@@ -1,7 +1,8 @@
-
 import React from "react";
+import { Link } from "react-router-dom";
 import { Smartphone, Globe, Code, Users, Settings, TestTube, Palette, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const Services = () => {
   const services = [
@@ -9,19 +10,22 @@ const Services = () => {
       icon: Smartphone,
       title: "Mobile Development",
       description: "We build native and cross-platform mobile applications that deliver seamless performance across devices.",
-      gradient: "from-purple-500 to-pink-500"
+      gradient: "from-purple-500 to-pink-500",
+      slug: "mobile-development"
     },
     {
       icon: Globe,
       title: "Web Development", 
       description: "We develop responsive, secure, and scalable web applications tailored to your business needs.",
-      gradient: "from-blue-500 to-purple-500"
+      gradient: "from-blue-500 to-purple-500",
+      slug: "web-development"
     },
     {
       icon: Code,
       title: "Custom Software Development",
       description: "From concept to deployment, we create software solutions tailored to your unique challenges and goals.",
-      gradient: "from-green-500 to-blue-500"
+      gradient: "from-green-500 to-blue-500",
+      slug: "custom-software"
     },
     {
       icon: Users,
@@ -80,9 +84,16 @@ const Services = () => {
                 <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-purple-600 transition-colors">
                   {service.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed mb-6">
                   {service.description}
                 </p>
+                {service.slug && (
+                  <Link to={`/services/${service.slug}`}>
+                    <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                      Learn More →
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           ))}

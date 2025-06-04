@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
@@ -19,7 +20,7 @@ const Navbar = () => {
     { name: "About", href: "#about" },
     { name: "Services", href: "#services" },
     { name: "Projects", href: "#projects" },
-    { name: "Blog", href: "#blog" },
+    { name: "Blog", href: "/blog" },
     { name: "Contact", href: "#contact" },
   ];
 
@@ -34,22 +35,34 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-              Nesisoft
-            </h1>
+            <Link to="/">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                Nesisoft
+              </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
               {navItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-800 hover:text-purple-600 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:bg-purple-50"
-                >
-                  {item.name}
-                </a>
+                item.href.startsWith("#") ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="text-gray-800 hover:text-purple-600 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:bg-purple-50"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="text-gray-800 hover:text-purple-600 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:bg-purple-50"
+                  >
+                    {item.name}
+                  </Link>
+                )
               ))}
             </div>
           </div>
@@ -71,14 +84,25 @@ const Navbar = () => {
         <div className="md:hidden bg-white shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-gray-800 hover:text-purple-600 block px-3 py-2 rounded-lg text-base font-medium transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.name}
-              </a>
+              item.href.startsWith("#") ? (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-800 hover:text-purple-600 block px-3 py-2 rounded-lg text-base font-medium transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </a>
+              ) : (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="text-gray-800 hover:text-purple-600 block px-3 py-2 rounded-lg text-base font-medium transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              )
             ))}
           </div>
         </div>

@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, ArrowRight } from "lucide-react";
@@ -10,13 +11,15 @@ const Projects = () => {
       name: "Agoo",
       description: "An errand-running platform connecting service seekers and runners, targeting middle and upper-income individuals with a scalable commission-based model.",
       image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop",
-      category: "Platform"
+      category: "Platform",
+      slug: "agoo"
     },
     {
       name: "Sua", 
       description: "A platform bridging parents with trusted teachers for personalized home and virtual tutoring services.",
       image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop",
-      category: "Education"
+      category: "Education",
+      slug: "sua"
     },
     {
       name: "Adesuapa",
@@ -37,7 +40,8 @@ const Projects = () => {
       name: "FinTech Mobile App",
       description: "A comprehensive mobile banking solution with biometric authentication and AI-powered insights.",
       image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=250&fit=crop",
-      category: "Mobile App"
+      category: "Mobile App",
+      slug: "fintech-app"
     },
     {
       name: "Healthcare Portal",
@@ -86,9 +90,17 @@ const Projects = () => {
                 <CardContent className="p-6">
                   <h4 className="text-xl font-bold text-gray-900 mb-3">{project.name}</h4>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4">{project.description}</p>
-                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
-                    Learn More <ArrowRight size={16} className="ml-2" />
-                  </Button>
+                  {project.slug ? (
+                    <Link to={`/projects/${project.slug}`}>
+                      <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                        Learn More <ArrowRight size={16} className="ml-2" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                      Learn More <ArrowRight size={16} className="ml-2" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -116,9 +128,17 @@ const Projects = () => {
                 <CardContent className="p-6">
                   <h4 className="text-xl font-bold text-gray-900 mb-3">{project.name}</h4>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4">{project.description}</p>
-                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
-                    View Project <ExternalLink size={16} className="ml-2" />
-                  </Button>
+                  {project.slug ? (
+                    <Link to={`/projects/${project.slug}`}>
+                      <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                        View Project <ExternalLink size={16} className="ml-2" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                      View Project <ExternalLink size={16} className="ml-2" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
