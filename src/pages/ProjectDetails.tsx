@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Tag, ExternalLink, Github, Users, Clock } from "lucide-react";
@@ -139,7 +138,7 @@ const ProjectDetails = () => {
               <p className="text-xl text-gray-600 mb-8">
                 {project.fullDescription}
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 mb-6">
                 <div className="flex items-center text-gray-600">
                   <Clock size={20} className="mr-2" />
                   <span>{project.timeline}</span>
@@ -158,6 +157,11 @@ const ProjectDetails = () => {
                   </span>
                 </div>
               </div>
+              <Link to="/contact">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full">
+                  Start a Project
+                </Button>
+              </Link>
             </div>
             <div className="relative">
               <img 

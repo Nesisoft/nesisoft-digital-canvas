@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle, Users, Clock, Target } from "lucide-react";
@@ -119,9 +118,16 @@ const ServiceDetails = () => {
               <p className="text-xl text-gray-600 mb-8">
                 {service.fullDescription}
               </p>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full">
-                Get Started
-              </Button>
+              <div className="flex space-x-4">
+                <Link to="/contact">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full">
+                    Start a Project
+                  </Button>
+                </Link>
+                <Button variant="outline" className="px-8 py-3 rounded-full border-purple-600 text-purple-600 hover:bg-purple-50">
+                  Learn More
+                </Button>
+              </div>
             </div>
             <div className="relative">
               <img 
