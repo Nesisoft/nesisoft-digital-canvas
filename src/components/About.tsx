@@ -4,10 +4,10 @@ import { Users, Target, Award, Globe } from "lucide-react";
 
 const About = () => {
   const stats = [
-    { icon: Users, number: "50+", label: "Happy Clients" },
-    { icon: Target, number: "100+", label: "Projects Completed" },
+    { icon: Users, number: "5+", label: "Happy Clients" },
+    { icon: Target, number: "10+", label: "Projects Completed" },
     { icon: Award, number: "5+", label: "Years Experience" },
-    { icon: Globe, number: "10+", label: "Countries Served" },
+    { icon: Globe, number: "2+", label: "Countries Served" },
   ];
 
   return (
