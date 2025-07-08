@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play } from "lucide-react";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const Hero = () => {
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900 to-purple-800 text-white relative overflow-hidden">
+    <section id="home" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900 to-purple-800 text-white relative overflow-hidden pt-20 md:pt-16">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -16,14 +15,14 @@ const Hero = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center">
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-8 leading-tight">
             Transform Ideas Into
             <span className="block bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               Digital Reality
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-purple-100 mb-12 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-purple-100 mb-12 max-w-4xl mx-auto leading-relaxed">
             We are Nesisoft - a full-cycle software development company specializing in web, mobile, and custom solutions 
             that drive innovation across Africa and beyond.
           </p>
@@ -42,7 +41,6 @@ const Hero = () => {
             </Button>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-purple-300 mb-2">10+</div>
@@ -64,7 +62,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
         <div className="w-6 h-10 border-2 border-purple-400 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-purple-400 rounded-full mt-2 animate-pulse"></div>
