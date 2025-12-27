@@ -38,7 +38,7 @@ const Hero = () => {
 
         {/* Accent glow - bottom */}
 
-        <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl" />
+        {/* <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl" /> */}
       </div>
 
       {/* Gradient overlay for depth */}
