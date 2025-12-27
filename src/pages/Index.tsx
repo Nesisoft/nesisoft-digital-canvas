@@ -1,3 +1,4 @@
+// Simpler version without the loader issue
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import About from "@/components/About";
@@ -7,10 +8,32 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { LabeledDivider } from "@/components/ui/labeled-divider";
 import FloatingActionButton from "@/components/ui/FloatingActionButton";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Handle hash scrolling
+    if (location.hash) {
+      const elementId = location.hash.replace("#", "");
+
+      // Wait for components to render
+      setTimeout(() => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 100);
+    }
+  }, [location]);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="">
       <FloatingActionButton />
       <Navbar />
       <Hero />

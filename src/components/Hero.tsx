@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link } from "react-router-dom";
 
-import { ArrowRight, ChevronDown, Play } from "lucide-react";
+import { ArrowRight, ChevronDown, Phone, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -90,11 +90,11 @@ const Hero = () => {
                 variant="outline"
                 className="border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 px-8 py-6 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-sm hover:text-white group"
               >
-                <Play
+                <Phone
                   size={20}
                   className="mr-2 transition-transform group-hover:scale-110 group-hover:text-purple-500"
                 />
-                Watch Demo
+                Schedule Call
               </Button>
             </div>
 

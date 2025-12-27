@@ -59,9 +59,13 @@ const About = () => {
           </h2>
 
           <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            We are committed to transforming innovative ideas into practical,
-            impactful digital solutions tailored to meet the evolving needs of
-            businesses across Africa and beyond.
+            We are committed to transforming innovative ideas into
+            <span className=" font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">
+              {" "}
+              practical, impactful digital solutions{" "}
+            </span>
+            tailored to meet the evolving needs of businesses across Africa and
+            beyond.
           </p>
         </div>
 
@@ -88,10 +92,14 @@ const About = () => {
               </p>
 
               <p className="text-gray-300 leading-relaxed">
-                Through our ventures like Agoo, Sua, Adesuapa, and Jua, we
-                actively develop scalable digital platforms that solve local and
-                regional problems while supporting our client-based development
-                work.
+                Through our ventures like
+                <span className=" font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">
+                  {" "}
+                  Agoo, Sua, Adesuapa, and Jua,{" "}
+                </span>
+                we actively develop scalable digital platforms that solve local
+                and regional problems while supporting our client-based
+                development work.
               </p>
             </div>
           </div>

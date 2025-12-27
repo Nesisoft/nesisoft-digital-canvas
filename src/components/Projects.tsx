@@ -31,6 +31,7 @@ const Projects = () => {
       image:
         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=250&fit=crop",
       category: "E-Learning",
+      slug: "adesuapa",
     },
     {
       name: "Jua",
@@ -39,6 +40,7 @@ const Projects = () => {
       image:
         "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop",
       category: "E-Commerce",
+      slug: "jua",
     },
   ];
 
@@ -57,7 +59,7 @@ const Projects = () => {
       description:
         "A telemedicine platform connecting patients with healthcare providers across rural Africa.",
       image:
-        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400&h=250&fit=crop",
+        "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aGVhbHRoY2FyZXxlbnwwfHwwfHx8MA%3D%3D",
       category: "Web Platform",
     },
     {
