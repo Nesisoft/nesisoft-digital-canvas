@@ -10,6 +10,7 @@ import {
   Code,
   Settings,
   Zap,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -247,22 +248,61 @@ const ServiceDetails = () => {
               </span>
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {service.features.map((feature, index) => (
               <Card
                 key={index}
-                className="bg-white/10 backdrop-blur-sm p-6 hover:bg-white/15 hover:border-purple-500/30 transition-all duration-300 rounded-2xl border border-white/10 group"
+                className="relative bg-white/5 backdrop-blur-xl p-6 hover:bg-gradient-to-br hover:from-white/10 hover:to-purple-500/10 hover:border-purple-400/40 transition-all duration-500 rounded-2xl border border-white/15 group overflow-hidden"
               >
+                {/* Gradient border effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/0 to-purple-300/0 group-hover:from-purple-500/20 group-hover:via-purple-400/10 group-hover:to-purple-300/5 transition-all duration-700 -z-10 rounded-2xl" />
+
+                {/* Animated arrow indicator */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
+                  <ArrowRight className="text-purple-400" size={20} />
+                </div>
+
                 <CardContent className="p-0">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                        <CheckCircle className="text-purple-400" size={20} />
+                  <div className="flex items-start space-x-5">
+                    {/* Animated icon container */}
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-purple-600/20 blur-sm group-hover:blur-md transition-all duration-500 rounded-full" />
+                      <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center border border-purple-500/40 group-hover:border-purple-400/60 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/5 rounded-full" />
+                        <CheckCircle
+                          className="text-purple-300 group-hover:text-purple-200 relative z-10"
+                          size={22}
+                        />
+                      </div>
+
+                      {/* Sequential number indicator */}
+                      <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center text-xs font-semibold text-white border border-purple-500/50">
+                        {index + 1}
                       </div>
                     </div>
-                    <span className="text-gray-100 font-medium">{feature}</span>
+
+                    {/* Feature text with enhanced styling */}
+                    <div className="flex-1 pt-1">
+                      <span className="text-gray-100 font-medium text-lg leading-relaxed tracking-tight group-hover:text-white transition-colors duration-300">
+                        {feature}
+                      </span>
+
+                      {/* Subtle underline effect on hover */}
+                      <div className="mt-3 w-0 group-hover:w-12 h-0.5 bg-gradient-to-r from-purple-400 to-transparent transition-all duration-700 rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* Hidden content reveal on hover */}
+                  <div className="mt-6 pl-16 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-20 transition-all duration-700 overflow-hidden">
+                    <p className="text-sm text-gray-400/80 font-light leading-relaxed">
+                      Premium feature with enhanced performance and seamless
+                      integration
+                    </p>
                   </div>
                 </CardContent>
+
+                {/* Glow effect on hover */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/0 via-purple-400/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-purple-400/5 group-hover:to-purple-600/10 blur-xl transition-all duration-1000 rounded-2xl -z-10" />
               </Card>
             ))}
           </div>
@@ -287,20 +327,86 @@ const ServiceDetails = () => {
               in every project.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {service.process.map((step, index) => (
-              <Card
-                key={index}
-                className="bg-white/10 backdrop-blur-sm p-6 text-center hover:bg-white/15 hover:border-purple-500/30 transition-all duration-300 rounded-2xl border border-white/10 group"
-              >
-                <CardContent className="p-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-lg font-bold group-hover:scale-110 transition-transform duration-300">
-                    {index + 1}
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">{step}</h3>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="relative overflow-hidden py-12 rounded-xl">
+            {/* Gradient fade effects on edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-purple-600 to-transparent z-20 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-purple-700 to-transparent z-20 pointer-events-none" />
+
+            <div className="flex animate-infinite-scroll">
+              {/* First set - visible content */}
+              <div className="flex space-x-8 pr-8">
+                {service.process.map((step, index) => (
+                  <Card
+                    key={`first-${index}`}
+                    className="flex-shrink-0 w-72 bg-white/10 backdrop-blur-xl p-6 text-center hover:bg-gradient-to-br hover:from-white/15 hover:to-purple-500/10 hover:border-purple-400/40 transition-all duration-500 rounded-2xl border border-white/15 group relative overflow-hidden"
+                  >
+                    {/* Animated background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/0 to-purple-300/0 group-hover:from-purple-500/10 group-hover:via-purple-400/5 group-hover:to-purple-300/3 transition-all duration-700 -z-10" />
+
+                    <CardContent className="p-0 relative z-10">
+                      {/* Animated step number */}
+                      <div className="relative w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-6 text-lg font-bold group-hover:scale-110 transition-all duration-500 border border-purple-500/40 group-hover:border-purple-400/60">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/5 rounded-full" />
+                        <span className="text-2xl font-bold text-white relative z-10">
+                          {index + 1}
+                        </span>
+
+                        {/* Pulse animation */}
+                        <div className="absolute inset-0 rounded-full border-2 border-purple-400/30 animate-ping opacity-0 group-hover:opacity-100" />
+                      </div>
+
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-purple-100 transition-all duration-500">
+                        {step}
+                      </h3>
+
+                      {/* Animated progress arrow */}
+                      <div className="mt-6 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <ArrowRight className="w-5 h-5 text-purple-400 mx-auto animate-pulse" />
+                      </div>
+                    </CardContent>
+
+                    {/* Moving gradient line */}
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent group-hover:opacity-100 opacity-0 transition-opacity duration-500">
+                      <div className="h-full w-1/2 bg-gradient-to-r from-purple-400 to-purple-300 animate-shimmer" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Duplicate set for seamless loop */}
+              <div className="flex space-x-8 pr-8" aria-hidden="true">
+                {service.process.map((step, index) => (
+                  <Card
+                    key={`second-${index}`}
+                    className="flex-shrink-0 w-72 bg-white/10 backdrop-blur-xl p-6 text-center hover:bg-gradient-to-br hover:from-white/15 hover:to-purple-500/10 hover:border-purple-400/40 transition-all duration-500 rounded-2xl border border-white/15 group relative overflow-hidden opacity-80"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/0 to-purple-300/0 group-hover:from-purple-500/10 group-hover:via-purple-400/5 group-hover:to-purple-300/3 transition-all duration-700 -z-10" />
+
+                    <CardContent className="p-0 relative z-10">
+                      <div className="relative w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-6 text-lg font-bold group-hover:scale-110 transition-all duration-500 border border-purple-500/40 group-hover:border-purple-400/60">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/5 rounded-full" />
+                        <span className="text-2xl font-bold text-white relative z-10">
+                          {index + 1}
+                        </span>
+                        <div className="absolute inset-0 rounded-full border-2 border-purple-400/30 animate-ping opacity-0 group-hover:opacity-100" />
+                      </div>
+
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-purple-100 transition-all duration-500">
+                        {step}
+                      </h3>
+
+                      <div className="mt-6 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <ArrowRight className="w-5 h-5 text-purple-400 mx-auto animate-pulse" />
+                      </div>
+                    </CardContent>
+
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent group-hover:opacity-100 opacity-0 transition-opacity duration-500">
+                      <div className="h-full w-1/2 bg-gradient-to-r from-purple-400 to-purple-300 animate-shimmer" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
