@@ -132,10 +132,10 @@ const Contact = () => {
                   <div>
                     <h4 className="text-white font-semibold mb-1">Email</h4>
                     <p className="text-purple-200 hover:text-purple-100 transition-colors cursor-pointer">
-                      info@nesisoft.com
+                      <a href="mailto:info@nesisoft">info@nesisoft.com</a>
                     </p>
                     <p className="text-purple-200 hover:text-purple-100 transition-colors cursor-pointer">
-                      sales@nesisoft.com
+                      <a href="mailto:sales@nesisoft">sales@nesisoft.com</a>
                     </p>
                   </div>
                 </div>
@@ -147,7 +147,9 @@ const Contact = () => {
                   <div>
                     <h4 className="text-white font-semibold mb-1">Phone</h4>
                     <p className="text-purple-200 hover:text-purple-100 transition-colors cursor-pointer">
-                      (+233) 555 351 068 / 553 140 807
+                      <a href="tel:+233555351068">
+                        (+233) 555 351 068 / 553 140 807
+                      </a>
                     </p>
                   </div>
                 </div>

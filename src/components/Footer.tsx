@@ -19,7 +19,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
 import { Button } from "@/components/ui/button";
 
 interface ModalContent {
@@ -384,9 +383,7 @@ const Footer = () => {
           </div>
         </div>
       </footer>
-
       {/* Full Screen Modal */}
-
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-full sm:h-full md:max-w-2xl md:h-auto bg-gradient-to-br from-gray-900 via-purple-900 to-black border-purple-500/30 text-white fixed inset-0 md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] flex flex-col justify-center items-center p-8 md:rounded-2xl">
           <div className="max-w-lg w-full text-center space-y-8">

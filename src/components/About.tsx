@@ -105,7 +105,7 @@ const About = () => {
           </div>
 
           {/* Why Choose Us Card - Updated for dark background */}
-          <div className="bg-gradient-to-br from-purple-600/90 via-purple-600/90 to-purple-700/90 rounded-3xl p-8 md:p-10 shadow-lg shadow-purple-500/20 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-purple-500/90 via-purple-600/90 to-purple-400/90 rounded-3xl p-8 md:p-10 shadow-lg shadow-purple-500/20 backdrop-blur-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
                 <Award className="w-5 h-5 text-white" />
@@ -131,32 +131,35 @@ const About = () => {
         </div>
 
         {/* Stats Section - Updated for dark background */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-sm border border-white/10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group cursor-default">
-                <div className="relative mx-auto mb-5 w-20 h-20">
-                  {/* Glow effect on hover */}
-                  <div className="absolute inset-0 bg-purple-500/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          {stats.map((stat, index) => (
+            <div key={index} className="group relative text-center">
+              {/* Hover glow */}
 
-                  <div className="relative bg-gradient-to-br from-purple-900/40 to-purple-800/30 rounded-2xl w-full h-full flex items-center justify-center group-hover:from-purple-800/50 group-hover:to-purple-700/40 transition-all duration-300 shadow-sm border border-purple-500/20">
+              <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 rounded-3xl blur-xl transition-colors duration-500" />
+
+              <div className="relative bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8 group-hover:border-purple-500/30 group-hover:bg-white/[0.06] transition-all duration-500">
+                <div className="relative mx-auto mb-5 w-16 h-16 md:w-20 md:h-20">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl opacity-20 blur-lg group-hover:opacity-40 transition-opacity" />
+
+                  <div className="relative w-full h-full bg-gradient-to-br from-purple-500/20 to-violet-600/20 rounded-2xl flex items-center justify-center border border-purple-500/20 group-hover:border-purple-500/40 transition-colors">
                     <stat.icon
-                      className="text-purple-300 group-hover:text-purple-200 group-hover:scale-110 transition-all duration-300"
-                      size={32}
+                      className="text-purple-400 group-hover:text-purple-300 transition-colors"
+                      size={28}
                     />
                   </div>
                 </div>
 
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors duration-300">
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-2">
                   {stat.number}
                 </div>
 
-                <div className="text-gray-400 text-sm md:text-base font-medium group-hover:text-gray-300 transition-colors">
+                <div className="text-gray-400 group-hover:text-gray-300 transition-colors text-sm md:text-base">
                   {stat.label}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
