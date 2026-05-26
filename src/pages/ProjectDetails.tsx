@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Clock, Layers3, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Seo } from "@/components/Seo";
+import { Seo, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -63,6 +63,12 @@ const ProjectDetails = () => {
         title={`${project.name} Case Study`}
         description={project.fullDescription}
         image={project.image}
+        type="article"
+        jsonLd={breadcrumbsJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Projects", path: "/#projects" },
+          { name: project.name, path: `/projects/${project.slug}` },
+        ])}
       />
       <PageShell>
         <Navbar />

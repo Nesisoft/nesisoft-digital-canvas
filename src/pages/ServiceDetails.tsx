@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Layers3 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Seo } from "@/components/Seo";
+import { Seo, breadcrumbsJsonLd, serviceJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -54,7 +54,23 @@ const ServiceDetails = () => {
 
   return (
     <>
-      <Seo title={service.title} description={service.fullDescription} />
+      <Seo
+        title={service.title}
+        description={service.fullDescription}
+        image={service.image}
+        jsonLd={[
+          serviceJsonLd({
+            title: service.title,
+            description: service.fullDescription,
+            slug: service.slug,
+          }),
+          breadcrumbsJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/#services" },
+            { name: service.title, path: `/services/${service.slug}` },
+          ]),
+        ]}
+      />
       <PageShell>
         <Navbar />
         <PageHeader

@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingActionButton from "@/components/ui/FloatingActionButton";
 import { PageShell } from "@/components/ui/page-shell";
-import { Seo, organizationJsonLd } from "@/components/Seo";
+import { Seo, organizationJsonLd, websiteJsonLd } from "@/components/Seo";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -28,7 +28,7 @@ const Index = () => {
 
   return (
     <PageShell>
-      <Seo jsonLd={organizationJsonLd} />
+      <Seo jsonLd={[organizationJsonLd, websiteJsonLd]} />
       <FloatingActionButton />
       <Navbar />
       <Hero />

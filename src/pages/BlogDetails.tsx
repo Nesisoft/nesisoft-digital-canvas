@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Calendar, Clock, MessageSquare, Send, User } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Seo } from "@/components/Seo";
+import { Seo, blogPostingJsonLd, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -94,6 +94,20 @@ const BlogDetails = () => {
         description={blogPost.excerpt}
         image={blogPost.image}
         type="article"
+        article={{
+          publishedTime: blogPost.date,
+          modifiedTime: blogPost.date,
+          author: blogPost.author,
+          section: blogPost.category,
+        }}
+        jsonLd={[
+          blogPostingJsonLd(blogPost),
+          breadcrumbsJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: blogPost.title, path: `/blog/${blogPost.slug}` },
+          ]),
+        ]}
       />
       <PageShell>
         <Navbar />
