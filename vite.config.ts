@@ -8,6 +8,15 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      // Dev-only proxy for the Blog Studio's Groq calls. Keeps requests
+      // same-origin (no browser CORS) — the studio sends "/groq-api/...".
+      "/groq-api": {
+        target: "https://api.groq.com",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/groq-api/, ""),
+      },
+    },
   },
   plugins: [
     react(),

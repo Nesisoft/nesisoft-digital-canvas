@@ -1,27 +1,40 @@
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Seo } from "@/components/Seo";
+import { Button } from "@/components/ui/button";
+import { PageHeader, PageShell } from "@/components/ui/page-shell";
 
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    console.error("404 route:", location.pathname);
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
-    </div>
+    <>
+      <Seo title="Page Not Found" noindex />
+      <PageShell>
+        <Navbar />
+        <PageHeader
+          align="center"
+          eyebrow="404"
+          title="This page does not exist"
+          description="The link may be broken, or the page may have moved."
+        >
+          <Link to="/">
+            <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+              Return home
+            </Button>
+          </Link>
+        </PageHeader>
+        <Footer />
+      </PageShell>
+    </>
   );
 };
 
 export default NotFound;
+

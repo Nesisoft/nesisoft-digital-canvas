@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -18,6 +20,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Satoshi', 'system-ui', 'sans-serif'],
+				display: ['Satoshi', 'system-ui', 'sans-serif'],
+				mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -64,9 +71,15 @@ export default {
 				}
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				none: '0px',
+				sm: '0px',
+				DEFAULT: '0px',
+				md: '0px',
+				lg: '0px',
+				xl: '0px',
+				'2xl': '0px',
+				'3xl': '0px',
+				full: '0px'
 			},
 			keyframes: {
 				'accordion-down': {
@@ -84,13 +97,25 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				// Slow-drifting ambient glow — replaces the external hero video.
+				'aurora': {
+					'0%, 100%': { transform: 'translate3d(0, 0, 0) scale(1)' },
+					'33%': { transform: 'translate3d(6%, 4%, 0) scale(1.12)' },
+					'66%': { transform: 'translate3d(-5%, -3%, 0) scale(0.94)' }
+				},
+				'aurora-alt': {
+					'0%, 100%': { transform: 'translate3d(0, 0, 0) scale(1.05)' },
+					'50%': { transform: 'translate3d(-7%, 5%, 0) scale(0.9)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'aurora': 'aurora 18s ease-in-out infinite',
+				'aurora-alt': 'aurora-alt 24s ease-in-out infinite'
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindcssAnimate, typography],
 } satisfies Config;

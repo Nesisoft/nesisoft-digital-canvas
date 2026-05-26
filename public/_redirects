@@ -1,0 +1,4 @@
+# Netlify SPA fallback: serve index.html for any unmatched path so React
+# Router can handle client-side routes (e.g. /blog/foo, /services/bar) on
+# direct visits and page refreshes — without it those would 404.
+/*  /index.html  200

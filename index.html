@@ -6,9 +6,15 @@
         <title>Nesisoft | Digital Solutions for Africa</title>
         <meta name="description" content="Nesisoft is a full-cycle software development company building custom web, mobile, desktop, and IoT applications, as well as impactful platforms like Agoo, Sua, Adesuapa, and Jua for Africa's digital growth." />
         <meta name="author" content="Nesisoft Team" />
+        <link rel="canonical" href="https://nesisoft.com/" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
         <meta property="og:title" content="Nesisoft | Digital Innovation for Africa" />
         <meta property="og:description" content="We create real-world solutions for Africa through custom software and platforms like Agoo, Sua, Adesuapa, and Jua. Explore Nesisoft’s impact-driven digital innovation." />
+        <meta property="og:url" content="https://nesisoft.com/" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://i.ibb.co/8nvq5Kx2/appstore.png" />
 
@@ -20,8 +26,71 @@
     </head>
 
 
-  <body>
-    <div id="root"></div>
+  <body style="background:#101622;margin:0">
+    <div id="root">
+      <!-- Boot loader: visible while the JS bundle downloads, then React's
+           first render replaces it. Matches the in-app RouteFallback. -->
+      <div class="nesisoft-boot">
+        <div class="nesisoft-boot__row">
+          <span class="nesisoft-boot__dot">
+            <span class="nesisoft-boot__ping"></span>
+          </span>
+          <span class="nesisoft-boot__text">
+            ENGINEERING, TECHNOLOGIES AND MORE<span class="nesisoft-boot__ellipsis">…</span>
+          </span>
+        </div>
+        <div class="nesisoft-boot__bar"><span></span></div>
+      </div>
+      <style>
+        .nesisoft-boot {
+          position: fixed; inset: 0; z-index: 100;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          background: #101622;
+          font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .nesisoft-boot__row { display: flex; align-items: center; gap: 12px; }
+        .nesisoft-boot__dot {
+          position: relative; display: inline-flex; width: 8px; height: 8px;
+        }
+        .nesisoft-boot__dot::after {
+          content: ""; position: absolute; inset: 0;
+          background: #a78bfa; border-radius: 999px;
+        }
+        .nesisoft-boot__ping {
+          position: absolute; inset: 0;
+          background: #a78bfa; border-radius: 999px; opacity: .75;
+          animation: nesisoft-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .nesisoft-boot__text {
+          font-family: ui-monospace, "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+          font-size: 12px; letter-spacing: 0.32em; color: #cbd5e1;
+        }
+        @media (min-width: 640px) { .nesisoft-boot__text { font-size: 14px; } }
+        .nesisoft-boot__ellipsis {
+          display: inline-block; animation: nesisoft-pulse 1.5s ease-in-out infinite;
+        }
+        .nesisoft-boot__bar {
+          margin-top: 24px; width: 160px; height: 1px; overflow: hidden;
+          background: rgba(255,255,255,0.1);
+        }
+        .nesisoft-boot__bar > span {
+          display: block; width: 33%; height: 100%;
+          background: #a78bfa;
+          animation: nesisoft-slide 1.2s ease-in-out infinite;
+        }
+        @keyframes nesisoft-ping {
+          75%, 100% { transform: scale(2.4); opacity: 0; }
+        }
+        @keyframes nesisoft-pulse {
+          0%, 100% { opacity: 1; } 50% { opacity: .35; }
+        }
+        @keyframes nesisoft-slide {
+          0%   { transform: translateX(-100%); }
+          50%  { transform: translateX(200%); }
+          100% { transform: translateX(-100%); }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
