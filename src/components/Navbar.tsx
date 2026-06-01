@@ -1,401 +1,481 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Menu,
-  X,
-  Home,
-  User,
-  Briefcase,
-  FolderOpen,
-  BookOpen,
-  Mail,
   ArrowRight,
-  Sparkles,
-  LucideIcon,
+  BookOpen,
+  BriefcaseBusiness,
+  ChevronDown,
+  Layers3,
+  Menu,
+  Phone,
+  X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
+import { services } from "@/data/services";
+import { clientProjects, internalProjects } from "@/data/projects";
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  type: "anchor" | "route";
-}
+const sectionLinks = [
+  { label: "Studio", href: "#about", description: "Who we are and how we work" },
+  { label: "Contact", href: "/contact", description: "Send a project brief" },
+];
 
-interface NavLinkProps {
-  item: NavItem;
-  isMobile?: boolean;
-  isScrolled?: boolean;
-  onClick?: () => void;
-}
+const navGroups = [
+  {
+    key: "services",
+    label: "Services",
+    eyebrow: "Build capability",
+    description: "Choose the product outcome you need.",
+    icon: BriefcaseBusiness,
+  },
+  {
+    key: "work",
+    label: "Work",
+    eyebrow: "Selected systems",
+    description: "Platforms and client products in motion.",
+    icon: Layers3,
+  },
+  {
+    key: "writing",
+    label: "Writing",
+    eyebrow: "Engineering notes",
+    description: "Practical thinking on building software.",
+    icon: BookOpen,
+  },
+] as const;
 
-// Create a custom hook for navigation
-const useNavigation = () => {
+type NavGroupKey = (typeof navGroups)[number]["key"];
+
+function useSiteNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNavigation = (href: string, onClick?: () => void) => {
-    if (onClick) onClick();
+  const scrollToHash = (hash: string) => {
+    const element = document.getElementById(hash.replace("#", ""));
+    if (!element) return;
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.pushState(null, "", hash);
+  };
 
-    // Check if it's an anchor link (starts with #)
+  const goTo = (href: string) => {
     if (href.startsWith("#")) {
-      const hash = href;
-
       if (location.pathname === "/") {
-        // Already on homepage, scroll to section
-        scrollToSection(hash);
+        scrollToHash(href);
       } else {
-        // Not on homepage, navigate to homepage with hash
-        navigate(`/${hash}`);
-        // The Home component will handle the scroll via useEffect
+        navigate(`/${href}`);
       }
-    } else {
-      // Regular route navigation
-      navigate(href);
+      return;
     }
+    navigate(href);
   };
 
-  const scrollToSection = (hash: string) => {
-    // Remove # from hash to get element id
-    const elementId = hash.replace("#", "");
-    const element = document.getElementById(elementId);
+  return { goTo };
+}
 
-    if (element) {
-      // Smooth scroll to element
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      // Update URL hash without triggering navigation
-      window.history.pushState(null, "", hash);
-    } else {
-      // If element not found, scroll to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  return { handleNavigation, scrollToSection };
-};
-
-// Add this helper function to your main App/Home component
-export const useHashScroll = () => {
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [openGroup, setOpenGroup] = useState<NavGroupKey | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const { goTo } = useSiteNavigation();
   const location = useLocation();
 
   useEffect(() => {
-    // Check if URL has a hash
-    if (location.hash) {
-      // Small delay to ensure page is rendered
-      setTimeout(() => {
-        const elementId = location.hash.replace("#", "");
-        const element = document.getElementById(elementId);
-
-        if (element) {
-          element.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-      }, 100);
-    }
-  }, [location]);
-};
-
-// NavLink component
-const NavLink: React.FC<NavLinkProps> = ({
-  item,
-  isMobile = false,
-  isScrolled = false,
-  onClick,
-}) => {
-  const Icon = item.icon;
-  const { handleNavigation } = useNavigation();
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleNavigation(item.href, onClick);
-  };
-
-  if (isMobile) {
-    const mobileClassName =
-      "group flex items-center gap-4 px-6 py-4 text-xl font-medium text-gray-100 transition-all duration-300 hover:bg-white/10 hover:pl-8 rounded-xl w-full text-left";
-
-    const content = (
-      <>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-          <Icon size={20} className="text-purple-300" />
-        </div>
-        <span className="flex-1">{item.name}</span>
-        <ArrowRight
-          size={18}
-          className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-purple-300"
-        />
-      </>
-    );
-
-    return (
-      <button onClick={handleClick} className={mobileClassName}>
-        {content}
-      </button>
-    );
-  }
-
-  // Desktop link
-  const desktopClassName =
-    "group relative flex items-center gap-2 px-3 py-4 text-sm font-medium transition-all duration-300 overflow-hidden cursor-pointer";
-
-  const content = (
-    <>
-      <Icon
-        size={14}
-        className={`transition-all duration-300 ${
-          isScrolled
-            ? "text-gray-300 group-hover:text-purple-400"
-            : "text-gray-200 group-hover:text-purple-300"
-        } opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0`}
-      />
-      <span
-        className={`transition-all duration-300 ${
-          isScrolled
-            ? "text-gray-100 group-hover:text-purple-400"
-            : "text-white group-hover:text-purple-300"
-        }`}
-      >
-        {item.name}
-      </span>
-      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-300 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
-    </>
-  );
-
-  return (
-    <button onClick={handleClick} className={desktopClassName}>
-      {content}
-    </button>
-  );
-};
-
-const navItems: NavItem[] = [
-  { name: "Home", href: "/", icon: Home, type: "route" },
-  { name: "About", href: "#about", icon: User, type: "anchor" },
-  { name: "Services", href: "#services", icon: Briefcase, type: "anchor" },
-  { name: "Projects", href: "#projects", icon: FolderOpen, type: "anchor" },
-  { name: "Blog", href: "/blog", icon: BookOpen, type: "route" },
-  { name: "Contact", href: "#contact", icon: Mail, type: "anchor" },
-];
-
-const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { handleNavigation } = useNavigation();
-
-  useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
+      setIsScrolled(window.scrollY > 24);
+      setScrollProgress(maxScroll > 0 ? window.scrollY / maxScroll : 0);
     };
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  const closeMenu = () => setIsOpen(false);
+  const cta = useMemo(() => {
+    if (location.pathname.startsWith("/projects/")) {
+      return "Build similar";
+    }
+    if (location.pathname.startsWith("/services/")) {
+      return "Discuss this";
+    }
+    if (location.pathname.startsWith("/blog")) {
+      return "Talk to us";
+    }
+    return "Start a project";
+  }, [location.pathname]);
 
-  const handleStartProject = () => {
-    handleNavigation("#contact", closeMenu);
+  const handleNav = (href: string) => {
+    setIsOpen(false);
+    setOpenGroup(null);
+    goTo(href);
+  };
+
+  const isGroupActive = (key: NavGroupKey) => {
+    if (key === "services") return location.pathname.startsWith("/services");
+    if (key === "work") return location.pathname.startsWith("/projects");
+    if (key === "writing") return location.pathname.startsWith("/blog");
+    return false;
+  };
+
+  const renderPanel = (key: NavGroupKey) => {
+    if (key === "services") {
+      return (
+        <div className="grid gap-1.5">
+          {services.map((service) => (
+            <button
+              key={service.slug}
+              onClick={() => handleNav(`/services/${service.slug}`)}
+              className="group flex items-start gap-3 rounded-2xl border border-slate-700 bg-[#202a3a] p-3.5 text-left transition-colors hover:border-violet-300/50 hover:bg-[#263247] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            >
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-violet-500/18 text-violet-200 ring-1 ring-violet-300/15">
+                <service.icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium text-white">
+                  {service.shortTitle}
+                </span>
+                <span className="mt-0.5 block text-sm leading-5 text-slate-300">
+                  {service.outcome}
+                </span>
+              </span>
+              <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-200" />
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (key === "work") {
+      return (
+        <div className="grid gap-2">
+          {[...internalProjects.slice(0, 3), ...clientProjects.slice(0, 1)].map(
+            (project) => (
+              <button
+                key={project.slug}
+                onClick={() => handleNav(`/projects/${project.slug}`)}
+                className="group flex items-center gap-4 rounded-2xl border border-slate-700 bg-[#202a3a] p-3 text-left transition-colors hover:border-violet-300/50 hover:bg-[#263247] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              >
+                <img
+                  src={project.image}
+                  alt=""
+                  className="h-12 w-16 rounded-lg object-cover opacity-85"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-white">
+                    {project.name}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm text-slate-300">
+                    {project.category}
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-300" />
+              </button>
+            )
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-2xl border border-slate-700 bg-[#202a3a] p-5">
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/18 text-violet-200 ring-1 ring-violet-300/15">
+          <BookOpen className="h-5 w-5" />
+        </div>
+        <p className="font-medium text-white">Engineering blog</p>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          Notes on mobile, web, AI, delivery, and building for African markets.
+        </p>
+        <button
+          onClick={() => handleNav("/blog")}
+          className="mt-5 inline-flex items-center text-sm font-medium text-violet-300 transition-colors hover:text-white"
+        >
+          Read articles
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </button>
+      </div>
+    );
   };
 
   return (
     <>
-      <nav
-        className={`fixed w-full z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-slate-900/95 backdrop-blur-xl border-b border-white/10 py-2"
-            : "bg-transparent py-4"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => handleNavigation("/")}
-                className="group flex items-center gap-2"
-              >
-                {/* <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Sparkles size={20} className="text-white" />
-                </div> */}
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-purple-200 transition-all duration-300">
-                  Nesisoft
-                </h1>
-              </button>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:block">
-              <div className="flex items-center space-x-8">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.name}
-                    item={item}
-                    isScrolled={isScrolled}
-                  />
-                ))}
-                <button
-                  onClick={() => handleNavigation("/contact")}
-                  className="
-    px-6 py-2.5 
-    bg-gradient-to-r from-purple-600 to-purple-700 
-    text-white font-medium rounded-full 
-    hover:from-purple-500 hover:to-purple-600 
-    transition-all duration-300 
-    hover:shadow-lg hover:shadow-purple-500/25
-    animate-pulse-button
-  "
-                >
-                  Get Started
-                </button>
-
-                <style>{`
-                  @keyframes pulseButton {
-                    0%,
-                    100% {
-                      transform: scale(1);
-                      box-shadow: 0 0 0px rgba(128, 90, 255, 0.4);
-                    }
-                    50% {
-                      transform: scale(1.05);
-                      box-shadow: 0 0 20px rgba(128, 90, 255, 0.6);
-                    }
-                  }
-
-                  .animate-pulse-button {
-                    animation: pulseButton 1.5s infinite;
-                  }
-                `}</style>
-              </div>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                aria-label={isOpen ? "Close menu" : "Open menu"}
-                aria-expanded={isOpen}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                  isScrolled
-                    ? "bg-gradient-to-br from-purple-600 to-purple-700 text-white"
-                    : "bg-gradient-to-br from-purple-500/20 to-purple-600/20 text-white border border-white/20"
-                } hover:scale-105 active:scale-95`}
-              >
-                {isOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Navigation - Full Page Overlay */}
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-200",
+        isScrolled
+          ? "bg-[#111827]/86 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+          : "bg-transparent"
+      )}
+      onMouseLeave={() => setOpenGroup(null)}
+    >
       <div
-        className={`md:hidden fixed inset-0 z-40 transition-all duration-500 ${
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-        aria-hidden={!isOpen}
+        className="absolute left-0 top-0 h-px bg-violet-300/80 transition-[width] duration-150"
+        style={{ width: `${Math.min(scrollProgress * 100, 100)}%` }}
+      />
+
+      <nav
+        className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        aria-label="Primary"
       >
-        {/* Backdrop */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950 transition-opacity duration-500 ${
-            isOpen ? "opacity-100" : "opacity-0"
-          }`}
-          onClick={closeMenu}
-        />
-
-        {/* Menu Content */}
-        <div
-          className={`relative h-full flex flex-col justify-between transition-all duration-500 ${
-            isOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        <Link
+          to="/"
+          className="group flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
-          {/* Close button */}
-          <div className="absolute top-6 right-6">
-            {/* <button
-              onClick={closeMenu}
-              className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/30 to-purple-700/30 flex items-center justify-center border border-white/10 hover:scale-105 transition-transform duration-300"
-            >
-              <X size={24} className="text-white" />
-            </button> */}
-          </div>
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/12 bg-white/[0.075] text-sm font-bold text-white transition-colors group-hover:border-violet-300/40 group-hover:bg-violet-500/18">
+            <span className="absolute inset-0 rounded-lg bg-violet-400/0 blur-md transition-colors group-hover:bg-violet-400/20" />
+            <span className="relative">N</span>
+          </span>
+          <span>
+            <span className="block text-lg font-bold leading-none tracking-[-0.02em] text-white">
+              Nesisoft
+            </span>
+            <span className="hidden font-mono text-[9px] uppercase tracking-[0.18em] text-slate-400 lg:block">
+              Software studio
+            </span>
+          </span>
+        </Link>
 
-          {/* Navigation Items */}
-          <div className="flex-1 flex flex-col justify-center px-6 space-y-2">
-            {navItems.map((item, index) => (
-              <div
-                key={item.name}
-                className="transition-all duration-500"
-                style={{
-                  transitionDelay: isOpen ? `${index * 100}ms` : "0ms",
-                  transform: isOpen ? "translateX(0)" : "translateX(50px)",
-                  opacity: isOpen ? 1 : 0,
-                }}
+        <div className="relative hidden lg:block">
+          <div className="flex items-center gap-8">
+            {sectionLinks.slice(0, 1).map((item, index) => (
+              <button
+                key={item.label}
+                onClick={() => handleNav(item.href)}
+                className="group flex h-10 items-center gap-2.5 rounded-lg text-lg font-semibold text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
               >
-                <NavLink item={item} isMobile onClick={closeMenu} />
-              </div>
+                <span className="font-mono text-xs tracking-[0.12em] text-violet-300/80 group-hover:text-violet-200">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {item.label}
+              </button>
             ))}
 
-            {/* Mobile CTA Button */}
-            <div
-              className="mt-8 px-6 transition-all duration-500"
-              style={{
-                transitionDelay: isOpen ? `${navItems.length * 100}ms` : "0ms",
-                transform: isOpen ? "translateY(0)" : "translateY(30px)",
-                opacity: isOpen ? 1 : 0,
-              }}
-            >
-              <button
-                onClick={handleStartProject}
-                className="block w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium text-lg rounded-2xl text-center hover:from-purple-500 hover:to-purple-600 transition-all duration-300 hover:scale-105"
-              >
-                Start Your Project →
-              </button>
-            </div>
+            {navGroups.map((group, index) => {
+              const Icon = group.icon;
+              const active = isGroupActive(group.key);
+              return (
+                <button
+                  key={group.key}
+                  onMouseEnter={() => setOpenGroup(group.key)}
+                  onFocus={() => setOpenGroup(group.key)}
+                  onClick={() =>
+                    setOpenGroup(openGroup === group.key ? null : group.key)
+                  }
+                  aria-expanded={openGroup === group.key}
+                className={cn(
+                    "group relative flex h-10 items-center gap-2.5 rounded-lg text-lg font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400",
+                    active || openGroup === group.key
+                      ? "text-white"
+                      : "text-slate-100 hover:text-white"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-mono text-xs tracking-[0.12em] transition-colors",
+                      active || openGroup === group.key
+                        ? "text-violet-300"
+                        : "text-violet-300/70 group-hover:text-violet-200"
+                    )}
+                  >
+                    {String(index + 2).padStart(2, "0")}
+                  </span>
+                  <Icon className="h-4 w-4 text-slate-300 transition-colors group-hover:text-violet-300" />
+                  {group.label}
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 text-slate-300 transition-transform",
+                      openGroup === group.key && "rotate-180 text-violet-300"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "absolute inset-x-3 -bottom-1 h-px origin-center scale-x-0 bg-violet-300 transition-transform duration-200",
+                      (active || openGroup === group.key) && "scale-x-100"
+                    )}
+                  />
+                </button>
+              );
+            })}
           </div>
 
-          {/* Tagline Footer */}
-          <div
-            className={`px-6 pb-10 pt-6 border-t border-white/10 backdrop-blur-sm transition-all duration-500 ${
-              isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-            }`}
-            style={{
-              transitionDelay: isOpen
-                ? `${(navItems.length + 1) * 100}ms`
-                : "0ms",
-            }}
-          >
-            <div className="text-center">
-              <p className="text-gray-400 text-sm mb-2">
-                Crafting Digital Excellence
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                <p className="text-gray-300 text-base font-medium">
-                  Transforming Africa through Innovation
-                </p>
+          {openGroup && (
+            <div
+              className="absolute left-1/2 top-[calc(100%+0.75rem)] w-[42rem] -translate-x-1/2 rounded-3xl border border-slate-700 bg-[#172033] p-3 shadow-2xl shadow-black/45"
+              onMouseEnter={() => setOpenGroup(openGroup)}
+            >
+              <div className="grid gap-3 lg:grid-cols-[15rem_1fr]">
+                <div className="rounded-2xl border border-slate-700 bg-[#202a3a] p-5">
+                  {(() => {
+                    const group = navGroups.find((item) => item.key === openGroup)!;
+                    const Icon = group.icon;
+                    return (
+                      <>
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/18 text-violet-200 ring-1 ring-violet-300/15">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-violet-300">
+                          {group.eyebrow}
+                        </p>
+                        <p className="mt-3 text-sm leading-6 text-slate-300">
+                          {group.description}
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+                {renderPanel(openGroup)}
               </div>
-              <p className="text-gray-500 text-xs mt-4">
-                © {new Date().getFullYear()} Nesisoft. All rights reserved.
+            </div>
+          )}
+        </div>
+
+        <div className="hidden items-center gap-2 lg:flex">
+          <a
+            href={siteConfig.contact.phonePrimary.href}
+            className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+          >
+            <Phone className="h-4 w-4" />
+            Call
+          </a>
+          <Button
+            onClick={() => handleNav("/contact")}
+            className="group h-10 rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 hover:bg-slate-200"
+          >
+            {cta}
+            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsOpen((value) => !value)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 lg:hidden"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </nav>
+    </header>
+
+    {/* Rendered OUTSIDE <header> on purpose: the header gains
+        `backdrop-filter` on scroll, which makes it a containing block for
+        `position: fixed` descendants — that's what was making the open
+        menu collapse to the header's height once the page scrolled. */}
+    {isOpen && (
+        <div className="fixed inset-0 z-[70] bg-[#0b0d12] lg:hidden">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.08] text-sm font-bold text-white">
+                N
+              </span>
+              <span className="text-lg font-bold tracking-[-0.02em] text-white">
+                Nesisoft
+              </span>
+            </Link>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.08] text-white"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="h-[calc(100svh-4rem)] overflow-y-auto px-4 pb-6 pt-5 sm:px-6">
+            <div className="mb-6">
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-violet-300">
+                Navigation
               </p>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-300">
+                Jump to the studio, services, work, writing, or start a project.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              {sectionLinks.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleNav(item.href)}
+                  className="flex items-center justify-between rounded-2xl bg-[#1b2536] p-4 text-left"
+                >
+                  <span>
+                    <span className="block text-lg font-semibold text-white">
+                      {item.label}
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-300">
+                      {item.description}
+                    </span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              {navGroups.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <button
+                    key={group.key}
+                    onClick={() =>
+                      handleNav(
+                        group.key === "services"
+                          ? "#services"
+                          : group.key === "work"
+                          ? "#projects"
+                          : "/blog"
+                      )
+                    }
+                    className="flex items-center gap-4 rounded-2xl bg-[#1b2536] p-4 text-left"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/18 text-violet-200">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-lg font-semibold text-white">
+                        {group.label}
+                      </span>
+                      <span className="mt-1 block text-sm leading-5 text-slate-300">
+                        {group.description}
+                      </span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-slate-400" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="sticky bottom-0 mt-6 grid grid-cols-2 gap-2 bg-[#0b0d12] pt-3">
+              <a
+                href={siteConfig.contact.phonePrimary.href}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#1b2536] text-sm font-medium text-white"
+              >
+                <Phone className="h-4 w-4" />
+                Call
+              </a>
+              <Button
+                onClick={() => handleNav("/contact")}
+                className="h-12 rounded-xl bg-white text-sm font-semibold text-slate-950 hover:bg-slate-200"
+              >
+                {cta}
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

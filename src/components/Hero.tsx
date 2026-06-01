@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronDown, Phone, X } from "lucide-react";
+import { ArrowRight, Phone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,95 +9,108 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { siteConfig } from "@/config/site";
+import { HeroChat } from "@/components/HeroChat";
+
+// Cycled in the headline. Kept short and similar in length to limit reflow.
+const HEADLINE_PHRASES = [
+  "African businesses forward",
+  "startups to market",
+  "bold ideas to launch",
+  "teams ahead",
+];
 
 const Hero = () => {
-  // State to manage which modal is open
   const [openModal, setOpenModal] = useState<string | null>(null);
+  const [phrase, setPhrase] = useState(0);
 
-  // Stats data with modal content
+  useEffect(() => {
+    const reduce = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    if (reduce) return;
+    const id = setInterval(
+      () => setPhrase((p) => (p + 1) % HEADLINE_PHRASES.length),
+      2800
+    );
+    return () => clearInterval(id);
+  }, []);
+
   const stats = [
     {
       id: "projects",
       title: "10+",
-      subtitle: "Projects Completed",
-      modalTitle: "Projects Completed",
-      videoUrl:
-        "https://cdnl.iconscout.com/lottie/premium/thumb/document-approved-with-thumbs-up-animation-gif-download-10823809.mp4",
+      subtitle: "Projects delivered",
+      modalTitle: "Projects Delivered",
       description:
-        "We've successfully delivered over 10 innovative projects across various industries including fintech, e-commerce, healthcare, and education.",
+        "We've shipped over 10 projects across fintech, e-commerce, healthcare and education — from first concept to production and beyond.",
       highlights: [
-        "Custom web applications with modern frameworks",
-        "Mobile apps for iOS and Android platforms",
-        "Enterprise solutions for businesses",
-        "UI/UX design and prototyping",
+        "Custom web applications built on modern frameworks",
+        "Native and cross-platform mobile apps",
+        "Enterprise systems and internal tools",
+        "End-to-end product design",
       ],
       achievements: [
-        "95% client satisfaction rate",
-        "All projects delivered on time",
-        "Post-launch support and maintenance",
+        "Delivered on schedule",
+        "Ongoing support and maintenance",
+        "Measurable outcomes for clients",
       ],
     },
     {
       id: "clients",
       title: "5+",
-      subtitle: "Happy Clients",
-      modalTitle: "Client Success Stories",
-      videoUrl:
-        "https://cdnl.iconscout.com/lottie/premium/thumb/positive-feedback-animation-gif-download-10727118.mp4",
+      subtitle: "Clients served",
+      modalTitle: "Clients Served",
       description:
-        "Our growing portfolio of satisfied clients ranges from startups to established enterprises across Africa and beyond.",
+        "From early-stage startups to established organisations across Africa and beyond, our clients return to us for the next build.",
       highlights: [
-        "Long-term partnerships with clients",
-        "Regular communication and updates",
-        "Flexible collaboration models",
+        "Long-term partnerships",
+        "Clear, regular communication",
+        "Flexible engagement models",
         "Transparent project management",
       ],
       achievements: [
-        "80% repeat business rate",
-        "Referrals from satisfied clients",
+        "High rate of repeat business",
+        "Referral-driven growth",
         "Industry-specific expertise",
       ],
     },
     {
       id: "experience",
       title: "5+",
-      subtitle: "Years Experience",
-      modalTitle: "Industry Experience",
-      videoUrl:
-        "https://cdnl.iconscout.com/lottie/premium/thumb/5-year-animation-gif-download-6477950.mp4",
+      subtitle: "Years building",
+      modalTitle: "Years of Experience",
       description:
-        "With over 5 years in the software development industry, we've honed our skills and processes to deliver exceptional results.",
+        "More than five years refining how we plan, build and ship software — so your project benefits from proven process, not guesswork.",
       highlights: [
-        "Agile development methodologies",
-        "Modern tech stack expertise",
-        "Cross-functional team collaboration",
-        "Continuous learning and improvement",
+        "Agile delivery",
+        "Modern, maintainable stacks",
+        "Cross-functional collaboration",
+        "Continuous improvement",
       ],
       achievements: [
-        "Stayed current with industry trends",
-        "Multiple successful project lifecycles",
-        "Mentored junior developers",
+        "Current with industry practice",
+        "Many full product lifecycles",
+        "A team that mentors and grows",
       ],
     },
     {
       id: "team",
       title: "5+",
-      subtitle: "Team Members",
-      modalTitle: "Our Expert Team",
-      videoUrl:
-        "https://cdnl.iconscout.com/lottie/premium/thumb/business-team-animation-gif-download-7612966.mp4",
+      subtitle: "Specialists",
+      modalTitle: "Our Team",
       description:
-        "Our diverse team of skilled professionals brings together expertise from various domains to create comprehensive solutions.",
+        "A focused team of engineers, designers and analysts who bring complementary expertise to every engagement.",
       highlights: [
-        "Frontend and backend developers",
-        "UI/UX designers",
-        "Quality assurance engineers",
+        "Frontend and backend engineers",
+        "Product and UI/UX designers",
+        "Quality assurance",
         "Project managers and analysts",
       ],
       achievements: [
-        "Cross-disciplinary collaboration",
-        "Regular skill development sessions",
-        "Collaborative problem-solving approach",
+        "Cross-disciplinary by default",
+        "Continuous skill development",
+        "Collaborative problem-solving",
       ],
     },
   ];
@@ -106,274 +119,148 @@ const Hero = () => {
     <>
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20 md:pt-16"
+        className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24"
       >
-        {/* Video Background */}
-        <div className="absolute inset-0 w-full h-full z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source
-              src="https://cdnl.iconscout.com/lottie/premium/preview-watermark/business-team-generating-idea-animation-gif-download-5293511.mp4"
-              type="video/mp4"
-            />
-            Your browser does not support the video tag.
-          </video>
-          {/* Video overlay to dull out the video */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-900/85 to-slate-950/90" />
-        </div>
-
-        {/* Base gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 opacity-70" />
-
-        {/* Subtle grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03] z-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-
-        {/* Ambient glow effects */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Primary glow - top left */}
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-violet-600/30 rounded-full blur-3xl" />
-
-          {/* Secondary glow - right side */}
-          <div className="absolute top-1/4 -right-20 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl" />
-        </div>
-
-        {/* Gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-0" />
-
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-sm text-slate-300">
-                Crafting Digital Excellence
-              </span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-8 leading-tight text-white">
-              Transform Ideas Into
-              <span className="block mt-2 bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">
-                Digital Reality
-              </span>
-            </h1>
-
-            <p className="text-lg sm:text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              We are{" "}
-              <span className="font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">
-                Nesisoft
-              </span>{" "}
-              - a full-cycle software development company specializing in web,
-              mobile, and custom solutions that drive innovation across Africa
-              and beyond.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/contact">
-                <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-8 py-6 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25 group">
-                  Get Started
-                  <ArrowRight
-                    className="ml-2 group-hover:translate-x-1 transition-transform group-hover:text-purple-50"
-                    size={20}
-                  />
-                </Button>
-              </Link>
-
-              <a href="tel:+233553140807">
-                <Button
-                  variant="outline"
-                  className="border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 px-8 py-6 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105 backdrop-blur-sm hover:text-white group"
+        <div className="relative z-10 mx-auto w-full max-w-6xl text-center">
+          <h1 className="font-display text-3xl font-bold leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl sm:leading-[0.96] md:text-7xl">
+            We build software that moves
+            {/* All phrases occupy the same grid cell, so the line is always
+                sized to the tallest one — swapping them never shifts layout. */}
+            <span className="mt-1 grid">
+              {HEADLINE_PHRASES.map((p, i) => (
+                <span
+                  key={p}
+                  aria-hidden={i !== phrase}
+                  className={`col-start-1 row-start-1 text-violet-400 transition-opacity duration-500 ${
+                    i === phrase ? "opacity-100" : "opacity-0"
+                  }`}
                 >
-                  <Phone
-                    size={20}
-                    className="mr-2 transition-transform group-hover:scale-110 group-hover:text-purple-500"
-                  />
-                  Schedule Call
-                </Button>
-              </a>
-            </div>
-
-            {/* Stats - Now clickable */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20">
-              {stats.map((stat) => (
-                <button
-                  key={stat.id}
-                  onClick={() => setOpenModal(stat.id)}
-                  className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden"
-                >
-                  {/* Hover effect overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-indigo-500/0 to-purple-500/0 group-hover:from-violet-500/10 group-hover:via-indigo-500/10 group-hover:to-purple-500/10 transition-all duration-500" />
-
-                  {/* Stat content */}
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-white mb-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:via-fuchsia-400 group-hover:to-indigo-400 group-hover:bg-clip-text transition-all duration-300">
-                      {stat.title}
-                    </div>
-                    <div className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">
-                      {stat.subtitle}
-                    </div>
-
-                    {/* Click hint indicator - Animated fade-in on hover */}
-                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none scale-95 group-hover:scale-100 hidden sm:block">
-                      <div className="text-xs text-white font-medium px-4 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 border border-violet-400/40 backdrop-blur-xl shadow-lg shadow-violet-900/30 whitespace-nowrap">
-                        Click to learn more
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                  {p}
+                </span>
               ))}
-            </div>
-          </div>
-        </div>
+            </span>
+          </h1>
 
-        {/* Scroll indicator */}
-        <div className="absolute w-full flex items-center justify-center bottom-8 animate-bounce z-10">
-          <ChevronDown
-            className="w-8 h-8 text-purple-400 animate-pulse"
-            strokeWidth={2.5}
-          />
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
+            Nesisoft is a full-cycle development studio. We design and ship web,
+            mobile and custom software — and build our own platforms like Agoo,
+            Sua, Adesuapa and Jua.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link to="/contact">
+              <Button className="group rounded-lg bg-violet-600 px-6 py-6 text-base font-medium text-white transition-colors hover:bg-violet-500">
+                Start a project
+                <ArrowRight
+                  className="ml-2 transition-transform group-hover:translate-x-0.5"
+                  size={18}
+                />
+              </Button>
+            </Link>
+
+            <a href={siteConfig.contact.phonePrimary.href}>
+              <Button
+                variant="outline"
+                className="rounded-lg border-white/15 bg-transparent px-6 py-6 text-base font-medium text-white transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <Phone size={18} className="mr-2" />
+                Schedule a call
+              </Button>
+            </a>
+          </div>
+
+          {/* Animated conversation: lead → product ready for review */}
+          <div className="mt-14">
+            <HeroChat />
+          </div>
+
+          {/* Stats */}
+          <div className="mt-20 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/5 md:grid-cols-4">
+            {stats.map((stat) => (
+              <button
+                key={stat.id}
+                onClick={() => setOpenModal(stat.id)}
+                className="bg-slate-950/40 p-6 text-center transition-colors hover:bg-white/[0.04]"
+              >
+                <div className="text-3xl font-semibold text-white">
+                  {stat.title}
+                </div>
+                <div className="mt-1 text-sm text-slate-300">
+                  {stat.subtitle}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Modal for each stat */}
+      {/* Stat detail modals */}
       {stats.map((stat) => (
         <Dialog
           key={stat.id}
           open={openModal === stat.id}
           onOpenChange={(open) => setOpenModal(open ? stat.id : null)}
         >
-          <DialogContent className="max-w-[95vw] sm:max-w-lg md:max-w-2xl lg:max-w-4xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-lg md:rounded-2xl overflow-hidden mx-2 sm:mx-4">
-            {/* Close button */}
+          <DialogContent className="max-w-[95vw] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 sm:max-w-lg md:max-w-2xl">
             <button
               onClick={() => setOpenModal(null)}
-              className="absolute right-2 top-2 sm:right-4 sm:top-4 z-50 rounded-full p-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 backdrop-blur-sm transition-colors"
+              className="absolute right-4 top-4 z-50 rounded-full border border-white/10 bg-white/5 p-2 transition-colors hover:bg-white/10"
             >
-              <X className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
+              <X className="h-4 w-4 text-slate-300" />
             </button>
 
-            {/* Modal Header with gradient */}
-            <DialogHeader className="relative pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-indigo-500/10 to-purple-500/10" />
-              <div className="relative z-10">
-                <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">
-                  {stat.modalTitle}
-                </DialogTitle>
-                <DialogDescription className="text-slate-300 text-sm sm:text-base md:text-lg">
-                  Discover more about our achievements
-                </DialogDescription>
-              </div>
+            <DialogHeader className="px-6 pt-6">
+              <DialogTitle className="text-2xl font-semibold text-white">
+                {stat.modalTitle}
+              </DialogTitle>
+              <DialogDescription className="text-slate-300">
+                {stat.description}
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 p-4 sm:p-6">
-              {/* Left column: Video and main description */}
-              <div className="space-y-4 sm:space-y-6">
-                {/* Video container with overlay */}
-                <div className="relative rounded-lg md:rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
-                  <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-48 sm:h-56 md:h-64 object-cover"
-                  >
-                    <source src={stat.videoUrl} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  {/* Video overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/20 to-transparent" />
-                </div>
-
-                {/* Description */}
-                <div className="bg-slate-800/30 rounded-lg md:rounded-xl p-4 sm:p-5 border border-slate-700/30">
-                  <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                    {stat.description}
-                  </p>
-                </div>
+            <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-violet-400">
+                  What we do
+                </h3>
+                <ul className="space-y-2.5">
+                  {stat.highlights.map((highlight) => (
+                    <li
+                      key={highlight}
+                      className="flex items-start gap-3 text-sm text-slate-300"
+                    >
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-[999px] bg-violet-400/70" />
+                      {highlight}
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              {/* Right column: Highlights and achievements */}
-              <div className="space-y-4 sm:space-y-6">
-                {/* Highlights section */}
-                <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 rounded-lg md:rounded-xl p-4 sm:p-5 border border-violet-500/20">
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse flex-shrink-0" />
-                    Key Highlights
-                  </h3>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {stat.highlights.map((highlight, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 sm:gap-3"
-                      >
-                        <div className="mt-1 sm:mt-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-violet-400/70 flex-shrink-0" />
-                        <span className="text-slate-300 text-sm sm:text-base">
-                          {highlight}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Achievements section */}
-                <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-lg md:rounded-xl p-4 sm:p-5 border border-emerald-500/20">
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0" />
-                    Notable Achievements
-                  </h3>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {stat.achievements.map((achievement, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 sm:gap-3"
-                      >
-                        <div className="mt-1 sm:mt-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400/70 flex-shrink-0" />
-                        <span className="text-slate-300 text-sm sm:text-base">
-                          {achievement}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Call to action */}
-                <div className="text-center pt-2 sm:pt-4">
-                  <Link to="/contact">
-                    <Button
-                      onClick={() => setOpenModal(null)}
-                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 sm:py-6 rounded-lg md:rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-violet-500/25"
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-emerald-400">
+                  Track record
+                </h3>
+                <ul className="space-y-2.5">
+                  {stat.achievements.map((achievement) => (
+                    <li
+                      key={achievement}
+                      className="flex items-start gap-3 text-sm text-slate-300"
                     >
-                      Start Your Project
-                      <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    </Button>
-                  </Link>
-                </div>
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-[999px] bg-emerald-400/70" />
+                      {achievement}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
-            {/* Footer with gradient border */}
-            <div className="border-t border-slate-700/50 pt-3 sm:pt-4 px-4 sm:px-6 pb-4 sm:pb-6 mt-2 sm:mt-4">
-              <div className="text-center">
-                <p className="text-slate-400 text-xs sm:text-sm">
-                  Ready to discuss how we can help with your next project?
-                </p>
-                <a
-                  href="tel:+233553140807"
-                  className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 transition-colors mt-1 sm:mt-2 font-medium text-sm sm:text-base"
-                >
-                  <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>+233 553 140 807</span>
-                </a>
-              </div>
+            <div className="border-t border-white/10 px-6 py-5">
+              <Link to="/contact" onClick={() => setOpenModal(null)}>
+                <Button className="w-full rounded-lg bg-violet-600 py-5 font-medium text-white hover:bg-violet-500">
+                  Start your project
+                  <ArrowRight className="ml-2" size={18} />
+                </Button>
+              </Link>
             </div>
           </DialogContent>
         </Dialog>

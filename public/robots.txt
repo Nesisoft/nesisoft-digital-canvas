@@ -12,3 +12,8 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://nesisoft.com/sitemap.xml
+
+# Block Studio (dev-only tool) from any accidental crawl.
+Disallow: /studio

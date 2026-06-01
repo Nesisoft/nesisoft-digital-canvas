@@ -1,1 +1,14 @@
 /// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  /** Web3Forms access key — enables real contact-form delivery. */
+  readonly VITE_WEB3FORMS_ACCESS_KEY?: string;
+  /** Plausible analytics domain — enables privacy-friendly analytics. */
+  readonly VITE_PLAUSIBLE_DOMAIN?: string;
+  /** Groq API key — DEV ONLY, powers the Blog Studio. Never deploy with this set. */
+  readonly VITE_GROQ_API_KEY?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
