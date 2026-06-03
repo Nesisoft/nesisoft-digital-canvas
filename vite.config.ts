@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/groq-api/, ""),
       },
+      // Dev-only proxy to the Express backend (see server/). Lets the app call
+      // "/api/..." same-origin so VITE_API_URL can stay empty in development.
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
   plugins: [

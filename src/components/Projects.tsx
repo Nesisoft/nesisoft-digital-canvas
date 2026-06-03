@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Section, SectionHeading } from "@/components/ui/section";
-import {
-  clientProjects,
-  internalProjects,
-  type Project,
-} from "@/data/projects";
+import { useProjects } from "@/hooks/useProjects";
+import type { Project } from "@/data/projects";
 
 const Projects = () => {
+  const projects = useProjects();
+  const internalProjects = projects.filter((p) => p.type === "Internal platform");
+  const clientProjects = projects.filter((p) => p.type === "Client work");
+
   const ProjectCard = ({ project }: { project: Project }) => {
     const inner = (
       <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-colors hover:border-violet-500/30 hover:bg-white/[0.05]">

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, Clock, Layers3, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,7 +8,8 @@ import { Seo, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
-import { getProject, projects } from "@/data/projects";
+import { fetchProject } from "@/lib/api";
+import { useProjects } from "@/hooks/useProjects";
 
 const statusClass = {
   Completed: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
@@ -17,11 +19,36 @@ const statusClass = {
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
-  const project = getProject(projectId);
+  const { data: project, isLoading } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: () => fetchProject(projectId!),
+    enabled: !!projectId,
+    retry: false,
+  });
+  const allProjects = useProjects();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [projectId]);
+
+  if (isLoading) {
+    return (
+      <>
+        <Seo title="Loading…" noindex />
+        <PageShell>
+          <Navbar />
+          <PageHeader
+            backTo="/#projects"
+            backLabel="Back to projects"
+            eyebrow="Project"
+            title="Loading project…"
+            description="Fetching the latest case study."
+          />
+          <Footer />
+        </PageShell>
+      </>
+    );
+  }
 
   if (!project) {
     return (
@@ -55,7 +82,7 @@ const ProjectDetails = () => {
     );
   }
 
-  const relatedProjects = projects.filter((item) => item.slug !== project.slug);
+  const relatedProjects = allProjects.filter((item) => item.slug !== project.slug);
 
   return (
     <>

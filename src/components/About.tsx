@@ -1,50 +1,39 @@
 import { CheckCircle2 } from "lucide-react";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const About = () => {
-  const stats = [
-    { number: "10+", label: "Projects delivered" },
-    { number: "5+", label: "Clients served" },
-    { number: "5+", label: "Years building" },
-    { number: "2+", label: "Countries served" },
-  ];
-
-  const benefits = [
-    "Full-cycle development, from concept to deployment",
-    "A senior team with a proven track record",
-    "Deep understanding of African markets",
-    "Practical solutions to real-world problems",
-  ];
+  const { about } = useSiteContent();
+  const stats = about.stats;
+  const benefits = about.benefits;
+  // Mission copy is stored as paragraphs separated by blank lines.
+  const missionParagraphs = about.missionBody
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   return (
     <Section id="about">
       <SectionHeading
-        eyebrow="About"
-        title="A studio built for Africa's digital growth"
-        description="We turn ideas into practical software — tailored to how businesses across Africa actually operate, and built to last."
+        eyebrow={about.eyebrow}
+        title={about.title}
+        description={about.description}
       />
 
       <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Mission */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-10">
-          <h3 className="mb-6 text-xl font-semibold text-white">Our mission</h3>
+          <h3 className="mb-6 text-xl font-semibold text-white">{about.missionTitle}</h3>
           <div className="space-y-4 text-slate-300 leading-relaxed">
-            <p>
-              We help clients innovate, grow and thrive in the digital economy.
-              Beyond delivering software, we create jobs, widen digital
-              inclusion and build lasting economic value on the continent.
-            </p>
-            <p>
-              Through ventures like Agoo, Sua, Adesuapa and Jua, we build
-              scalable platforms that solve regional problems — alongside our
-              client work.
-            </p>
+            {missionParagraphs.map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
           </div>
         </div>
 
         {/* Why choose us */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-10">
-          <h3 className="mb-6 text-xl font-semibold text-white">Why work with us</h3>
+          <h3 className="mb-6 text-xl font-semibold text-white">{about.whyTitle}</h3>
           <ul className="space-y-4">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-start gap-3">

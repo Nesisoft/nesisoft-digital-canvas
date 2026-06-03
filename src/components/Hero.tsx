@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { siteConfig } from "@/config/site";
 import { HeroChat } from "@/components/HeroChat";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 // Cycled in the headline. Kept short and similar in length to limit reflow.
 const HEADLINE_PHRASES = [
@@ -21,6 +22,7 @@ const HEADLINE_PHRASES = [
 ];
 
 const Hero = () => {
+  const content = useSiteContent();
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [phrase, setPhrase] = useState(0);
 
@@ -123,7 +125,7 @@ const Hero = () => {
       >
         <div className="relative z-10 mx-auto w-full max-w-6xl text-center">
           <h1 className="font-display text-3xl font-bold leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl sm:leading-[0.96] md:text-7xl">
-            We build software that moves
+            {content.hero.titleLead}
             {/* All phrases occupy the same grid cell, so the line is always
                 sized to the tallest one — swapping them never shifts layout. */}
             <span className="mt-1 grid">
@@ -142,9 +144,7 @@ const Hero = () => {
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
-            Nesisoft is a full-cycle development studio. We design and ship web,
-            mobile and custom software — and build our own platforms like Agoo,
-            Sua, Adesuapa and Jua.
+            {content.hero.subtitle}
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
