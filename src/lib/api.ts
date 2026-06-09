@@ -1,14 +1,13 @@
 /**
- * Client for the Express + MongoDB backend (see `server/`). Blog posts and the
+ * Client for the same-origin Express + MongoDB API. Blog posts and the
  * team are now managed in the /admin panel and served live from this API.
  *
- * Base URL: empty in dev (Vite proxies "/api" to the server — see vite.config),
- * set via VITE_API_URL for production where the API lives on another origin.
+ * Base URL is normally empty: /api is same-origin in dev and production.
  */
 
 import type { Project } from "@/data/projects";
 
-export const API_BASE = import.meta.env.VITE_API_URL ?? "";
+export const API_BASE = "";
 
 export type { Project };
 

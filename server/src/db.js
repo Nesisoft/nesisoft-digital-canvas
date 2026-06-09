@@ -13,10 +13,16 @@ export async function connectDB() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
     mongoose.set("strictQuery", true);
-    cached.promise = mongoose.connect(MONGODB_URI).then((m) => {
-      console.log("[db] connected");
-      return m.connection;
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 })
+      .then((m) => {
+        console.log("[db] connected");
+        return m.connection;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        throw err;
+      });
   }
   cached.conn = await cached.promise;
   return cached.conn;

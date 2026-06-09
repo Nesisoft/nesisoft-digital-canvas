@@ -1,8 +1,7 @@
 /**
- * Authenticated client for the admin API (see `server/`). Runs from the public
+ * Authenticated client for the same-origin admin API. Runs from the public
  * site at /admin. Every request sends credentials so the session cookie rides
- * along — works first-party (when /api is proxied through this origin) and
- * cross-site (cookie set SameSite=None on the server in production).
+ * along as a first-party cookie.
  */
 
 import { API_BASE, type SiteContent, type Project } from "./api";

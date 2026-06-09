@@ -4,9 +4,9 @@ The marketing and content website for **Nesisoft**, a full-cycle software
 development company building custom web, mobile, desktop, and IoT applications,
 along with internal platforms like Agoo, Sua, Adesuapa, and Jua.
 
-A single-page React application with code-split routes for services, projects,
-a Markdown-driven blog, and a contact page — plus a developer-only AI Blog
-Studio for drafting posts.
+A monolith application with a React frontend and an Express + MongoDB API served
+from the same domain. Public pages, `/admin`, and `/api/...` all deploy as one
+Vercel project under `nesisoft.com`.
 
 ## Tech stack
 
@@ -16,6 +16,9 @@ Studio for drafting posts.
 - **TanStack Query** for data/state
 - **react-hook-form** + **zod** for forms and validation
 - **react-markdown** + **remark-gfm** for blog rendering
+- **Express** + **MongoDB / Mongoose** for live blog, project, team, image, and
+  editable site content APIs
+- **express-session** + **connect-mongo** for admin sessions
 
 ## Getting started
 
@@ -25,7 +28,7 @@ The only requirement is Node.js & npm (or [bun](https://bun.sh)).
 # Install dependencies
 npm install
 
-# Start the dev server (http://localhost:8080)
+# Start the frontend and API together
 npm run dev
 ```
 
@@ -35,6 +38,8 @@ Other scripts:
 npm run build       # Production build → dist/
 npm run build:dev   # Development-mode build
 npm run preview     # Preview the production build locally
+npm start           # Serve dist/ + API from Express after a build
+npm run seed        # Seed MongoDB content
 npm run lint        # ESLint
 ```
 
@@ -48,6 +53,10 @@ client-exposed variables must be prefixed with `VITE_`.
 | `VITE_WEB3FORMS_ACCESS_KEY` | Contact-form delivery via [Web3Forms](https://web3forms.com). Without it, the form falls back to opening the visitor's mail client. |
 | `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
+| `MONGODB_URI` | MongoDB connection string for the API. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. |
+| `SESSION_SECRET` | Session signing secret. |
+| `CORS_ORIGIN` | Optional comma-separated origins allowed to call the API during local development. |
 
 ## Project structure
 
@@ -61,6 +70,13 @@ src/
   data/           services.ts, projects.ts — structured content
   config/site.ts  Single source of truth for brand/contact data
   lib/            blog.ts, groq.ts, analytics.ts, utils.ts
+api/
+  index.js        Vercel Express function for /api
+  [...path].js    Vercel catch-all for /api/*
+server/src/
+  app.js          Express app used by Vercel and local start
+  routes/         Public and admin API routes
+  models/         Mongoose models
 scripts/
   seo-plugin.ts   Build-time sitemap.xml + rss.xml generation
 ```
@@ -81,8 +97,19 @@ route and key are only mounted during `npm run dev` and never reach a
 production bundle. Workflow: run the dev server, draft a post, download the
 generated `.md`, commit it, then deploy the static content — never the key.
 
+## API and admin
+
+The browser always calls relative `/api/...` URLs. In development, Vite proxies
+those calls to the local Express process. In production, Vercel routes `/api`
+and `/api/*` to the root `api/` functions in this same project, so the admin
+session cookie is first-party on `nesisoft.com`.
+
+The admin panel lives at `/admin` and supports CRUD for posts, projects, team
+members, uploaded images, and editable homepage content.
+
 ## Deployment
 
-The site is a static SPA deployed on **Vercel** (see `vercel.json`, which
-rewrites all non-asset routes to `index.html` and sets long-lived caching for
-hashed assets). Build with `npm run build` and serve `dist/`.
+Deploy the repository root as one **Vercel** project. Set the server-only
+environment variables in Vercel project settings, then build with
+`npm run build`. `vercel.json` sends non-asset frontend routes to `index.html`
+while Vercel handles `/api/...` with the Express functions in `api/`.

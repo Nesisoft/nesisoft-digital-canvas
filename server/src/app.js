@@ -2,12 +2,16 @@ import express from "express";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { connectDB, MONGODB_URI } from "./db.js";
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
 
 const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distDir = path.resolve(__dirname, "../../dist");
 
 export function createApp() {
   const app = express();
@@ -37,26 +41,36 @@ export function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
 
-  app.use(
-    session({
-      name: "nesisoft.sid",
-      secret: process.env.SESSION_SECRET || "dev-insecure-session-secret",
-      resave: false,
-      saveUninitialized: false,
-      // Persist sessions in MongoDB so logins survive across serverless
-      // invocations (a plain MemoryStore would not).
-      store: MongoStore.create({ mongoUrl: MONGODB_URI }),
-      cookie: {
-        httpOnly: true,
-        // The admin UI lives on the public site (nesisoft.com/admin). When the
-        // API is reached cross-site, "none" + Secure is required for the cookie
-        // to be sent; first-party (proxied /api) works the same. Dev stays lax.
-        sameSite: isProd ? "none" : "lax",
-        secure: isProd,
-        maxAge: 1000 * 60 * 60 * 8, // 8 hours
-      },
-    }),
-  );
+  const sessionOptions = {
+    name: "nesisoft.sid",
+    secret: process.env.SESSION_SECRET || "dev-insecure-session-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      // The admin UI and API are served from one origin in the monolith, so a
+      // first-party lax cookie is enough for the dashboard session.
+      sameSite: "lax",
+      secure: isProd,
+      maxAge: 1000 * 60 * 60 * 8, // 8 hours
+    },
+  };
+
+  if (isProd) {
+    // Persist sessions in MongoDB so logins survive across serverless
+    // invocations. Local dev uses MemoryStore to avoid a second Mongo client
+    // crashing the API when Atlas is unavailable.
+    const store = MongoStore.create({ mongoUrl: MONGODB_URI });
+    store.on("error", (err) => {
+      console.error("[session]", err.message);
+    });
+    sessionOptions.store = store;
+  }
+
+  app.use(session(sessionOptions));
+
+  app.get("/health", (_req, res) => res.json({ ok: true }));
+  app.get("/", (_req, res) => res.json({ ok: true, status: "green" }));
 
   // Ensure a live DB connection before handling any data route (serverless
   // functions start cold). Cached, so this is a no-op once connected.
@@ -65,17 +79,22 @@ export function createApp() {
       await connectDB();
       next();
     } catch (err) {
+      err.status = 503;
       next(err);
     }
   });
-
-  app.get("/health", (_req, res) => res.json({ ok: true }));
-  app.get("/", (_req, res) => res.json({ ok: true, status: "green" }));
 
   // Pure JSON API. The admin UI is a route in the public site
   // (nesisoft.com/admin) and talks to these endpoints.
   app.use("/api", publicRoutes);
   app.use("/api/admin", adminRoutes);
+
+  if (isProd && !process.env.VERCEL) {
+    app.use(express.static(distDir));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(distDir, "index.html"));
+    });
+  }
 
   // JSON error handler (keeps CORS/multer errors from leaking HTML stacks).
   app.use((err, _req, res, _next) => {
