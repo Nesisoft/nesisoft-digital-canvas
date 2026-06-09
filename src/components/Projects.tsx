@@ -1,14 +1,21 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Section, SectionHeading } from "@/components/ui/section";
-import {
-  clientProjects,
-  internalProjects,
-  type Project,
-} from "@/data/projects";
+import { useProjects } from "@/hooks/useProjects";
+import type { Project } from "@/data/projects";
 
 const Projects = () => {
-  const ProjectCard = ({ project }: { project: Project }) => {
+  const projects = useProjects();
+  const internalProjects = projects.filter((p) => p.type === "Internal platform");
+  const clientProjects = projects.filter((p) => p.type === "Client work");
+
+  const ProjectCard = ({
+    project,
+    className = "",
+  }: {
+    project: Project;
+    className?: string;
+  }) => {
     const inner = (
       <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-colors hover:border-violet-500/30 hover:bg-white/[0.05]">
         <div className="relative aspect-[16/10] overflow-hidden">
@@ -37,7 +44,11 @@ const Projects = () => {
       </div>
     );
 
-    return <Link to={`/projects/${project.slug}`}>{inner}</Link>;
+    return (
+      <Link to={`/projects/${project.slug}`} className={className}>
+        {inner}
+      </Link>
+    );
   };
 
   return (
@@ -63,9 +74,13 @@ const Projects = () => {
         <h3 className="mb-6 text-sm font-medium uppercase tracking-wider text-slate-400">
           Client work
         </h3>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="-mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
           {clientProjects.map((project) => (
-            <ProjectCard key={project.name} project={project} />
+            <ProjectCard
+              key={project.name}
+              project={project}
+              className="shrink-0 basis-[82%] snap-start rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080a0f] sm:basis-[55%] md:basis-auto md:shrink"
+            />
           ))}
         </div>
       </div>

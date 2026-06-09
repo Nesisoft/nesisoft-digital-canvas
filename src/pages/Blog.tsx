@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Calendar, FileText, Search, User } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -8,7 +9,7 @@ import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
-import { getAllPosts, getCategories } from "@/lib/blog";
+import { fetchPosts, resolveImage } from "@/lib/api";
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -19,8 +20,14 @@ const Blog = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, []);
 
-  const blogPosts = getAllPosts();
-  const categories = getCategories();
+  const { data: blogPosts = [], isLoading } = useQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+  });
+  const categories = [
+    "All",
+    ...Array.from(new Set(blogPosts.map((p) => p.category))),
+  ];
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredPosts = blogPosts.filter((post) => {
@@ -91,7 +98,13 @@ const Blog = () => {
         </Section>
 
         <Section className="pt-0">
-          {filteredPosts.length > 0 ? (
+          {isLoading ? (
+            <EmptyState
+              title="Loading articles…"
+              description="Fetching the latest posts."
+              icon={<FileText className="h-5 w-5" />}
+            />
+          ) : filteredPosts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredPosts.map((post) => (
                 <Link
@@ -102,7 +115,7 @@ const Blog = () => {
                   {post.image && (
                     <div className="relative aspect-[16/10] overflow-hidden">
                       <img
-                        src={post.image}
+                        src={resolveImage(post.image)}
                         alt={post.title}
                         loading="lazy"
                         className="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"

@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
-import { clientProjects, internalProjects } from "@/data/projects";
+import { useProjects } from "@/hooks/useProjects";
 
 const sectionLinks = [
   { label: "Studio", href: "#about", description: "Who we are and how we work" },
+  { label: "Team", href: "/team", description: "The people behind the work" },
   { label: "Contact", href: "/contact", description: "Send a project brief" },
 ];
 
@@ -80,6 +81,9 @@ const Navbar = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const { goTo } = useSiteNavigation();
   const location = useLocation();
+  const projects = useProjects();
+  const internalProjects = projects.filter((p) => p.type === "Internal platform");
+  const clientProjects = projects.filter((p) => p.type === "Client work");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -304,6 +308,16 @@ const Navbar = () => {
                 </button>
               );
             })}
+
+            <button
+              onClick={() => handleNav("/team")}
+              className="group flex h-10 items-center gap-2.5 rounded-lg text-lg font-semibold text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            >
+              <span className="font-mono text-xs tracking-[0.12em] text-violet-300/80 group-hover:text-violet-200">
+                {String(navGroups.length + 2).padStart(2, "0")}
+              </span>
+              Team
+            </button>
           </div>
 
           {openGroup && (

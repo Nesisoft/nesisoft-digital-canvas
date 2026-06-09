@@ -193,6 +193,146 @@ export const projects: Project[] = [
     result:
       "A completed mobile product with a stronger security posture and a smoother customer experience.",
   },
+  {
+    slug: "retail-ecommerce",
+    name: "Retail E-Commerce Platform",
+    category: "E-commerce",
+    type: "Client work",
+    description:
+      "A multi-store online shop with local payment options and reliable order fulfilment.",
+    fullDescription:
+      "A retail client needed to sell online without the checkout drop-off and delivery confusion that hurts conversion locally. We built a fast storefront, integrated local payment gateways, and gave the team clear tools to manage stock and orders.",
+    image:
+      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&h=800&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=900&h=700&fit=crop",
+    ],
+    technologies: ["Next.js", "Node.js", "PostgreSQL", "Paystack"],
+    features: [
+      "Fast, mobile-first storefront",
+      "Local payment gateways",
+      "Inventory and stock control",
+      "Order and fulfilment tracking",
+      "Discounts and promotions",
+      "Sales and product reporting",
+    ],
+    timeline: "9 months",
+    teamSize: "7 specialists",
+    status: "Completed",
+    challenge:
+      "Customers were abandoning checkout because payment and delivery felt uncertain, and the team had no single view of stock or orders.",
+    solution:
+      "We streamlined checkout around trusted local payment methods, made delivery status visible, and built an operations dashboard for inventory and orders.",
+    result:
+      "A launched storefront with fewer abandoned carts and a back office the team can run day to day.",
+  },
+  {
+    slug: "hospital-management",
+    name: "Hospital Management System",
+    category: "Healthcare",
+    type: "Client work",
+    description:
+      "A clinic and hospital system covering patient records, appointments, and billing.",
+    fullDescription:
+      "A healthcare provider was running on paper and disconnected spreadsheets. We delivered a secure system that ties patient records, scheduling, and billing together so staff spend less time on admin and more time with patients.",
+    image:
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=900&h=700&fit=crop",
+    ],
+    technologies: ["React", "Django", "PostgreSQL", "Redis"],
+    features: [
+      "Electronic patient records",
+      "Appointment scheduling",
+      "Billing and invoicing",
+      "Pharmacy and inventory",
+      "Role-based staff access",
+      "Reporting for management",
+    ],
+    timeline: "11 months",
+    teamSize: "8 specialists",
+    status: "Completed",
+    challenge:
+      "Records were scattered across paper and spreadsheets, making patient history slow to find and billing error-prone.",
+    solution:
+      "We centralised records with strict role-based access, connected scheduling to billing, and kept the interface simple enough for busy staff.",
+    result:
+      "A deployed system that cut administrative time and gave management a clear view of operations.",
+  },
+  {
+    slug: "logistics-fleet",
+    name: "Logistics & Fleet Dashboard",
+    category: "Logistics",
+    type: "Client work",
+    description:
+      "A delivery and fleet platform with live tracking, route assignment, and proof of delivery.",
+    fullDescription:
+      "A logistics client needed visibility over a growing fleet and a way to coordinate deliveries without endless phone calls. We built dispatch tools, live tracking, and driver and customer apps that keep everyone informed.",
+    image:
+      "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=1200&h=800&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=900&h=700&fit=crop",
+    ],
+    technologies: ["React", "React Native", "Node.js", "PostgreSQL", "Mapbox"],
+    features: [
+      "Live vehicle tracking",
+      "Dispatch and route assignment",
+      "Driver mobile app",
+      "Proof of delivery capture",
+      "Customer delivery updates",
+      "Fleet performance reporting",
+    ],
+    timeline: "8 months",
+    teamSize: "6 specialists",
+    status: "Completed",
+    challenge:
+      "Dispatch ran on phone calls and guesswork, so the team could not see where vehicles were or confirm deliveries reliably.",
+    solution:
+      "We added live tracking and structured dispatch, plus a driver app for status and proof of delivery and automatic updates for customers.",
+    result:
+      "A platform that gave the operations team real-time visibility and reduced missed and disputed deliveries.",
+  },
+  {
+    slug: "agritech-marketplace",
+    name: "Agritech Marketplace",
+    category: "Agriculture",
+    type: "Client work",
+    description:
+      "A marketplace linking farmers directly to buyers, with pricing and logistics support.",
+    fullDescription:
+      "An agribusiness client wanted to shorten the chain between farmers and buyers. We built a marketplace that lists produce, supports negotiated and fixed pricing, and coordinates pickup and payment so smallholders get a fairer deal.",
+    image:
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=800&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&h=700&fit=crop",
+    ],
+    technologies: ["React", "Node.js", "MongoDB", "Mobile Money"],
+    features: [
+      "Produce listings and grading",
+      "Buyer and farmer accounts",
+      "Negotiated and fixed pricing",
+      "Mobile money payments",
+      "Pickup and logistics coordination",
+      "Market price insights",
+    ],
+    timeline: "7 months",
+    teamSize: "5 specialists",
+    status: "Completed",
+    challenge:
+      "Farmers had little price transparency and depended on intermediaries, while buyers struggled to source consistent supply.",
+    solution:
+      "We built direct listings with clear pricing, mobile money payments, and logistics coordination that work for users with limited connectivity.",
+    result:
+      "A working marketplace that connects farmers and buyers directly and makes pricing more transparent.",
+  },
 ];
 
 export function getProject(slug: string | undefined) {

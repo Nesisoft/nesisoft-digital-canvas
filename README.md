@@ -1,73 +1,115 @@
-# Welcome to your Lovable project
+# Nesisoft — Digital Solutions for Africa
 
-## Project info
+The marketing and content website for **Nesisoft**, a full-cycle software
+development company building custom web, mobile, desktop, and IoT applications,
+along with internal platforms like Agoo, Sua, Adesuapa, and Jua.
 
-**URL**: https://lovable.dev/projects/07e4a259-d5f3-4de1-ad6c-569718dca6a7
+A monolith application with a React frontend and an Express + MongoDB API served
+from the same domain. Public pages, `/admin`, and `/api/...` all deploy as one
+Vercel project under `nesisoft.com`.
 
-## How can I edit this code?
+## Tech stack
 
-There are several ways of editing your application.
+- **Vite** + **React 18** + **TypeScript**
+- **Tailwind CSS** with **shadcn/ui** (Radix primitives)
+- **React Router** for client-side routing
+- **TanStack Query** for data/state
+- **react-hook-form** + **zod** for forms and validation
+- **react-markdown** + **remark-gfm** for blog rendering
+- **Express** + **MongoDB / Mongoose** for live blog, project, team, image, and
+  editable site content APIs
+- **express-session** + **connect-mongo** for admin sessions
 
-**Use Lovable**
+## Getting started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/07e4a259-d5f3-4de1-ad6c-569718dca6a7) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+The only requirement is Node.js & npm (or [bun](https://bun.sh)).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the frontend and API together
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Other scripts:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm run build       # Production build → dist/
+npm run build:dev   # Development-mode build
+npm run preview     # Preview the production build locally
+npm start           # Serve dist/ + API from Express after a build
+npm run seed        # Seed MongoDB content
+npm run lint        # ESLint
+```
 
-**Use GitHub Codespaces**
+## Configuration
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Copy `.env.example` to `.env.local` and fill in the values you need. All
+client-exposed variables must be prefixed with `VITE_`.
 
-## What technologies are used for this project?
+| Variable | Purpose |
+| --- | --- |
+| `VITE_WEB3FORMS_ACCESS_KEY` | Contact-form delivery via [Web3Forms](https://web3forms.com). Without it, the form falls back to opening the visitor's mail client. |
+| `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
+| `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
+| `MONGODB_URI` | MongoDB connection string for the API. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. |
+| `SESSION_SECRET` | Session signing secret. |
+| `CORS_ORIGIN` | Optional comma-separated origins allowed to call the API during local development. |
 
-This project is built with:
+## Project structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+  pages/          Route components (Index, Blog, BlogDetails,
+                  ServiceDetails, ProjectDetails, Contact, BlogStudio)
+  components/     Hero, Services, Projects, Contact, Navbar, Footer, …
+    ui/           shadcn/ui primitives
+  content/blog/   Markdown blog posts (one .md file per post)
+  data/           services.ts, projects.ts — structured content
+  config/site.ts  Single source of truth for brand/contact data
+  lib/            blog.ts, groq.ts, analytics.ts, utils.ts
+api/
+  index.js        Vercel Express function for /api
+  [...path].js    Vercel catch-all for /api/*
+server/src/
+  app.js          Express app used by Vercel and local start
+  routes/         Public and admin API routes
+  models/         Mongoose models
+scripts/
+  seo-plugin.ts   Build-time sitemap.xml + rss.xml generation
+```
 
-## How can I deploy this project?
+### Editing content
 
-Simply open [Lovable](https://lovable.dev/projects/07e4a259-d5f3-4de1-ad6c-569718dca6a7) and click on Share -> Publish.
+- **Brand, contact, and SEO defaults** live in `src/config/site.ts` — change
+  them in one place rather than hardcoding anywhere.
+- **Services** and **projects** are data-driven from `src/data/`.
+- **Blog posts** are Markdown files in `src/content/blog/`. The build's SEO
+  plugin reads these (plus services and projects) to regenerate
+  `sitemap.xml` and `rss.xml` automatically, so the feeds never drift.
 
-## Can I connect a custom domain to my Lovable project?
+### AI Blog Studio (`/studio`)
 
-Yes, you can!
+A developer-only authoring tool that drafts blog posts with the Groq API. The
+route and key are only mounted during `npm run dev` and never reach a
+production bundle. Workflow: run the dev server, draft a post, download the
+generated `.md`, commit it, then deploy the static content — never the key.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## API and admin
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The browser always calls relative `/api/...` URLs. In development, Vite proxies
+those calls to the local Express process. In production, Vercel routes `/api`
+and `/api/*` to the root `api/` functions in this same project, so the admin
+session cookie is first-party on `nesisoft.com`.
+
+The admin panel lives at `/admin` and supports CRUD for posts, projects, team
+members, uploaded images, and editable homepage content.
+
+## Deployment
+
+Deploy the repository root as one **Vercel** project. Set the server-only
+environment variables in Vercel project settings, then build with
+`npm run build`. `vercel.json` sends non-asset frontend routes to `index.html`
+while Vercel handles `/api/...` with the Express functions in `api/`.

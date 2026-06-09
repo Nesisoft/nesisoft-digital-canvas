@@ -32,6 +32,7 @@ export function seoPlugin(siteUrl: string): Plugin {
       // ---- sitemap.xml ----
       const urls: Array<{ loc: string; lastmod?: string; priority: string; changefreq: string }> = [
         { loc: "/", priority: "1.0", changefreq: "weekly" },
+        { loc: "/team", priority: "0.7", changefreq: "monthly" },
         { loc: "/contact", priority: "0.8", changefreq: "monthly" },
         { loc: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
         ...serviceSlugs.map((slug) => ({

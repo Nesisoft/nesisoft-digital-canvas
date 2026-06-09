@@ -11,10 +11,12 @@ import Index from "./pages/Index";
 // Secondary routes are code-split so the landing page (the primary entry
 // point) ships without their bundles. Index stays eager for a flash-free LCP.
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
+const Team = lazy(() => import("./pages/Team"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // AI Blog Studio — authoring tool, only mounted during local development so
@@ -23,7 +25,19 @@ const BlogStudio = import.meta.env.DEV
   ? lazy(() => import("./pages/BlogStudio"))
   : null;
 
-const queryClient = new QueryClient();
+// Cache fetched content so navigating between pages doesn't refetch on every
+// mount. Data stays "fresh" for 5 min and is served from cache meanwhile;
+// admin edits call invalidateQueries to refresh immediately.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <ErrorBoundary>
@@ -36,10 +50,12 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/services/:serviceId" element={<ServiceDetails />} />
+              <Route path="/team" element={<Team />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:postId" element={<BlogDetails />} />
               <Route path="/projects/:projectId" element={<ProjectDetails />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/admin" element={<Admin />} />
               {BlogStudio && (
                 <Route path="/studio" element={<BlogStudio />} />
               )}

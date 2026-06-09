@@ -45,6 +45,78 @@ const scenarios: Scenario[] = [
     image:
       "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=480&h=240&fit=crop",
   },
+  {
+    lead: "Our clinic needs online appointments and patient records in one place.",
+    reply:
+      "We can build that. We'll map the patient journey and secure the data layer first.",
+    product: "Clinic portal",
+    image:
+      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "We run retail branches and need inventory, sales, and staff reports.",
+    reply:
+      "Yes. We'll centralize stock, connect branch sales, and make the reports scan fast.",
+    product: "Retail operations system",
+    image:
+      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "Can you help our farm cooperative track harvests and buyer payments?",
+    reply:
+      "Definitely. We'll design simple field capture and dashboards for managers.",
+    product: "Agri cooperative platform",
+    image:
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "Our school wants admissions, fees, grades, and parent updates online.",
+    reply:
+      "We can ship it in phases: admissions first, then finance, academics, and messaging.",
+    product: "School management portal",
+    image:
+      "https://images.unsplash.com/photo-1588072432836-e10032774350?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "We need a booking app for rides with driver tracking and payments.",
+    reply:
+      "Yes. We'll model dispatch, driver availability, fares, and a clean rider flow.",
+    product: "Ride booking app",
+    image:
+      "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "Our NGO needs to register field work and prove impact to donors.",
+    reply:
+      "We can help. We'll build offline-friendly forms and impact dashboards.",
+    product: "Impact reporting platform",
+    image:
+      "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "We sell online and need a faster store with mobile money checkout.",
+    reply:
+      "Absolutely. We'll optimize the storefront and keep checkout simple on mobile.",
+    product: "Commerce storefront",
+    image:
+      "https://images.unsplash.com/photo-1557821552-17105176677c?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "Our team is buried in spreadsheets. Can you turn it into one tool?",
+    reply:
+      "Yes. We'll audit the workflow, remove duplicate entry, and build the internal app.",
+    product: "Internal workflow tool",
+    image:
+      "https://images.unsplash.com/photo-1551434678-e076c223a692?w=480&h=240&fit=crop",
+  },
+  {
+    lead: "We want sensors and a dashboard for equipment performance.",
+    reply:
+      "We can do it. We'll define the device data, alerts, and operational views.",
+    product: "IoT monitoring dashboard",
+    image:
+      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=480&h=240&fit=crop",
+  },
 ];
 
 interface Message {

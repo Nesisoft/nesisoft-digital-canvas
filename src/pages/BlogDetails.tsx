@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Calendar, Clock, MessageSquare, Send, User } from "lucide-react";
@@ -11,11 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
-import { getPostBySlug } from "@/lib/blog";
+import { fetchPost, resolveImage } from "@/lib/api";
 
 const BlogDetails = () => {
   const { postId } = useParams();
-  const blogPost = getPostBySlug(postId);
+  const { data: blogPost, isLoading } = useQuery({
+    queryKey: ["post", postId],
+    queryFn: () => fetchPost(postId!),
+    enabled: !!postId,
+    retry: false,
+  });
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentData, setCommentData] = useState({ fullName: "", comment: "" });
   const [comments, setComments] = useState([
@@ -54,6 +60,25 @@ const BlogDetails = () => {
     setCommentData({ fullName: "", comment: "" });
     setShowCommentForm(false);
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <Seo title="Loading…" noindex />
+        <PageShell>
+          <Navbar />
+          <PageHeader
+            backTo="/blog"
+            backLabel="Back to blog"
+            eyebrow="Article"
+            title="Loading article…"
+            description="Fetching the latest version of this post."
+          />
+          <Footer />
+        </PageShell>
+      </>
+    );
+  }
 
   if (!blogPost) {
     return (
@@ -138,7 +163,7 @@ const BlogDetails = () => {
           <Section className="pt-0">
             <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
               <img
-                src={blogPost.image}
+                src={resolveImage(blogPost.image)}
                 alt={blogPost.title}
                 className="h-[22rem] w-full object-cover opacity-90 md:h-[34rem]"
               />

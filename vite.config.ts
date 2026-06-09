@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    strictPort: true,
     proxy: {
       // Dev-only proxy for the Blog Studio's Groq calls. Keeps requests
       // same-origin (no browser CORS) — the studio sends "/groq-api/...".
@@ -18,6 +19,12 @@ export default defineConfig(({ mode }) => ({
         target: "https://api.groq.com",
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/groq-api/, ""),
+      },
+      // Dev-only proxy to the monolith API process. Lets the app call
+      // "/api/..." same-origin in local development too.
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
       },
     },
   },
