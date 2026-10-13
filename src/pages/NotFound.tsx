@@ -24,11 +24,11 @@ const NotFound = () => {
           title="This page does not exist"
           description="The link may be broken, or the page may have moved."
         >
-          <Link to="/">
-            <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+          <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+            <Link to="/">
               Return home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </PageHeader>
         <Footer />
       </PageShell>

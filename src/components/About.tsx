@@ -37,7 +37,7 @@ const About = () => {
           <ul className="space-y-4">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-violet-400" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold-400" />
                 <span className="text-slate-300">{benefit}</span>
               </li>
             ))}
@@ -49,8 +49,10 @@ const About = () => {
       <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/5 md:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-slate-950/40 p-8 text-center">
-            <div className="text-3xl font-semibold text-white md:text-4xl">
-              {stat.number}
+            <div className="text-3xl font-semibold tabular-nums text-white md:text-4xl">
+              {/* Numbers stay white; a trailing "+", "%" etc. gets the gold accent. */}
+              {stat.number.replace(/[^\d.,]+$/, "")}
+              <span className="text-gold-300">{stat.number.match(/[^\d.,]+$/)?.[0]}</span>
             </div>
             <div className="mt-2 text-sm text-slate-300">{stat.label}</div>
           </div>

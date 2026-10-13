@@ -8,7 +8,12 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/10 bg-[#050609] text-white">
+    <footer className="relative border-t border-white/10 bg-[#09090b] text-white">
+      {/* Gold hairline that fades out at the edges. */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 -top-px mx-auto h-px max-w-3xl bg-gradient-to-r from-transparent via-gold-300/60 to-transparent"
+      />
       <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_2fr]">
           <div>

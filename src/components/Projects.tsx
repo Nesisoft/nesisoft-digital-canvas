@@ -79,7 +79,7 @@ const Projects = () => {
             <ProjectCard
               key={project.name}
               project={project}
-              className="shrink-0 basis-[82%] snap-start rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080a0f] sm:basis-[55%] md:basis-auto md:shrink"
+              className="shrink-0 basis-[82%] snap-start rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] sm:basis-[55%] md:basis-auto md:shrink"
             />
           ))}
         </div>

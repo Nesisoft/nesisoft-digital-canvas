@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Github, Linkedin, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, Github, Linkedin, Twitter, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
 import {
   Dialog,
@@ -8,7 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { fetchTeam, resolveImage, type TeamMember } from "@/lib/api";
+import { resolveImage, type TeamMember } from "@/lib/api";
+import { team as teamData } from "@/data/team";
 
 function initials(name: string): string {
   return name
@@ -55,7 +58,7 @@ function MemberCard({ member }: { member: TeamMember }) {
           </span>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-md border-white/10 bg-[#0b0d12] p-0 text-white shadow-2xl shadow-black/40">
+      <DialogContent className="max-w-md border-white/10 bg-[#0f0f12] p-0 text-white shadow-2xl shadow-black/40">
         <div className="p-6">
           <div className="flex items-start gap-4">
             {image ? (
@@ -128,23 +131,26 @@ function MemberCard({ member }: { member: TeamMember }) {
   );
 }
 
+// The team is bundled with the frontend (src/data/team.ts) for now, so there
+// is no loading or error state — just the list, in display order.
+const sortedTeam = [...teamData].sort((a, b) => a.order - b.order);
+
 /** Bare grid of team members — used on both the homepage and the Team page. */
 export function TeamGrid() {
-  const { data: team = [], isLoading } = useQuery({
-    queryKey: ["team"],
-    queryFn: fetchTeam,
-  });
+  const team = sortedTeam;
 
-  if (isLoading) {
-    return (
-      <p className="text-center text-sm text-slate-400">Loading the team…</p>
-    );
-  }
   if (!team.length) {
     return (
-      <p className="text-center text-sm text-slate-400">
-        Team members will appear here soon.
-      </p>
+      <EmptyState
+        title="Team profiles are coming soon"
+        description="We're putting faces to names. In the meantime, say hello."
+        icon={<Users className="h-5 w-5" />}
+        action={
+          <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+            <Link to="/contact">Get in touch</Link>
+          </Button>
+        }
+      />
     );
   }
 
@@ -157,18 +163,22 @@ export function TeamGrid() {
   );
 }
 
-/** Homepage "Team" section. */
-const Team = () => (
-  <Section id="team">
-    <SectionHeading
-      eyebrow="Team"
-      title="The people behind the work"
-      description="A senior, multi-disciplinary team that designs, builds, and ships software for African markets."
-    />
-    <div className="mt-16">
-      <TeamGrid />
-    </div>
-  </Section>
-);
+/** Homepage "Team" section — omitted entirely until there are members to show. */
+const Team = () => {
+  if (!sortedTeam.length) return null;
+
+  return (
+    <Section id="team">
+      <SectionHeading
+        eyebrow="Team"
+        title="The people behind the work"
+        description="A multi-disciplinary team that designs, builds, and ships software for African markets."
+      />
+      <div className="mt-12">
+        <TeamGrid />
+      </div>
+    </Section>
+  );
+};
 
 export default Team;

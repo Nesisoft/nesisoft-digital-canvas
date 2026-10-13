@@ -5,7 +5,7 @@
  */
 export function RouteFallback() {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#101622]">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#09090b]">
       <div className="flex items-center gap-3">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-[999px] bg-violet-400 opacity-75" />

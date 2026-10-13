@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Layers3 } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -13,9 +12,6 @@ const ServiceDetails = () => {
   const { serviceId } = useParams();
   const service = getService(serviceId);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [serviceId]);
 
   if (!service) {
     return (
@@ -35,11 +31,11 @@ const ServiceDetails = () => {
               title="No matching service"
               description="Return to the homepage to browse the current services."
               action={
-                <Link to="/">
-                  <Button className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                  <Link to="/#services">
                     View services
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               }
             />
           </Section>
@@ -81,20 +77,17 @@ const ServiceDetails = () => {
           description={service.fullDescription}
         >
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link to="/contact">
-              <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+            <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+              <Link to="/contact">
                 Start a project
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <a href="#process">
-              <Button
-                variant="outline"
-                className="h-11 rounded-lg border-white/15 bg-white/[0.02] px-5 text-white hover:bg-white/[0.06] hover:text-white"
-              >
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-11 rounded-lg border-white/15 bg-white/[0.02] px-5 text-white hover:bg-white/[0.06] hover:text-white">
+              <a href="#process">
                 See process
-              </Button>
-            </a>
+              </a>
+            </Button>
           </div>
         </PageHeader>
 
@@ -109,9 +102,11 @@ const ServiceDetails = () => {
             </div>
             <div className="grid gap-4">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
-                  <ServiceIcon className="h-5 w-5" />
-                </div>
+                <ServiceIcon
+                  aria-hidden
+                  className="mb-5 h-7 w-7 text-gold-300"
+                  strokeWidth={1.5}
+                />
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-400">
                   Outcome
                 </p>
@@ -129,7 +124,7 @@ const ServiceDetails = () => {
                       key={item}
                       className="flex items-center gap-3 text-sm text-slate-300"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-violet-300" />
+                      <CheckCircle2 className="h-4 w-4 text-gold-400" />
                       {item}
                     </div>
                   ))}
@@ -152,7 +147,7 @@ const ServiceDetails = () => {
                 key={feature}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
               >
-                <CheckCircle2 className="mb-4 h-5 w-5 text-violet-300" />
+                <CheckCircle2 className="mb-4 h-5 w-5 text-gold-400" />
                 <p className="font-medium text-white">{feature}</p>
               </div>
             ))}
@@ -167,7 +162,7 @@ const ServiceDetails = () => {
           />
           <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 lg:grid-cols-5">
             {service.process.map((step, index) => (
-              <div key={step} className="bg-[#080a0f]/90 p-6">
+              <div key={step} className="bg-[#09090b]/90 p-6">
                 <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-sm font-semibold text-violet-300">
                   {index + 1}
                 </div>
@@ -215,12 +210,12 @@ const ServiceDetails = () => {
                   scope, risks, timeline, and best first release.
                 </p>
               </div>
-              <Link to="/contact">
-                <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+              <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+                <Link to="/contact">
                   Send project brief
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </Section>

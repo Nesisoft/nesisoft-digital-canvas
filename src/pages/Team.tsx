@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { TeamGrid } from "@/components/Team";
@@ -7,9 +6,6 @@ import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 
 const Team = () => {
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, []);
 
   return (
     <>

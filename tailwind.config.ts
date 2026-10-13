@@ -26,6 +26,33 @@ export default {
 				mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
 			},
 			colors: {
+				// Site-wide neutral greys. Overrides Tailwind's blue-tinted slate so
+				// every text-slate-* / bg-slate-* is a true neutral on the near-black
+				// canvas; 400–500 are lifted for comfortable contrast (≥5.5:1).
+				slate: {
+					50: '#fafafa',
+					100: '#f4f4f5',
+					200: '#e4e4e7',
+					300: '#d4d4d8',
+					400: '#a1a1aa',
+					500: '#8b8b94',
+					600: '#5c5c66',
+					700: '#3f3f46',
+					800: '#27272a',
+					900: '#18181b',
+					950: '#09090b',
+				},
+				// Accent that complements the violet: used sparingly for labels,
+				// checkmarks, stat markers and active states — never for body text
+				// or primary buttons (those stay violet / white).
+				gold: {
+					100: '#f7edcc',
+					200: '#f0dc9f',
+					300: '#e8c873',
+					400: '#dcb252',
+					500: '#c99a32',
+					600: '#a77c24',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

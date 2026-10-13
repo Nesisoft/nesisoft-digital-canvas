@@ -11,17 +11,15 @@ export function PageShell({ children, className }: PageShellProps) {
   return (
     <div
       className={cn(
-        "relative min-h-screen overflow-hidden bg-[#101622] text-slate-100",
+        "relative min-h-screen overflow-hidden bg-[#09090b] text-slate-100",
         className
       )}
     >
+      {/* One restrained violet glow at the top — no tinted haze, so the
+          canvas stays truly dark and text keeps full contrast. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(139,92,246,0.22),transparent_34%),radial-gradient(circle_at_85%_12%,rgba(56,189,248,0.10),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.055),transparent_32%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:64px_64px] opacity-[0.16]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(124,58,237,0.16),transparent_70%)]"
       />
       <div className="relative z-10">{children}</div>
     </div>
@@ -50,28 +48,35 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <header className={cn("px-6 pb-14 pt-28 lg:px-8", className)}>
+    <header className={cn("pb-12 pt-28 md:pt-32", className)}>
+      {/* Same container + gutters as <Section> and the navbar, so page
+          titles line up with the content beneath them. */}
       <div
         className={cn(
-          "mx-auto max-w-7xl",
+          "mx-auto max-w-7xl px-6 lg:px-8",
           align === "center" && "text-center"
         )}
       >
         {backTo && (
           <Link
             to={backTo}
-            className="mb-8 inline-flex items-center rounded-lg px-2 py-1 text-sm font-medium text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            className="-ml-2 mb-8 inline-flex items-center rounded-lg px-2 py-1 text-sm font-medium text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {backLabel}
           </Link>
         )}
         {eyebrow && (
-          <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-violet-300">
+          <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold-300">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-4 max-w-4xl font-display text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+        <h1
+          className={cn(
+            "mt-4 max-w-4xl font-display text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl",
+            align === "center" && "mx-auto"
+          )}
+        >
           {title}
         </h1>
         {description && (

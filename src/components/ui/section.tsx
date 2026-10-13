@@ -19,7 +19,7 @@ export function Section({
   ...props
 }: SectionProps) {
   return (
-    <section id={id} className={cn("py-20 md:py-28", className)} {...props}>
+    <section id={id} className={cn("py-16 md:py-20", className)} {...props}>
       <div className={cn("mx-auto max-w-7xl px-6 lg:px-8", containerClassName)}>
         {children}
       </div>
@@ -51,7 +51,7 @@ export function SectionHeading({
       )}
     >
       {eyebrow && (
-        <span className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-violet-400">
+        <span className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold-300">
           {eyebrow}
         </span>
       )}

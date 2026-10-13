@@ -46,7 +46,7 @@ const Admin = () => {
   return (
     <>
       <Seo title="Admin" noindex />
-      <div className="min-h-screen bg-[#0b0d12] text-slate-100">
+      <div className="min-h-screen bg-[#0f0f12] text-slate-100">
         {me.isLoading ? (
           <div className="grid min-h-screen place-items-center text-slate-400">Loading…</div>
         ) : me.data?.authed ? (
