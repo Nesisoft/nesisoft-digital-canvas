@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, Clock, Layers3, Users } from "lucide-react";
@@ -19,19 +18,20 @@ const statusClass = {
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
-  const { data: project, isLoading } = useQuery({
+  const allProjects = useProjects();
+  // The projects list (live, or bundled when the API is unreachable) already
+  // holds this project: render it instantly and if the detail request fails.
+  const listed = allProjects.find((p) => p.slug === projectId);
+  const { data, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => fetchProject(projectId!),
     enabled: !!projectId,
     retry: false,
+    placeholderData: listed,
   });
-  const allProjects = useProjects();
+  const project = data ?? listed;
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [projectId]);
-
-  if (isLoading) {
+  if (isLoading && !project) {
     return (
       <>
         <Seo title="Loading…" noindex />
@@ -68,11 +68,11 @@ const ProjectDetails = () => {
               title="No matching project"
               description="Browse the current project library from the homepage."
               action={
-                <Link to="/#projects">
-                  <Button className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                  <Link to="/#projects">
                     View projects
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               }
             />
           </Section>
@@ -111,7 +111,7 @@ const ProjectDetails = () => {
               {project.category}
             </span>
             <span
-              className={`rounded-full border px-3 py-1.5 text-sm ${statusClass[project.status]}`}
+              className={`rounded-full border px-3 py-1.5 text-sm ${statusClass[project.status as keyof typeof statusClass] ?? "border-white/15 bg-white/5 text-slate-200"}`}
             >
               {project.status}
             </span>
@@ -127,17 +127,17 @@ const ProjectDetails = () => {
             />
           </div>
           <div className="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-3">
-            <div className="bg-[#080a0f]/90 p-5">
+            <div className="bg-[#09090b]/90 p-5">
               <Clock className="mb-3 h-5 w-5 text-violet-300" />
               <p className="text-sm text-slate-400">Timeline</p>
               <p className="mt-1 font-medium text-white">{project.timeline}</p>
             </div>
-            <div className="bg-[#080a0f]/90 p-5">
+            <div className="bg-[#09090b]/90 p-5">
               <Users className="mb-3 h-5 w-5 text-violet-300" />
               <p className="text-sm text-slate-400">Team</p>
               <p className="mt-1 font-medium text-white">{project.teamSize}</p>
             </div>
-            <div className="bg-[#080a0f]/90 p-5">
+            <div className="bg-[#09090b]/90 p-5">
               <Layers3 className="mb-3 h-5 w-5 text-violet-300" />
               <p className="text-sm text-slate-400">Result</p>
               <p className="mt-1 font-medium text-white">{project.result}</p>
@@ -159,7 +159,7 @@ const ProjectDetails = () => {
                   key={feature}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
                 >
-                  <CheckCircle2 className="mb-4 h-5 w-5 text-violet-300" />
+                  <CheckCircle2 className="mb-4 h-5 w-5 text-gold-400" />
                   <p className="font-medium text-white">{feature}</p>
                 </div>
               ))}
@@ -249,12 +249,12 @@ const ProjectDetails = () => {
                   clean build plan.
                 </p>
               </div>
-              <Link to="/contact">
-                <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+              <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+                <Link to="/contact">
                   Start a project
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </Section>

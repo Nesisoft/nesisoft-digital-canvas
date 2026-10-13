@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Mail, MapPin, Phone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -11,9 +10,6 @@ import { Section } from "@/components/ui/section";
 import { siteConfig } from "@/config/site";
 
 const Contact = () => {
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, []);
 
   return (
     <>

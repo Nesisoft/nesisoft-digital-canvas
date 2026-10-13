@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, FileText, Search, User } from "lucide-react";
@@ -16,11 +16,8 @@ const Blog = () => {
   const [query, setQuery] = useState("");
   const [email, setEmail] = useState("");
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, []);
 
-  const { data: blogPosts = [], isLoading } = useQuery({
+  const { data: blogPosts = [], isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["posts"],
     queryFn: fetchPosts,
   });
@@ -54,7 +51,6 @@ const Blog = () => {
       <Seo
         title="Blog"
         description="Insights on mobile, web, AI and software development across Africa from the Nesisoft team."
-        type="article"
       />
       <PageShell>
         <Navbar />
@@ -65,44 +61,89 @@ const Blog = () => {
           description="Short, useful writing on building, launching, and operating software in African markets."
         />
 
-        <Section className="pt-0">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto]">
-              <label className="relative block">
-                <span className="sr-only">Search articles</span>
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by topic, author, or category"
-                  className="h-11 w-full rounded-xl border border-white/10 bg-black/20 pl-11 pr-4 text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20"
-                />
-              </label>
-              <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`h-11 flex-shrink-0 rounded-xl border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-                      selectedCategory === category
-                        ? "border-violet-400/40 bg-violet-500/15 text-violet-100"
-                        : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
+        {/* Filters only make sense once there is something to filter. */}
+        {blogPosts.length > 0 && (
+          <Section className="pt-0">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto]">
+                <label className="relative block">
+                  <span className="sr-only">Search articles</span>
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search by topic, author, or category"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-black/20 pl-11 pr-4 text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20"
+                  />
+                </label>
+                <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`h-11 flex-shrink-0 rounded-xl border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+                        selectedCategory === category
+                          ? "border-violet-400/40 bg-violet-500/15 text-violet-100"
+                          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </Section>
+          </Section>
+        )}
 
         <Section className="pt-0">
           {isLoading ? (
+            <div
+              className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+              aria-busy="true"
+              aria-label="Loading articles"
+            >
+              {Array.from({ length: 3 }, (_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                >
+                  <div className="aspect-[16/10] animate-pulse bg-white/[0.05]" />
+                  <div className="space-y-3 p-6">
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-white/[0.06]" />
+                    <div className="h-5 w-4/5 animate-pulse rounded bg-white/[0.08]" />
+                    <div className="h-3 w-full animate-pulse rounded bg-white/[0.05]" />
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-white/[0.05]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isError ? (
             <EmptyState
-              title="Loading articles…"
-              description="Fetching the latest posts."
+              title="Articles didn't load"
+              description="We couldn't reach the blog just now. Check your connection and try again."
               icon={<FileText className="h-5 w-5" />}
+              action={
+                <Button
+                  variant="outline"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  className="rounded-lg border-white/15 bg-white/[0.02] text-white hover:bg-white/[0.06] hover:text-white"
+                >
+                  {isFetching ? "Retrying…" : "Try again"}
+                </Button>
+              }
+            />
+          ) : blogPosts.length === 0 ? (
+            <EmptyState
+              title="New writing is on the way"
+              description="We're preparing our first articles. In the meantime, tell us what you're building."
+              icon={<FileText className="h-5 w-5" />}
+              action={
+                <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                  <Link to="/contact">Start a conversation</Link>
+                </Button>
+              }
             />
           ) : filteredPosts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -120,7 +161,7 @@ const Blog = () => {
                         loading="lazy"
                         className="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
                       />
-                      <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-[#080a0f]/75 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur">
+                      <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-[#09090b]/75 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur">
                         {post.category}
                       </span>
                     </div>
@@ -129,7 +170,11 @@ const Blog = () => {
                     <div className="mb-4 flex flex-wrap gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        {new Date(post.date).toLocaleDateString()}
+                        {new Date(post.date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <User className="h-3.5 w-3.5" />
@@ -181,7 +226,7 @@ const Blog = () => {
           >
             <div className="grid gap-8 lg:grid-cols-[1fr_26rem] lg:items-end">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.18em] text-violet-300">
+                <p className="text-sm font-medium uppercase tracking-[0.18em] text-gold-300">
                   Newsletter
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold text-white">

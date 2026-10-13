@@ -14,18 +14,20 @@ const Services = () => {
 
       {/* Horizontal scroll on mobile, grid from md up. */}
       <div className="mt-16 -mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-4">
-        {services.map((service) => {
+        {services.map((service, index) => {
           const Icon = service.icon;
           const card = (
             <article className="group relative flex h-full min-h-[25rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-transparent p-6 transition-all duration-200 hover:-translate-y-1 hover:border-violet-400/60 hover:bg-violet-500/[0.07] hover:shadow-2xl hover:shadow-violet-900/30 focus-within:border-violet-400/60">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/0 to-transparent transition-colors duration-200 group-hover:via-violet-400" />
 
               <div className="mb-6 flex items-start justify-between gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-violet-300 transition-colors duration-200 group-hover:border-violet-400/50 group-hover:bg-violet-500/25">
-                  <Icon className="h-5 w-5" strokeWidth={1.75} />
-                </div>
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 transition-colors duration-200 group-hover:border-violet-400/25 group-hover:text-violet-200">
-                  Service
+                <Icon
+                  aria-hidden
+                  className="h-7 w-7 text-violet-300 transition-colors duration-200 group-hover:text-gold-300"
+                  strokeWidth={1.5}
+                />
+                <span className="font-mono text-xs tracking-[0.12em] text-slate-500 transition-colors duration-200 group-hover:text-gold-300">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
 
@@ -37,7 +39,7 @@ const Services = () => {
               </p>
 
               <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors duration-200 group-hover:border-violet-400/40 group-hover:bg-violet-500/10">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400 transition-colors duration-200 group-hover:text-gold-300">
                   Outcome
                 </p>
                 <p className="mt-2 text-sm font-medium leading-6 text-slate-100">
@@ -51,7 +53,7 @@ const Services = () => {
                     key={deliverable}
                     className="flex items-center gap-2.5 text-sm text-slate-300"
                   >
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-violet-300/80" />
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-gold-400" />
                     <span>{deliverable}</span>
                   </div>
                 ))}
@@ -70,7 +72,7 @@ const Services = () => {
             <Link
               key={service.title}
               to={`/services/${service.slug}`}
-              className="shrink-0 basis-[82%] snap-start rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080a0f] sm:basis-[55%] md:basis-auto md:shrink"
+              className="shrink-0 basis-[82%] snap-start rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] sm:basis-[55%] md:basis-auto md:shrink"
             >
               {card}
             </Link>

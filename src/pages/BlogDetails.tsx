@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
@@ -40,9 +40,6 @@ const BlogDetails = () => {
     },
   ]);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [postId]);
 
   const handleCommentSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -98,11 +95,11 @@ const BlogDetails = () => {
               title="No matching article"
               description="Return to the blog to browse the available posts."
               action={
-                <Link to="/blog">
-                  <Button className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
+                  <Link to="/blog">
                     View blog
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               }
             />
           </Section>
