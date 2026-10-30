@@ -51,7 +51,7 @@ client-exposed variables must be prefixed with `VITE_`.
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_WEB3FORMS_ACCESS_KEY` | Contact-form delivery via [Web3Forms](https://web3forms.com). Without it, the form falls back to opening the visitor's mail client. |
+| `VITE_WEB3FORMS_ACCESS_KEY` | Contact-form and blog newsletter-signup delivery via [Web3Forms](https://web3forms.com); both arrive in the inbox tied to the key. Without it, the contact form falls back to opening the visitor's mail client and the newsletter signup is hidden. |
 | `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
 | `MONGODB_URI` | MongoDB connection string for the API. |

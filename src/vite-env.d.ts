@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Web3Forms access key — enables real contact-form delivery. */
+  /** Web3Forms access key — enables contact-form and newsletter-signup delivery. */
   readonly VITE_WEB3FORMS_ACCESS_KEY?: string;
   /** Plausible analytics domain — enables privacy-friendly analytics. */
   readonly VITE_PLAUSIBLE_DOMAIN?: string;

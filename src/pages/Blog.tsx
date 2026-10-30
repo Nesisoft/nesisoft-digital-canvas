@@ -11,11 +11,14 @@ import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 import { getAllPosts } from "@/lib/blog";
 import { fetchPosts, resolveImage } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
+import { WEB3FORMS_KEY, submitToWeb3Forms } from "@/lib/web3forms";
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
 
 
   // The bundled Markdown posts render instantly and stand in whenever the API
@@ -45,11 +48,33 @@ const Blog = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const handleNewsletterSubmit = (event: React.FormEvent) => {
+  const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email) return;
-    toast.success("You're on the list. We'll only send useful updates.");
-    setEmail("");
+    if (!email || subscribing) return;
+
+    // Honeypot: hidden from people, so only bots ever tick it. They get the
+    // usual success message, but nothing is sent.
+    const isBot = new FormData(event.currentTarget).has("botcheck");
+    if (!isBot) trackEvent("Newsletter Signup");
+
+    setSubscribing(true);
+    try {
+      if (!isBot) {
+        await submitToWeb3Forms({
+          from_name: "Nesisoft website",
+          subject: "[Website] Newsletter signup",
+          email,
+          message: `${email} signed up via the blog newsletter form.`,
+        });
+      }
+      toast.success("You're on the list. We'll only send useful updates.");
+      setEmail("");
+    } catch (err) {
+      console.error(err);
+      toast.error("We couldn't sign you up just now. Please try again.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -225,49 +250,64 @@ const Blog = () => {
           )}
         </Section>
 
-        <Section className="pt-0">
-          <form
-            onSubmit={handleNewsletterSubmit}
-            className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 md:p-10"
-          >
-            <div className="grid gap-8 lg:grid-cols-[1fr_26rem] lg:items-end">
-              <div>
-                <p className="text-sm font-medium uppercase tracking-[0.18em] text-gold-300">
-                  Newsletter
-                </p>
-                <h2 className="mt-3 text-2xl font-semibold text-white">
-                  Useful product and engineering notes, not spam.
-                </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                  Join for occasional writing on software delivery, product
-                  quality, and building for African users.
-                </p>
-              </div>
-              <div>
-                <label htmlFor="newsletter-email" className="sr-only">
-                  Email address
-                </label>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <input
-                    id="newsletter-email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    type="email"
-                    required
-                    placeholder="you@company.com"
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-4 text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20"
-                  />
-                  <Button className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
-                    Subscribe
-                  </Button>
+        {/* Signups are emailed via Web3Forms; without a key there's nowhere to send them. */}
+        {WEB3FORMS_KEY && (
+          <Section className="pt-0">
+            <form
+              onSubmit={handleNewsletterSubmit}
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 md:p-10"
+            >
+              <div className="grid gap-8 lg:grid-cols-[1fr_26rem] lg:items-end">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-gold-300">
+                    Newsletter
+                  </p>
+                  <h2 className="mt-3 text-2xl font-semibold text-white">
+                    Useful product and engineering notes, not spam.
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+                    Join for occasional writing on software delivery, product
+                    quality, and building for African users.
+                  </p>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">
-                  No spam. Unsubscribe whenever you want.
-                </p>
+                <div>
+                  <label htmlFor="newsletter-email" className="sr-only">
+                    Email address
+                  </label>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      id="newsletter-email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      readOnly={subscribing}
+                      type="email"
+                      required
+                      placeholder="you@company.com"
+                      className="h-11 min-w-0 sm:flex-1 rounded-lg border border-white/10 bg-black/20 px-4 text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20"
+                    />
+                    <input
+                      type="checkbox"
+                      name="botcheck"
+                      className="hidden"
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={subscribing}
+                      className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500 disabled:opacity-70"
+                    >
+                      {subscribing ? "Subscribing…" : "Subscribe"}
+                    </Button>
+                  </div>
+                  <p className="mt-3 text-xs text-slate-400">
+                    No spam. Reply to any email from us to unsubscribe.
+                  </p>
+                </div>
               </div>
-            </div>
-          </form>
-        </Section>
+            </form>
+          </Section>
+        )}
 
         <Footer />
       </PageShell>
