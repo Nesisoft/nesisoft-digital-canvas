@@ -85,7 +85,7 @@ export function createApp() {
   });
 
   // Pure JSON API. The admin UI is a route in the public site
-  // (nesisoft.com/admin) and talks to these endpoints.
+  // (www.nesisoft.com/admin) and talks to these endpoints.
   app.use("/api", publicRoutes);
   app.use("/api/admin", adminRoutes);
 

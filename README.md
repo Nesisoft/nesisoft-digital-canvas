@@ -6,7 +6,8 @@ along with internal platforms like Agoo, Sua, Adesuapa, and Jua.
 
 A monolith application with a React frontend and an Express + MongoDB API served
 from the same domain. Public pages, `/admin`, and `/api/...` all deploy as one
-Vercel project under `nesisoft.com`.
+Vercel project under `www.nesisoft.com` (the apex `nesisoft.com` redirects
+there).
 
 ## Tech stack
 
@@ -102,7 +103,7 @@ generated `.md`, commit it, then deploy the static content — never the key.
 The browser always calls relative `/api/...` URLs. In development, Vite proxies
 those calls to the local Express process. In production, Vercel routes `/api`
 and `/api/*` to the root `api/` functions in this same project, so the admin
-session cookie is first-party on `nesisoft.com`.
+session cookie is first-party on `www.nesisoft.com`.
 
 The admin panel lives at `/admin` and supports CRUD for posts, projects, team
 members, uploaded images, and editable homepage content.
