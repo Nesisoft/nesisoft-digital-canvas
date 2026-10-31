@@ -20,6 +20,10 @@ export interface Service {
   technologies: string[];
   process: string[];
   deliverables: string[];
+  /** Search-facing <title> (before " | Nesisoft"); falls back to `title`. */
+  seoTitle?: string;
+  /** Meta description, 120–160 characters; falls back to `fullDescription`. */
+  seoDescription?: string;
 }
 
 export const services: Service[] = [
@@ -57,6 +61,9 @@ export const services: Service[] = [
       "Admin or dashboard flows",
       "Deployment handoff",
     ],
+    seoTitle: "Web Development Company in Accra, Ghana",
+    seoDescription:
+      "Nesisoft is a web development company in Accra, Ghana, building fast, secure web apps: customer portals, marketplaces, dashboards and internal tools.",
   },
   {
     slug: "mobile-development",
@@ -92,6 +99,9 @@ export const services: Service[] = [
       "Release checklist",
       "Support plan",
     ],
+    seoTitle: "Mobile App Development in Accra, Ghana",
+    seoDescription:
+      "Our mobile app developers in Accra build iOS, Android and React Native apps with mobile money payments, push notifications and offline-tolerant design.",
   },
   {
     slug: "custom-software",
@@ -127,6 +137,9 @@ export const services: Service[] = [
       "Reporting views",
       "User training materials",
     ],
+    seoTitle: "Custom Software Development Company in Ghana",
+    seoDescription:
+      "Nesisoft builds custom software for organizations in Ghana and across Africa, replacing manual processes with secure workflow systems and reporting.",
   },
   {
     slug: "product-design",
@@ -162,6 +175,9 @@ export const services: Service[] = [
       "Component guidelines",
       "Delivery roadmap",
     ],
+    seoTitle: "Product Design & UX Consulting in Ghana",
+    seoDescription:
+      "UX audits, product discovery, clickable prototypes and technical planning from Nesisoft in Accra, Ghana, so you know what to build before development starts.",
   },
 ];
 

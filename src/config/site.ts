@@ -12,8 +12,17 @@ export const siteConfig = {
   name: "Nesisoft",
   legalName: "Nesisoft",
   tagline: "Digital Solutions for Africa",
+
+  /**
+   * Homepage title and default meta description, worded around what people
+   * actually search for. The Seo component appends " | Nesisoft" to the
+   * title, as it does on every page. index.html repeats both in its static
+   * title / description / og / twitter tags for non-JS crawlers and link
+   * previews — keep them in sync, and the description within 160 characters.
+   */
+  seoTitle: "Software & App Development Company in Accra, Ghana",
   description:
-    "Nesisoft is a full-cycle software development company building custom web, mobile, desktop, and IoT applications, as well as impactful platforms like Agoo, Sua, Adesuapa, and Jua for Africa's digital growth.",
+    "Nesisoft is a software development company in Accra, Ghana, building web platforms, mobile apps and custom software for businesses across Africa.",
 
   /**
    * Public site URL — used for canonical links, sitemap and OG tags. The host

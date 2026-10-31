@@ -7,6 +7,7 @@ import { Seo, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { siteConfig } from "@/config/site";
 import { fetchProject } from "@/lib/api";
 import { useProjects } from "@/hooks/useProjects";
 
@@ -83,12 +84,19 @@ const ProjectDetails = () => {
   }
 
   const relatedProjects = allProjects.filter((item) => item.slug !== project.slug);
+  // The one-line summary plus who built it fits a search snippet (~160 chars)
+  // where the full description usually runs over. Projects are edited in
+  // /admin, so fall back when either field was saved empty.
+  const summary = project.description?.trim();
+  const seoDescription = summary
+    ? `${/[.!?]$/.test(summary) ? summary : `${summary}.`} Case study by Nesisoft, software developers in Accra, Ghana.`
+    : project.fullDescription || siteConfig.description;
 
   return (
     <>
       <Seo
         title={`${project.name} Case Study`}
-        description={project.fullDescription}
+        description={seoDescription}
         image={project.image}
         type="article"
         jsonLd={breadcrumbsJsonLd([

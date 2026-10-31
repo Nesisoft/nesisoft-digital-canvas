@@ -15,7 +15,11 @@ const NotFound = () => {
 
   return (
     <>
-      <Seo title="Page Not Found" noindex />
+      <Seo
+        title="Page Not Found"
+        description="This page doesn't exist or may have moved. Head back to Nesisoft to explore our web, mobile and custom software development services in Accra, Ghana."
+        noindex
+      />
       <PageShell>
         <Navbar />
         <PageHeader

@@ -14,8 +14,8 @@ const Contact = () => {
   return (
     <>
       <Seo
-        title="Contact Us"
-        description="Get in touch with Nesisoft to discuss your web, mobile, or custom software project. Based in Accra, Ghana and serving Africa and beyond."
+        title="Contact Our Software Developers in Accra, Ghana"
+        description="Tell us about your web, mobile or custom software project. Our development team in Accra, Ghana will get back to you within one business day."
       />
       <PageShell>
         <Navbar />

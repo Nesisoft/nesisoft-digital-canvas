@@ -80,8 +80,8 @@ const Blog = () => {
   return (
     <>
       <Seo
-        title="Blog"
-        description="Insights on mobile, web, AI and software development across Africa from the Nesisoft team."
+        title="Software Development Insights for African Businesses"
+        description="Practical articles from the Nesisoft team in Accra on web and mobile app development, AI and launching software products for businesses across Africa."
       />
       <PageShell>
         <Navbar />
