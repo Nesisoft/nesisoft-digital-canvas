@@ -144,7 +144,12 @@ const Footer = () => {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
-          <p>© {currentYear} Nesisoft. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <p>© {currentYear} Nesisoft. All rights reserved.</p>
+            <Link to="/privacy" className="transition-colors hover:text-white">
+              Privacy
+            </Link>
+          </div>
           <p>{siteConfig.contact.region}</p>
         </div>
       </div>

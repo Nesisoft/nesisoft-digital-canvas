@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -143,23 +144,35 @@ export function ContactForm() {
           />
         )}
       </Field>
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="h-11 w-full rounded-lg bg-violet-600 font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-70"
-      >
-        {isSubmitting ? (
-          <>
-            Sending…
-            <Loader2 className="ml-2 animate-spin" size={20} />
-          </>
-        ) : (
-          <>
-            Send Message
-            <Send className="ml-2" size={20} />
-          </>
-        )}
-      </Button>
+      <div>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="h-11 w-full rounded-lg bg-violet-600 font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-70"
+        >
+          {isSubmitting ? (
+            <>
+              Sending…
+              <Loader2 className="ml-2 animate-spin" size={20} />
+            </>
+          ) : (
+            <>
+              Send Message
+              <Send className="ml-2" size={20} />
+            </>
+          )}
+        </Button>
+        <p className="mt-3 text-center text-xs text-slate-400">
+          We only use your details to reply. See our{" "}
+          <Link
+            to="/privacy"
+            className="text-violet-300 underline underline-offset-2 transition-colors hover:text-violet-200"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
     </form>
   );
 }

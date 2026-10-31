@@ -38,6 +38,7 @@ export function seoPlugin(siteUrl: string): Plugin {
         ...(hasTeam ? [{ loc: "/team", priority: "0.7", changefreq: "monthly" }] : []),
         { loc: "/contact", priority: "0.8", changefreq: "monthly" },
         { loc: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
+        { loc: "/privacy", priority: "0.3", changefreq: "yearly" },
         ...serviceSlugs.map((slug) => ({
           loc: `/services/${slug}`,
           priority: "0.6",
