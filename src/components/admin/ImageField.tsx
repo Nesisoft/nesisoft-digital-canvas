@@ -51,7 +51,7 @@ export function ImageField({ value, onChange, round }: ImageFieldProps) {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
           className="hidden"
           onChange={(e) => handleFile(e.target.files?.[0])}
         />

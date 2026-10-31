@@ -42,6 +42,7 @@ npm run preview     # Preview the production build locally
 npm start           # Serve dist/ + API from Express after a build
 npm run seed        # Seed MongoDB content
 npm run lint        # ESLint
+npm run hash-password  # Prompt for the admin password, print ADMIN_PASSWORD_HASH
 ```
 
 ## Configuration
@@ -55,7 +56,8 @@ client-exposed variables must be prefixed with `VITE_`.
 | `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
 | `MONGODB_URI` | MongoDB connection string for the API. |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production: admin login stays disabled if either is missing or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production (with `ADMIN_PASSWORD_HASH` standing in for `ADMIN_PASSWORD`): admin login stays disabled if the username or both password variables are missing, or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
+| `ADMIN_PASSWORD_HASH` | Preferred over `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set; a malformed hash disables admin login in production. |
 | `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
 | `CORS_ORIGIN` | Optional comma-separated origins allowed to call the API during local development. |
 
@@ -107,6 +109,13 @@ session cookie is first-party on `www.nesisoft.com`.
 
 The admin panel lives at `/admin` and supports CRUD for posts, projects, team
 members, uploaded images, and editable homepage content.
+
+- **Login rate limit:** after 5 failed sign-ins from one IP within 15 minutes,
+  further attempts get `429` until the window passes; 50 failures across all
+  IPs locks sign-in for everyone (the owner included) for the same window.
+  Counters are in memory, so each serverless instance keeps its own.
+- **Uploads** accept only JPEG, PNG, WebP, AVIF and GIF, checked by the file's
+  bytes; anything else (including SVG) gets `415`.
 
 ## Deployment
 

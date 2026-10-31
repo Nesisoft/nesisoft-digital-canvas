@@ -1,10 +1,12 @@
 import crypto from "node:crypto";
+import { parsePasswordHash, verifyPassword } from "./password.js";
 
 /**
- * Admin auth — a single admin account configured via env (ADMIN_USERNAME /
- * ADMIN_PASSWORD), with sessions signed by SESSION_SECRET. Production fails
- * closed: admin login stays disabled until all three are set to real values.
- * Local dev falls back to admin / changeme so `npm run dev` needs no config.
+ * Admin auth — a single admin account configured via env (ADMIN_USERNAME plus
+ * ADMIN_PASSWORD_HASH or a raw ADMIN_PASSWORD), with sessions signed by
+ * SESSION_SECRET. Production fails closed: admin login stays disabled until
+ * all three are set to real values. Local dev falls back to admin / changeme
+ * so `npm run dev` needs no config.
  * TODO: move to a real user store if we ever need more than one admin.
  */
 
@@ -28,10 +30,28 @@ function configProblem(name, placeholders = []) {
   return null;
 }
 
+// A hash (from `npm run hash-password`) takes precedence over a raw password.
+// A malformed one counts as a config problem, so production disables login
+// rather than falling back to ADMIN_PASSWORD.
+const hashSet = !!process.env.ADMIN_PASSWORD_HASH;
+const PASSWORD_HASH = hashSet
+  ? parsePasswordHash(process.env.ADMIN_PASSWORD_HASH)
+  : null;
+const passwordProblem = hashSet
+  ? !PASSWORD_HASH &&
+    "ADMIN_PASSWORD_HASH is malformed (regenerate it with npm run hash-password)"
+  : configProblem("ADMIN_PASSWORD", PLACEHOLDER_PASSWORDS);
+
+if (PASSWORD_HASH && process.env.ADMIN_PASSWORD) {
+  console.warn(
+    "[auth] Both ADMIN_PASSWORD_HASH and ADMIN_PASSWORD are set; using ADMIN_PASSWORD_HASH. Remove ADMIN_PASSWORD.",
+  );
+}
+
 const secretProblem = configProblem("SESSION_SECRET", PLACEHOLDER_SECRETS);
 const configProblems = [
   configProblem("ADMIN_USERNAME"),
-  configProblem("ADMIN_PASSWORD", PLACEHOLDER_PASSWORDS),
+  passwordProblem,
   secretProblem,
 ].filter(Boolean);
 
@@ -45,8 +65,8 @@ if (configProblems.length > 0) {
   );
 }
 
-// The fallbacks only ever apply in dev: production with login enabled has
-// both values set.
+// The fallbacks only ever apply in dev: production with login enabled has a
+// username and a valid hash or password set.
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
 
@@ -64,12 +84,15 @@ function safeEqual(input, expected) {
   return crypto.timingSafeEqual(digest(input), digest(expected));
 }
 
-export function checkCredentials(username, password) {
+// Async because scrypt runs on libuv's thread pool, off the event loop.
+export async function checkCredentials(username, password) {
   if (!adminLoginEnabled) return false;
   if (typeof username !== "string" || typeof password !== "string") return false;
   // Check both every time so a wrong username isn't rejected any faster.
   const usernameOk = safeEqual(username, ADMIN_USERNAME);
-  const passwordOk = safeEqual(password, ADMIN_PASSWORD);
+  const passwordOk = PASSWORD_HASH
+    ? await verifyPassword(password, PASSWORD_HASH)
+    : safeEqual(password, ADMIN_PASSWORD);
   return usernameOk && passwordOk;
 }
 

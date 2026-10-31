@@ -10,6 +10,8 @@ import {
   isAuthed,
   requireAuthApi,
 } from "../auth.js";
+import { loginLimiter } from "../loginLimiter.js";
+import { detectImageType } from "../imageTypes.js";
 import { asyncRouter } from "./asyncRouter.js";
 
 const router = asyncRouter();
@@ -29,15 +31,26 @@ function slugify(value) {
 }
 
 // --- Auth ---
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   // Production refuses every sign-in until real credentials are configured.
   if (!adminLoginEnabled) {
     return res.status(503).json({ error: "Admin login is not configured" });
   }
+  // req.ip honours app.js's trust proxy setting (the client, not Vercel).
+  const client = req.ip || "unknown";
+  const waitMs = loginLimiter.consume(client);
+  if (waitMs > 0) {
+    const minutes = Math.ceil(waitMs / 60000);
+    res.set("Retry-After", String(Math.ceil(waitMs / 1000)));
+    return res.status(429).json({
+      error: `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+    });
+  }
   const { username, password } = req.body || {};
-  if (!checkCredentials(username, password)) {
+  if (!(await checkCredentials(username, password))) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
+  loginLimiter.reset(client);
   req.session.authed = true;
   req.session.username = username;
   res.json({ ok: true });
@@ -57,9 +70,16 @@ router.use(requireAuthApi);
 // --- Image upload ---
 router.post("/images", upload.single("image"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  // Store the type the bytes prove, not the one the browser claims.
+  const contentType = detectImageType(req.file.buffer);
+  if (!contentType) {
+    return res
+      .status(415)
+      .json({ error: "Unsupported image type. Upload a JPEG, PNG, WebP, AVIF or GIF." });
+  }
   const image = await Image.create({
     filename: req.file.originalname,
-    contentType: req.file.mimetype,
+    contentType,
     data: req.file.buffer,
     size: req.file.size,
   });
