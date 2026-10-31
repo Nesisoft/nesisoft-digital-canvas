@@ -1,15 +1,12 @@
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Calendar, Clock, MessageSquare, Send, User } from "lucide-react";
+import { ArrowRight, Calendar, Clock, User } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Seo, blogPostingJsonLd, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 import { getPostBySlug } from "@/lib/blog";
@@ -28,41 +25,6 @@ const BlogDetails = () => {
     retry: false,
     placeholderData: bundledPost,
   });
-  const [showCommentForm, setShowCommentForm] = useState(false);
-  const [commentData, setCommentData] = useState({ fullName: "", comment: "" });
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      comment:
-        "Great article. The African market constraints angle is especially useful.",
-      date: "2024-01-16",
-    },
-    {
-      id: 2,
-      name: "Michael Osei",
-      comment: "Clear and practical. Looking forward to more posts like this.",
-      date: "2024-01-17",
-    },
-  ]);
-
-
-  const handleCommentSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!commentData.fullName.trim() || !commentData.comment.trim()) return;
-
-    setComments((current) => [
-      ...current,
-      {
-        id: current.length + 1,
-        name: commentData.fullName.trim(),
-        comment: commentData.comment.trim(),
-        date: new Date().toISOString().split("T")[0],
-      },
-    ]);
-    setCommentData({ fullName: "", comment: "" });
-    setShowCommentForm(false);
-  };
 
   if (isLoading) {
     return (
@@ -182,121 +144,24 @@ const BlogDetails = () => {
           </article>
         </Section>
 
-        <Section className="border-t border-white/10 bg-white/[0.025]">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Section className="pt-0" containerClassName="max-w-3xl">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 md:p-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <h2 className="flex items-center text-2xl font-semibold text-white">
-                  <MessageSquare className="mr-3 h-5 w-5 text-violet-300" />
-                  Comments ({comments.length})
+                <h2 className="text-2xl font-semibold text-white">
+                  Building something similar?
                 </h2>
-                <p className="mt-2 text-sm text-slate-300">
-                  Local comments are for frontend interaction only.
+                <p className="mt-3 max-w-2xl text-slate-300">
+                  Tell us what you are working on and we will help you shape it
+                  into a clear build plan.
                 </p>
               </div>
-              <Button
-                onClick={() => setShowCommentForm((value) => !value)}
-                className="h-10 rounded-lg bg-violet-600 px-4 text-white hover:bg-violet-500"
-              >
-                Add comment
+              <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+                <Link to="/contact">
+                  Start a project
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
-            </div>
-
-            {showCommentForm && (
-              <form
-                onSubmit={handleCommentSubmit}
-                className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-6"
-              >
-                <div className="grid gap-5">
-                  <div>
-                    <label
-                      htmlFor="comment-name"
-                      className="mb-2 block text-sm font-medium text-slate-300"
-                    >
-                      Full name
-                    </label>
-                    <Input
-                      id="comment-name"
-                      value={commentData.fullName}
-                      onChange={(event) =>
-                        setCommentData((current) => ({
-                          ...current,
-                          fullName: event.target.value,
-                        }))
-                      }
-                      className="rounded-lg border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus-visible:ring-violet-400"
-                      placeholder="Jane Doe"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="comment-body"
-                      className="mb-2 block text-sm font-medium text-slate-300"
-                    >
-                      Comment
-                    </label>
-                    <Textarea
-                      id="comment-body"
-                      value={commentData.comment}
-                      onChange={(event) =>
-                        setCommentData((current) => ({
-                          ...current,
-                          comment: event.target.value,
-                        }))
-                      }
-                      className="min-h-[8rem] rounded-lg border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus-visible:ring-violet-400"
-                      placeholder="Share your thoughts..."
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <Button
-                      type="submit"
-                      className="rounded-lg bg-violet-600 text-white hover:bg-violet-500"
-                    >
-                      Post comment
-                      <Send className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowCommentForm(false)}
-                      className="rounded-lg border-white/15 bg-white/[0.02] text-white hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            )}
-
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <article
-                  key={comment.id}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[999px] border border-white/10 bg-white/[0.05] text-sm font-semibold text-white">
-                      {comment.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <h3 className="font-medium text-white">
-                          {comment.name}
-                        </h3>
-                        <time className="text-xs text-slate-400">
-                          {new Date(comment.date).toLocaleDateString()}
-                        </time>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-300">
-                        {comment.comment}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ))}
             </div>
           </div>
         </Section>
