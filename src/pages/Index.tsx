@@ -1,7 +1,9 @@
 import Hero from "@/components/Hero";
+import ClientLogos from "@/components/ClientLogos";
 import Services from "@/components/Services";
 import About from "@/components/About";
 import Projects from "@/components/Projects";
+import Testimonials from "@/components/Testimonials";
 import Team from "@/components/Team";
 import Contact from "@/components/Contact";
 import Navbar from "@/components/Navbar";
@@ -16,9 +18,11 @@ const Index = () => {
       <Seo jsonLd={[organizationJsonLd, websiteJsonLd]} />
       <Navbar />
       <Hero />
+      <ClientLogos />
       <About />
       <Services />
       <Projects />
+      <Testimonials />
       <Team />
       <Contact />
       <Footer />

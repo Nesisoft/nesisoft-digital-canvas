@@ -11,16 +11,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { resolveImage, type TeamMember } from "@/lib/api";
+import { initials } from "@/lib/utils";
 import { team as teamData } from "@/data/team";
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 function MemberCard({ member }: { member: TeamMember }) {
   const image = resolveImage(member.image);
