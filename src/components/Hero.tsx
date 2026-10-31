@@ -6,8 +6,9 @@ import { siteConfig } from "@/config/site";
 import { HeroChat } from "@/components/HeroChat";
 import { useSiteContent } from "@/hooks/useSiteContent";
 
-// Cycled in the headline. Each phrase is split over two lines so every one
-// fills the same space — no empty gap under the shorter phrases.
+// Cycled in the headline; the first is the one search engines and screen
+// readers get. Each phrase is split over two lines so every one fills the
+// same space — no empty gap under the shorter phrases.
 const HEADLINE_PHRASES: [string, string][] = [
   ["African businesses", "forward"],
   ["startups", "to market"],
@@ -49,22 +50,23 @@ const Hero = () => {
             Software studio · {siteConfig.contact.location}
           </p>
           <h1 className="font-display text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl sm:leading-[0.98] lg:text-6xl xl:text-[4.25rem]">
-            {content.hero.titleLead}
+            {content.hero.titleLead}{" "}
+            {/* Search engines and screen readers get one stable headline. The
+                rotating phrases below are painted by ::before from data-text
+                (pre-line keeps its line break); that isn't DOM text, so they
+                never leak into the heading. */}
+            <span className="sr-only">{HEADLINE_PHRASES[0].join(" ")}</span>
             {/* All phrases occupy the same grid cell, so the line is always
                 sized to the tallest one — swapping them never shifts layout. */}
-            <span className="mt-1 grid">
+            <span aria-hidden className="mt-1 grid">
               {HEADLINE_PHRASES.map(([first, second], i) => (
                 <span
                   key={first}
-                  aria-hidden={i !== phrase}
-                  className={`col-start-1 row-start-1 text-violet-400 transition-opacity duration-500 ${
+                  data-text={`${first}\n${second}`}
+                  className={`col-start-1 row-start-1 whitespace-pre-line text-violet-400 transition-opacity duration-500 before:content-[attr(data-text)] ${
                     i === phrase ? "opacity-100" : "opacity-0"
                   }`}
-                >
-                  {first}
-                  <br />
-                  {second}
-                </span>
+                />
               ))}
             </span>
           </h1>
