@@ -87,7 +87,10 @@ scripts/
 ### Editing content
 
 - **Brand, contact, and SEO defaults** live in `src/config/site.ts` — change
-  them in one place rather than hardcoding anywhere.
+  them in one place rather than hardcoding anywhere. Set
+  `siteConfig.contact.bookingUrl` to a Cal.com or Calendly link to make
+  "Book a call" (footer and `/contact`) open it in a new tab; left empty,
+  the footer link dials the main phone number.
 - **Services** and **projects** are data-driven from `src/data/`.
 - **Blog posts** are Markdown files in `src/content/blog/`. The build's SEO
   plugin reads these (plus services and projects) to regenerate

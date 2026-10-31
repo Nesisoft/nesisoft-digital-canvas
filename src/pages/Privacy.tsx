@@ -15,7 +15,9 @@ const siteHost = siteConfig.url.replace(/^https?:\/\//, "");
 /**
  * Plain-English privacy policy, written from what the site actually does:
  * contact + newsletter submissions via Web3Forms (or a mailto: fallback),
- * WhatsApp click-to-chat, optional cookie-free Plausible analytics, and
+ * WhatsApp click-to-chat, an optional call-scheduling link (described
+ * conditionally, so the text holds whether or not one is configured),
+ * optional cookie-free Plausible analytics, and
  * third-party embeds (Google Maps, fonts, Unsplash images). Contact details
  * come from siteConfig so they stay in sync with the rest of the site.
  */
@@ -68,10 +70,13 @@ const Privacy = () => {
               <li>
                 <strong>Enquiries.</strong> When you use our{" "}
                 <Link to="/contact">contact form</Link>, we receive your name,
-                email address, subject and message. We use them to reply and
-                to discuss your project. If the form can't send directly, it
-                opens your own email app with your message filled in instead;
-                nothing is sent until you press send there.
+                email address, the service you need and your message, plus
+                anything optional you choose to add: your phone or WhatsApp
+                number, company or organisation, budget range, timeline and
+                how you heard about us. We use them to reply and to discuss
+                your project. If the form can't send directly, it opens your
+                own email app with your details filled in instead; nothing is
+                sent until you press send there.
               </li>
               <li>
                 <strong>Newsletter signups.</strong> If you subscribe on our{" "}
@@ -125,15 +130,21 @@ const Privacy = () => {
                 here, so your browser loads them from Unsplash's servers.
               </li>
               <li>
+                <strong>Call scheduling.</strong> If you book a call through
+                our scheduling link, that provider receives the details you
+                enter, such as your name, email address and chosen time, and
+                handles them under its own privacy policy.
+              </li>
+              <li>
                 <strong>WhatsApp</strong> handles chats you start with our
                 "WhatsApp us" button. Those conversations happen on WhatsApp
                 and are covered by its own terms and privacy policy.
               </li>
               <li>
                 <strong>Plausible Analytics</strong>, when enabled, counts
-                visits and a few actions, such as form submissions. It does
-                not use cookies and only gives us aggregate numbers, not who
-                you are.
+                visits and a few actions, such as form submissions and the
+                type of service asked about. It does not use cookies and only
+                gives us aggregate numbers, not who you are.
               </li>
             </ul>
             <p>
