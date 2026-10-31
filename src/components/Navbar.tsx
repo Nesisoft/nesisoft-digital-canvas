@@ -5,9 +5,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
+import { team } from "@/data/team";
 import { useProjects } from "@/hooks/useProjects";
 
 type GroupKey = "services" | "work";
+
+// Same rule as the homepage Team section: no link to /team until
+// src/data/team.ts has someone in it, so the nav never leads to an empty page.
+const hasTeam = team.length > 0;
 
 const groups: Record<GroupKey, { label: string; eyebrow: string; description: string; all: To; allLabel: string }> = {
   services: {
@@ -213,7 +218,7 @@ const Navbar = () => {
     { label: "Services", to: { pathname: "/", hash: "#services" }, description: "Web, mobile, custom systems, design" },
     { label: "Work", to: { pathname: "/", hash: "#projects" }, description: "Our platforms and client builds" },
     { label: "Writing", to: "/blog", description: "Engineering notes and insights" },
-    { label: "Team", to: "/team", description: "The people behind the work" },
+    ...(hasTeam ? [{ label: "Team", to: "/team", description: "The people behind the work" }] : []),
     { label: "Contact", to: "/contact", description: "Send a project brief" },
   ];
 
@@ -311,17 +316,19 @@ const Navbar = () => {
                   <Indicator on={isActive.writing} />
                 </Link>
               </li>
-              <li>
-                <Link
-                  onClick={() => onNavigate("/team")}
-                  to="/team"
-                  aria-current={isActive.team ? "page" : undefined}
-                  className={cn(linkBase, isActive.team ? "text-white" : "text-slate-300 hover:text-white")}
-                >
-                  Team
-                  <Indicator on={isActive.team} />
-                </Link>
-              </li>
+              {hasTeam && (
+                <li>
+                  <Link
+                    onClick={() => onNavigate("/team")}
+                    to="/team"
+                    aria-current={isActive.team ? "page" : undefined}
+                    className={cn(linkBase, isActive.team ? "text-white" : "text-slate-300 hover:text-white")}
+                  >
+                    Team
+                    <Indicator on={isActive.team} />
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

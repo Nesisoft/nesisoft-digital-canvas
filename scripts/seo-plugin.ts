@@ -4,7 +4,7 @@ import type { Plugin } from "vite";
 
 /**
  * Build-time SEO plugin — generates dist/sitemap.xml and dist/rss.xml from
- * the live content sources (markdown blog posts + services + projects data).
+ * the live content sources (markdown blog posts + services + projects + team data).
  * Adding a post or a service auto-updates both feeds at next build.
  *
  * Why a plugin rather than a static file: any time the content drifts, the
@@ -23,16 +23,19 @@ export function seoPlugin(siteUrl: string): Plugin {
       const blogDir = path.join(root, "src", "content", "blog");
       const servicesFile = path.join(root, "src", "data", "services.ts");
       const projectsFile = path.join(root, "src", "data", "projects.ts");
+      const teamFile = path.join(root, "src", "data", "team.ts");
 
       const blogPosts = readBlogPosts(blogDir);
       const serviceSlugs = extractSlugs(servicesFile);
       const projectSlugs = extractSlugs(projectsFile);
+      const hasTeam = hasEntries(teamFile);
       const today = new Date().toISOString().split("T")[0];
 
       // ---- sitemap.xml ----
       const urls: Array<{ loc: string; lastmod?: string; priority: string; changefreq: string }> = [
         { loc: "/", priority: "1.0", changefreq: "weekly" },
-        { loc: "/team", priority: "0.7", changefreq: "monthly" },
+        // /team is a "coming soon" placeholder (and noindex) until team.ts has members.
+        ...(hasTeam ? [{ loc: "/team", priority: "0.7", changefreq: "monthly" }] : []),
         { loc: "/contact", priority: "0.8", changefreq: "monthly" },
         { loc: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
         ...serviceSlugs.map((slug) => ({
@@ -160,6 +163,19 @@ function extractSlugs(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
   const src = fs.readFileSync(filePath, "utf8");
   return Array.from(src.matchAll(/slug:\s*["']([^"']+)["']/g)).map((m) => m[1]);
+}
+
+/**
+ * True when a TS data file has at least one `id: ...` entry. Comments are
+ * stripped first so a commented-out example (like the one in team.ts) doesn't count.
+ */
+function hasEntries(filePath: string): boolean {
+  if (!fs.existsSync(filePath)) return false;
+  const src = fs
+    .readFileSync(filePath, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
+    .replace(/^\s*\/\/.*$/gm, ""); // whole-line // comments (not URLs inside strings)
+  return /\bid:/.test(src);
 }
 
 function escapeXml(value: string): string {
