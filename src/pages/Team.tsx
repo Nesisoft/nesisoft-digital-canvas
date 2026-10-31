@@ -13,8 +13,8 @@ const Team = () => {
       {/* Still reachable, but kept out of search results while it would only
           show the "coming soon" placeholder (src/data/team.ts is empty). */}
       <Seo
-        title="Team"
-        description="Meet the people behind Nesisoft — the senior, multi-disciplinary team designing and building software across Africa."
+        title="Meet Our Software Engineers & Designers in Accra"
+        description="Meet the designers, engineers and strategists behind Nesisoft, a software development company in Accra, Ghana, building web and mobile products for Africa."
         noindex={!team.length}
       />
       <PageShell>

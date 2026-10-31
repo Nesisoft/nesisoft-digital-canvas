@@ -51,8 +51,8 @@ const ServiceDetails = () => {
   return (
     <>
       <Seo
-        title={service.title}
-        description={service.fullDescription}
+        title={service.seoTitle ?? service.title}
+        description={service.seoDescription ?? service.fullDescription}
         image={service.image}
         jsonLd={[
           serviceJsonLd({

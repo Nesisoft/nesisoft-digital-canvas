@@ -10,6 +10,7 @@ interface ArticleMeta {
 }
 
 interface SeoProps {
+  /** Page title without the brand — " | Nesisoft" is appended. Omit for the homepage. */
   title?: string;
   description?: string;
   /** Path-relative or absolute image URL for social cards. */
@@ -49,9 +50,8 @@ export function Seo({
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const fullTitle = title
-      ? `${title} | ${siteConfig.name}`
-      : `${siteConfig.name} | ${siteConfig.tagline}`;
+    // Brand last on every page; pages without a title get the homepage one.
+    const fullTitle = `${title || siteConfig.seoTitle} | ${siteConfig.name}`;
     document.title = fullTitle;
 
     const url = canonical ?? `${siteConfig.url}${pathname}`;
