@@ -55,8 +55,8 @@ client-exposed variables must be prefixed with `VITE_`.
 | `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
 | `MONGODB_URI` | MongoDB connection string for the API. |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. |
-| `SESSION_SECRET` | Session signing secret. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production: admin login stays disabled if either is missing or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
+| `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
 | `CORS_ORIGIN` | Optional comma-separated origins allowed to call the API during local development. |
 
 ## Project structure
