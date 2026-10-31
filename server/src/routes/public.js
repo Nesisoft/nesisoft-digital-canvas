@@ -3,6 +3,7 @@ import { TeamMember } from "../models/TeamMember.js";
 import { Image } from "../models/Image.js";
 import { SiteContent, DEFAULT_CONTENT } from "../models/SiteContent.js";
 import { Project, serializeProject } from "../models/Project.js";
+import { IMAGE_TYPES } from "../imageTypes.js";
 import { asyncRouter } from "./asyncRouter.js";
 
 const router = asyncRouter();
@@ -82,10 +83,20 @@ router.get("/team", async (_req, res) => {
 
 // --- Images (binary served straight from Mongo) ---
 router.get("/images/:id", async (req, res) => {
+  // Also set app-wide, but this route serves uploaded bytes, so make sure
+  // browsers never second-guess the declared type.
+  res.set("X-Content-Type-Options", "nosniff");
   try {
     const image = await Image.findById(req.params.id);
     if (!image) return res.status(404).json({ error: "Image not found" });
-    res.set("Content-Type", image.contentType);
+    if (IMAGE_TYPES.includes(image.contentType)) {
+      res.set("Content-Type", image.contentType);
+    } else {
+      // Uploads from before the allowlist (e.g. SVG) download instead of
+      // rendering on our origin.
+      res.set("Content-Type", "application/octet-stream");
+      res.set("Content-Disposition", "attachment");
+    }
     res.set("Cache-Control", "public, max-age=31536000, immutable");
     res.send(image.data);
   } catch {

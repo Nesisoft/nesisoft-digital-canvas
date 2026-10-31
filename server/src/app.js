@@ -13,11 +13,27 @@ import adminRoutes from "./routes/admin.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../../dist");
 
+// Baseline security headers on every response, API and static alike. No CSP
+// yet: it would break the SPA's inline boot loader and third-party fonts.
+function securityHeaders(_req, res, next) {
+  res.set({
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+  });
+  // Production only: dev runs on plain-HTTP localhost.
+  if (isProd) {
+    res.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+}
+
 export function createApp() {
   const app = express();
   app.disable("x-powered-by");
   // Behind Vercel's proxy — required for secure cookies to be set over HTTPS.
   app.set("trust proxy", 1);
+  app.use(securityHeaders);
 
   // The public API is consumed cross-origin by the Vite app; the admin UI is
   // same-origin so its session cookie rides along without CORS concerns.
