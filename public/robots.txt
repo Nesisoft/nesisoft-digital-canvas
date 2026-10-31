@@ -6,4 +6,4 @@ Allow: /
 Disallow: /admin
 Disallow: /studio
 
-Sitemap: https://nesisoft.com/sitemap.xml
+Sitemap: https://www.nesisoft.com/sitemap.xml

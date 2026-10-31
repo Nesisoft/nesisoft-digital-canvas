@@ -15,8 +15,12 @@ export const siteConfig = {
   description:
     "Nesisoft is a full-cycle software development company building custom web, mobile, desktop, and IoT applications, as well as impactful platforms like Agoo, Sua, Adesuapa, and Jua for Africa's digital growth.",
 
-  /** Public site URL — used for canonical links, sitemap and OG tags. */
-  url: "https://nesisoft.com",
+  /**
+   * Public site URL — used for canonical links, sitemap and OG tags. The host
+   * 301-redirects the apex (nesisoft.com) to www, so this must stay on www.
+   * index.html repeats it in its static canonical / og:url tags.
+   */
+  url: "https://www.nesisoft.com",
 
   /** Default social-share image. Replace with a hosted brand asset. */
   ogImage: "https://i.ibb.co/8nvq5Kx2/appstore.png",

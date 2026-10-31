@@ -3,8 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { seoPlugin } from "./scripts/seo-plugin";
-
-const SITE_URL = "https://nesisoft.com";
+import { siteConfig } from "./src/config/site";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -35,7 +34,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === 'development' && componentTagger(),
-      seoPlugin(SITE_URL),
+      seoPlugin(siteConfig.url),
     ].filter(Boolean),
     resolve: {
       alias: {
