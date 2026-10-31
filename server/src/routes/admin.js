@@ -4,7 +4,12 @@ import { TeamMember } from "../models/TeamMember.js";
 import { Image } from "../models/Image.js";
 import { SiteContent, DEFAULT_CONTENT } from "../models/SiteContent.js";
 import { Project } from "../models/Project.js";
-import { checkCredentials, requireAuthApi } from "../auth.js";
+import {
+  adminLoginEnabled,
+  checkCredentials,
+  isAuthed,
+  requireAuthApi,
+} from "../auth.js";
 import { asyncRouter } from "./asyncRouter.js";
 
 const router = asyncRouter();
@@ -25,6 +30,10 @@ function slugify(value) {
 
 // --- Auth ---
 router.post("/login", (req, res) => {
+  // Production refuses every sign-in until real credentials are configured.
+  if (!adminLoginEnabled) {
+    return res.status(503).json({ error: "Admin login is not configured" });
+  }
   const { username, password } = req.body || {};
   if (!checkCredentials(username, password)) {
     return res.status(401).json({ error: "Invalid credentials" });
@@ -39,7 +48,7 @@ router.post("/logout", (req, res) => {
 });
 
 router.get("/me", (req, res) => {
-  res.json({ authed: !!req.session?.authed, username: req.session?.username });
+  res.json({ authed: isAuthed(req), username: req.session?.username });
 });
 
 // Everything below requires a session.

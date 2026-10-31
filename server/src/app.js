@@ -6,10 +6,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { connectDB, MONGODB_URI } from "./db.js";
+import { isProd, SESSION_SECRET } from "./auth.js";
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
 
-const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../../dist");
 
@@ -43,7 +43,8 @@ export function createApp() {
 
   const sessionOptions = {
     name: "nesisoft.sid",
-    secret: process.env.SESSION_SECRET || "dev-insecure-session-secret",
+    // Never a publicly known value in production (see auth.js).
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
