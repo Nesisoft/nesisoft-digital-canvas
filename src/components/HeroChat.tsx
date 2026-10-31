@@ -123,12 +123,19 @@ const scenarios: Scenario[] = [
 
 interface Message {
   from: "lead" | "studio";
-  text: string;
+  // Several strings only in the sizer: one per scenario, overlaid.
+  text: string | string[];
   delivery?: boolean;
   image?: string;
 }
 
 const SCENARIO_MS = 5200;
+
+// The live thread and its invisible sizer share one grid cell, so the
+// conversation is always as tall as the sizer.
+const threadClass = "col-start-1 row-start-1 flex flex-col gap-3.5 sm:gap-4";
+
+const caption = (scenario: Scenario) => `${scenario.product} ready for review`;
 
 export function HeroChat() {
   const [count, setCount] = useState(0);
@@ -194,10 +201,20 @@ export function HeroChat() {
     { from: "studio", text: scenario.reply },
     {
       from: "studio",
-      text: scenario.product,
+      text: caption(scenario),
       delivery: true,
       image: scenario.image,
     },
+  ];
+
+  // Every scenario fully revealed, each message stacking all its variants,
+  // with a blank block in place of the preview (so no image is fetched).
+  // Reduced motion only ever shows the one scenario.
+  const sized = reduceMotion ? [scenario] : scenarios;
+  const sizer: Message[] = [
+    { from: "lead", text: sized.map((s) => s.lead) },
+    { from: "studio", text: sized.map((s) => s.reply) },
+    { from: "studio", text: sized.map(caption), delivery: true },
   ];
 
   return (
@@ -232,21 +249,27 @@ export function HeroChat() {
         </div>
       </div>
 
-      {/* Conversation — top-aligned + fixed height so new bubbles slide in
-          without shoving the earlier ones around. Decorative, so screen
-          readers get a one-line summary instead of a looping script. */}
+      {/* Conversation — top-aligned, and held at the height of the tallest
+          full thread (the invisible sizer), so new bubbles slide in without
+          shoving the earlier ones around and nothing is ever cut off.
+          Decorative, so screen readers get a one-line summary instead of a
+          looping script. */}
       <p className="sr-only">
         Example: a client asks Nesisoft to build a {scenario.product.toLowerCase()}, and
         Nesisoft scopes, designs and delivers it for review.
       </p>
-      <div
-        aria-hidden
-        className="flex h-[21rem] flex-col justify-start gap-3.5 overflow-hidden p-4 sm:gap-4 sm:p-5"
-      >
-        {thread.slice(0, count).map((message, index) => (
-          <Bubble key={`${scenarioIndex}-${index}`} message={message} />
-        ))}
-        {typing && <Typing />}
+      <div aria-hidden className="grid overflow-hidden p-4 sm:p-5">
+        <div className={cn(threadClass, "invisible")}>
+          {sizer.map((message, index) => (
+            <Bubble key={index} message={message} />
+          ))}
+        </div>
+        <div className={threadClass}>
+          {thread.slice(0, count).map((message, index) => (
+            <Bubble key={`${scenarioIndex}-${index}`} message={message} />
+          ))}
+          {typing && <Typing />}
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-white/10 px-5 py-3">
@@ -290,15 +313,19 @@ function Bubble({ message }: { message: Message }) {
       <Avatar studio={studio} />
       {message.delivery ? (
         <div className="max-w-[80%] overflow-hidden border border-violet-400/30 bg-violet-500/10">
-          <img
-            src={message.image}
-            alt=""
-            className="h-24 w-full object-cover sm:h-28"
-          />
+          {message.image ? (
+            <img
+              src={message.image}
+              alt=""
+              className="h-24 w-full object-cover sm:h-28"
+            />
+          ) : (
+            <div className="h-24 sm:h-28" />
+          )}
           <div className="p-3">
             <div className="flex items-center gap-2 text-sm font-medium text-white">
               <Check className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-              {message.text} ready for review
+              <MessageText text={message.text} />
             </div>
             <span className="mt-1.5 inline-flex items-center text-xs font-medium text-violet-300">
               View staging
@@ -313,10 +340,25 @@ function Bubble({ message }: { message: Message }) {
             studio ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-200"
           )}
         >
-          {message.text}
+          <MessageText text={message.text} />
         </div>
       )}
     </div>
+  );
+}
+
+// Overlays every variant in one grid cell, so the bubble wraps to the width
+// and height of whichever is longest at the current size and font.
+function MessageText({ text }: { text: string | string[] }) {
+  if (typeof text === "string") return <>{text}</>;
+  return (
+    <span className="grid">
+      {text.map((variant, index) => (
+        <span key={index} className="col-start-1 row-start-1">
+          {variant}
+        </span>
+      ))}
+    </span>
   );
 }
 
