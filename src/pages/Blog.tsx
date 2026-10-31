@@ -301,7 +301,15 @@ const Blog = () => {
                     </Button>
                   </div>
                   <p className="mt-3 text-xs text-slate-400">
-                    No spam. Reply to any email from us to unsubscribe.
+                    No spam. We only use your email for these updates; reply
+                    to any of them to unsubscribe. See our{" "}
+                    <Link
+                      to="/privacy"
+                      className="text-violet-300 underline underline-offset-2 transition-colors hover:text-violet-200"
+                    >
+                      Privacy Policy
+                    </Link>
+                    .
                   </p>
                 </div>
               </div>
