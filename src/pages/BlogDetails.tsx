@@ -12,15 +12,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
+import { getPostBySlug } from "@/lib/blog";
 import { fetchPost, resolveImage } from "@/lib/api";
 
 const BlogDetails = () => {
   const { postId } = useParams();
-  const { data: blogPost, isLoading } = useQuery({
+  // A bundled Markdown post with this slug renders instantly (as placeholder
+  // data, so isLoading stays false) and stays up if the API can't serve it;
+  // the API's version replaces it once it arrives.
+  const bundledPost = getPostBySlug(postId);
+  const { data: blogPost = bundledPost, isLoading } = useQuery({
     queryKey: ["post", postId],
     queryFn: () => fetchPost(postId!),
     enabled: !!postId,
     retry: false,
+    placeholderData: bundledPost,
   });
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentData, setCommentData] = useState({ fullName: "", comment: "" });

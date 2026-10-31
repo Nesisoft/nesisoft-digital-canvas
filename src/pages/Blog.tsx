@@ -9,6 +9,7 @@ import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
+import { getAllPosts } from "@/lib/blog";
 import { fetchPosts, resolveImage } from "@/lib/api";
 
 const Blog = () => {
@@ -17,9 +18,14 @@ const Blog = () => {
   const [email, setEmail] = useState("");
 
 
-  const { data: blogPosts = [], isLoading, isError, refetch, isFetching } = useQuery({
+  // The bundled Markdown posts render instantly and stand in whenever the API
+  // can't serve the list; a successful API response (managed in /admin) wins.
+  // Without bundled posts, the skeleton and error state below still apply.
+  const bundledPosts = getAllPosts();
+  const { data: blogPosts = bundledPosts, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["posts"],
     queryFn: fetchPosts,
+    placeholderData: bundledPosts.length > 0 ? bundledPosts : undefined,
   });
   const categories = [
     "All",
@@ -118,7 +124,7 @@ const Blog = () => {
                 </div>
               ))}
             </div>
-          ) : isError ? (
+          ) : isError && blogPosts.length === 0 ? (
             <EmptyState
               title="Articles didn't load"
               description="We couldn't reach the blog just now. Check your connection and try again."
