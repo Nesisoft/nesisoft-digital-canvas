@@ -4,14 +4,18 @@ import { TeamGrid } from "@/components/Team";
 import { Seo } from "@/components/Seo";
 import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
+import { team } from "@/data/team";
 
 const Team = () => {
 
   return (
     <>
+      {/* Still reachable, but kept out of search results while it would only
+          show the "coming soon" placeholder (src/data/team.ts is empty). */}
       <Seo
         title="Team"
         description="Meet the people behind Nesisoft — the senior, multi-disciplinary team designing and building software across Africa."
+        noindex={!team.length}
       />
       <PageShell>
         <Navbar />
