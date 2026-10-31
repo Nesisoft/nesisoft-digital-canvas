@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { siteConfig } from "@/config/site";
 import { trackEvent } from "@/lib/analytics";
+import { WEB3FORMS_KEY, submitToWeb3Forms } from "@/lib/web3forms";
 
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -19,10 +20,6 @@ const contactSchema = z.object({
 });
 
 type ContactValues = z.infer<typeof contactSchema>;
-
-const WEB3FORMS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY as
-  | string
-  | undefined;
 
 const inputClass =
   "h-11 rounded-lg border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus-visible:border-violet-400/60 focus-visible:ring-violet-400";
@@ -90,24 +87,14 @@ export function ContactForm() {
     }
 
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          from_name: `${values.firstName} ${values.lastName}`,
-          subject: `[Website] ${values.subject}`,
-          email: values.email,
-          message: values.message,
-        }),
+      await submitToWeb3Forms({
+        from_name: `${values.firstName} ${values.lastName}`,
+        subject: `[Website] ${values.subject}`,
+        email: values.email,
+        message: values.message,
       });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Message sent! We'll get back to you shortly.");
-        reset();
-      } else {
-        throw new Error(data.message ?? "Submission failed");
-      }
+      toast.success("Message sent! We'll get back to you shortly.");
+      reset();
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong. Please email us directly.");
