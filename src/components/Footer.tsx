@@ -3,6 +3,9 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { internalProjects } from "@/data/projects";
+import { trackEvent } from "@/lib/analytics";
+
+const { bookingUrl } = siteConfig.contact;
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -131,11 +134,19 @@ const Footer = () => {
                   </a>
                 </li>
                 <li>
+                  {/* Opens the scheduling page when one is configured,
+                      otherwise rings the main line. */}
                   <a
-                    href={siteConfig.contact.phonePrimary.href}
+                    href={bookingUrl || siteConfig.contact.phonePrimary.href}
+                    target={bookingUrl ? "_blank" : undefined}
+                    rel={bookingUrl ? "noreferrer" : undefined}
+                    onClick={() => trackEvent("Book a Call")}
                     className="transition-colors hover:text-white"
                   >
                     Book a call
+                    {bookingUrl && (
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    )}
                   </a>
                 </li>
               </ul>

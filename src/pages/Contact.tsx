@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ContactForm } from "@/components/ContactForm";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 import { siteConfig } from "@/config/site";
+import { trackEvent } from "@/lib/analytics";
 
 const Contact = () => {
 
@@ -87,6 +88,29 @@ const Contact = () => {
                       </span>
                     </span>
                   </a>
+
+                  {siteConfig.contact.bookingUrl && (
+                    <a
+                      href={siteConfig.contact.bookingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => trackEvent("Book a Call")}
+                      className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.025] p-4 transition-colors hover:bg-white/[0.05]"
+                    >
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
+                        <CalendarClock className="h-5 w-5" />
+                      </span>
+                      <span>
+                        <span className="block text-sm font-medium text-white">
+                          Book a call
+                        </span>
+                        <span className="mt-1 block text-sm text-slate-300">
+                          Pick a time that suits you
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </span>
+                      </span>
+                    </a>
+                  )}
 
                   <div className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.025] p-4">
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
