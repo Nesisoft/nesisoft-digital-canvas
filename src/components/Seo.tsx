@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { siteConfig } from "@/config/site";
+import { SeoHeadCollector, type SeoHead } from "@/lib/seo-head";
 
 interface ArticleMeta {
   publishedTime?: string;
@@ -28,38 +29,66 @@ interface SeoProps {
 }
 
 /**
- * Client-side head management — sets <title>, meta description, canonical,
- * Open Graph / Twitter tags and optional JSON-LD per route.
+ * Head management — sets <title>, meta description, canonical, Open Graph /
+ * Twitter tags and optional JSON-LD per route.
  *
- * NOTE: Effect-based. Googlebot executes JS so it picks these up, but social
- * scrapers (Slack/iMessage/older crawlers) only read the static index.html.
- * For perfect non-JS link previews we need SSR/prerender (Phase 4).
+ * The build prerenders every public page (scripts/prerender-plugin.ts), and
+ * during that server render this hands its tags to the prerender, which
+ * writes them into the page's static <head> — so link previews and non-JS
+ * crawlers get each page's own tags. In the browser, an effect keeps them
+ * current as the visitor navigates.
  *
  * Companion helpers below build JSON-LD payloads for each page type.
  */
 export function Seo({
   title,
-  description = siteConfig.description,
-  image = siteConfig.ogImage,
-  type = "website",
-  noindex = false,
+  description,
+  image,
+  type,
+  noindex,
   jsonLd,
   article,
   canonical,
 }: SeoProps) {
   const { pathname } = useLocation();
 
+  const collect = useContext(SeoHeadCollector);
+  collect?.(
+    buildHead({ title, description, image, type, noindex, jsonLd, article, canonical }, pathname)
+  );
+
   useEffect(() => {
-    // Brand last on every page; pages without a title get the homepage one.
-    const fullTitle = `${title || siteConfig.seoTitle} | ${siteConfig.name}`;
-    document.title = fullTitle;
+    applyHead(
+      buildHead({ title, description, image, type, noindex, jsonLd, article, canonical }, pathname)
+    );
+  }, [title, description, image, type, noindex, jsonLd, article, canonical, pathname]);
 
-    const url = canonical ?? `${siteConfig.url}${pathname}`;
-    const absoluteImage = image.startsWith("http")
-      ? image
-      : `${siteConfig.url}${image}`;
+  return null;
+}
 
-    const tags: Array<[string, string, string | undefined]> = [
+function buildHead(
+  {
+    title,
+    description = siteConfig.description,
+    image = siteConfig.ogImage,
+    type = "website",
+    noindex = false,
+    jsonLd,
+    article,
+    canonical,
+  }: SeoProps,
+  pathname: string
+): SeoHead {
+  // Brand last on every page; pages without a title get the homepage one.
+  const fullTitle = `${title || siteConfig.seoTitle} | ${siteConfig.name}`;
+  const url = canonical ?? `${siteConfig.url}${pathname}`;
+  const absoluteImage = image.startsWith("http")
+    ? image
+    : `${siteConfig.url}${image}`;
+
+  return {
+    title: fullTitle,
+    meta: [
       ["name", "description", description],
       ["name", "robots", noindex ? "noindex, nofollow" : "index, follow"],
       // Open Graph
@@ -81,50 +110,52 @@ export function Seo({
       ["property", "article:modified_time", article?.modifiedTime],
       ["property", "article:author", article?.author],
       ["property", "article:section", article?.section],
-    ];
-
-    tags.forEach(([attr, key, value]) => {
-      const selector = `meta[${attr}="${key}"]`;
-      const existing = document.head.querySelector<HTMLMetaElement>(selector);
-      if (value === undefined || value === "") {
-        existing?.remove();
-        return;
-      }
-      const el = existing ?? document.createElement("meta");
-      if (!existing) {
-        el.setAttribute(attr, key);
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", value);
-    });
-
-    let link = document.head.querySelector<HTMLLinkElement>(
-      'link[rel="canonical"]'
-    );
-    if (!link) {
-      link = document.createElement("link");
-      link.setAttribute("rel", "canonical");
-      document.head.appendChild(link);
-    }
-    link.setAttribute("href", url);
-
+    ],
+    canonical: url,
     // JSON-LD structured data — one or many schemas per page.
-    document
-      .querySelectorAll('script[data-seo-jsonld="true"]')
-      .forEach((node) => node.remove());
-    if (jsonLd) {
-      const blocks = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
-      blocks.forEach((block) => {
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.dataset.seoJsonld = "true";
-        script.text = JSON.stringify(block);
-        document.head.appendChild(script);
-      });
-    }
-  }, [title, description, image, type, noindex, jsonLd, article, canonical, pathname]);
+    jsonLd: jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [],
+  };
+}
 
-  return null;
+/** Writes the tags into the live document, updating the existing ones in place. */
+function applyHead(head: SeoHead) {
+  document.title = head.title;
+
+  head.meta.forEach(([attr, key, value]) => {
+    const selector = `meta[${attr}="${key}"]`;
+    const existing = document.head.querySelector<HTMLMetaElement>(selector);
+    if (value === undefined || value === "") {
+      existing?.remove();
+      return;
+    }
+    const el = existing ?? document.createElement("meta");
+    if (!existing) {
+      el.setAttribute(attr, key);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", value);
+  });
+
+  let link = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]'
+  );
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", "canonical");
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", head.canonical);
+
+  document
+    .querySelectorAll('script[data-seo-jsonld="true"]')
+    .forEach((node) => node.remove());
+  head.jsonLd.forEach((block) => {
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.dataset.seoJsonld = "true";
+    script.text = JSON.stringify(block);
+    document.head.appendChild(script);
+  });
 }
 
 /* ------------------------------ JSON-LD helpers ------------------------------ */

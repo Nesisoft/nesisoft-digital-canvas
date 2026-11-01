@@ -83,6 +83,19 @@ export function getPostBySlug(slug: string | undefined): BlogPost | undefined {
   return posts.find((p) => p.slug === slug);
 }
 
+/**
+ * "15 Jan 2025". A fixed locale and UTC (ISO dates parse as UTC midnight), so
+ * the prerendered HTML and every visitor's browser show the same day.
+ */
+export function formatPostDate(date: string): string {
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function getCategories(): string[] {
   return ["All", ...Array.from(new Set(posts.map((p) => p.category)))];
 }

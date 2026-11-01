@@ -138,15 +138,22 @@ const threadClass = "col-start-1 row-start-1 flex flex-col gap-3.5 sm:gap-4";
 const caption = (scenario: Scenario) => `${scenario.product} ready for review`;
 
 export function HeroChat() {
-  const [count, setCount] = useState(0);
+  // Starts on the full thread, so the prerendered page (and anyone without
+  // JavaScript) sees a whole conversation; playback restarts it once in view.
+  const [count, setCount] = useState(3);
   const [typing, setTyping] = useState(false);
   const [scenarioIndex, setScenarioIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
-  const [reduceMotion] = useState(
-    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-  );
+  // Read after mount: the first render has to match the prerendered HTML,
+  // which can't know the visitor's setting. Nothing plays before inView
+  // flips, so reduced motion still never sees an animation.
+  const [reduceMotion, setReduceMotion] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setReduceMotion(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+  }, []);
 
   useEffect(() => {
     const el = rootRef.current;

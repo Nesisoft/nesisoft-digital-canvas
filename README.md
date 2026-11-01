@@ -82,6 +82,8 @@ server/src/
   models/         Mongoose models
 scripts/
   seo-plugin.ts   Build-time sitemap.xml + rss.xml generation
+  site-routes.ts  The public route list shared by the sitemap and prerender
+  prerender-plugin.ts  Build-time prerender of every public page (see below)
 ```
 
 ### Editing content
@@ -124,5 +126,24 @@ members, uploaded images, and editable homepage content.
 
 Deploy the repository root as one **Vercel** project. Set the server-only
 environment variables in Vercel project settings, then build with
-`npm run build`. `vercel.json` sends non-asset frontend routes to `index.html`
-while Vercel handles `/api/...` with the Express functions in `api/`.
+`npm run build`. `vercel.json` sends non-asset frontend routes that weren't
+prerendered to `200.html` while Vercel handles `/api/...` with the Express
+functions in `api/`.
+
+### Prerendering
+
+`npm run build` also renders every public page (home, blog and posts,
+services, projects, contact, privacy, team) to static HTML with React's server
+renderer (`scripts/prerender-plugin.ts`, `src/entry-server.tsx`), so search
+engines, AI crawlers and link previews that don't run JavaScript get each
+page's real content and its own title, description, canonical, Open Graph tags
+and JSON-LD. The browser then hydrates that markup. The route list lives in
+`scripts/site-routes.ts` and also feeds the sitemap.
+
+Each page is written as both `dist/<path>/index.html` and `dist/<path>.html`,
+plus `dist/404.html` and `dist/200.html` — the plain client-only shell for
+everything that isn't prerendered (`/admin`, unknown URLs). On a static host,
+point the SPA fallback at the shell: on Render, the rewrite rule should be
+`/*` → `/200.html` (Render serves real files before applying rules). If the
+fallback still points at `/index.html`, pages keep working: a prerendered page
+served for another URL hides itself and the app renders the right one.

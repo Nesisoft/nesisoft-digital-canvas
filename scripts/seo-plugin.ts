@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
+import { getSiteRoutes, readBlogPosts } from "./site-routes";
 
 /**
  * Build-time SEO plugin — generates dist/sitemap.xml and dist/rss.xml from
@@ -14,48 +15,20 @@ import type { Plugin } from "vite";
 export function seoPlugin(siteUrl: string): Plugin {
   return {
     name: "nesisoft-seo",
-    apply: "build",
+    // Client build only: the prerender's SSR build (prerender-plugin.ts) reuses
+    // this config, and has no feeds to write.
+    apply: (_, env) => env.command === "build" && !env.isSsrBuild,
     closeBundle() {
       const root = process.cwd();
       const outDir = path.join(root, "dist");
       if (!fs.existsSync(outDir)) return;
 
-      const blogDir = path.join(root, "src", "content", "blog");
-      const servicesFile = path.join(root, "src", "data", "services.ts");
-      const projectsFile = path.join(root, "src", "data", "projects.ts");
-      const teamFile = path.join(root, "src", "data", "team.ts");
-
-      const blogPosts = readBlogPosts(blogDir);
-      const serviceSlugs = extractSlugs(servicesFile);
-      const projectSlugs = extractSlugs(projectsFile);
-      const hasTeam = hasEntries(teamFile);
+      const blogPosts = readBlogPosts(path.join(root, "src", "content", "blog"));
       const today = new Date().toISOString().split("T")[0];
 
       // ---- sitemap.xml ----
-      const urls: Array<{ loc: string; lastmod?: string; priority: string; changefreq: string }> = [
-        { loc: "/", priority: "1.0", changefreq: "weekly" },
-        // /team is a "coming soon" placeholder (and noindex) until team.ts has members.
-        ...(hasTeam ? [{ loc: "/team", priority: "0.7", changefreq: "monthly" }] : []),
-        { loc: "/contact", priority: "0.8", changefreq: "monthly" },
-        { loc: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
-        { loc: "/privacy", priority: "0.3", changefreq: "yearly" },
-        ...serviceSlugs.map((slug) => ({
-          loc: `/services/${slug}`,
-          priority: "0.6",
-          changefreq: "monthly",
-        })),
-        ...projectSlugs.map((slug) => ({
-          loc: `/projects/${slug}`,
-          priority: "0.5",
-          changefreq: "monthly",
-        })),
-        ...blogPosts.map((post) => ({
-          loc: `/blog/${post.slug}`,
-          priority: "0.6",
-          changefreq: "monthly",
-          lastmod: post.date,
-        })),
-      ];
+      // The same route list the prerender renders, minus its noindex pages.
+      const urls = getSiteRoutes(root).filter((route) => !route.noindex);
 
       const sitemap =
         `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -63,7 +36,7 @@ export function seoPlugin(siteUrl: string): Plugin {
         urls
           .map(
             (u) =>
-              `  <url>\n    <loc>${siteUrl}${u.loc}</loc>\n` +
+              `  <url>\n    <loc>${siteUrl}${u.path}</loc>\n` +
               (u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>\n` : "") +
               `    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`
           )
@@ -110,73 +83,6 @@ export function seoPlugin(siteUrl: string): Plugin {
       void today;
     },
   };
-}
-
-interface BlogEntry {
-  slug: string;
-  title: string;
-  excerpt: string;
-  author: string;
-  date: string;
-}
-
-function readBlogPosts(dir: string): BlogEntry[] {
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((name) => name.endsWith(".md"))
-    .map((name) => {
-      const raw = fs.readFileSync(path.join(dir, name), "utf8");
-      const meta = parseFrontmatter(raw);
-      return {
-        slug: name.replace(/\.md$/, ""),
-        title: meta.title ?? name,
-        excerpt: meta.excerpt ?? "",
-        author: meta.author ?? "Nesisoft Team",
-        date: meta.date ?? "1970-01-01",
-      };
-    })
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
-}
-
-function parseFrontmatter(raw: string): Record<string, string> {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
-  if (!match) return {};
-  const out: Record<string, string> = {};
-  for (const line of match[1].split(/\r?\n/)) {
-    const idx = line.indexOf(":");
-    if (idx === -1) continue;
-    const key = line.slice(0, idx).trim();
-    let value = line.slice(idx + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (key) out[key] = value;
-  }
-  return out;
-}
-
-/** Pull every `slug: "..."` value out of a TS data file. */
-function extractSlugs(filePath: string): string[] {
-  if (!fs.existsSync(filePath)) return [];
-  const src = fs.readFileSync(filePath, "utf8");
-  return Array.from(src.matchAll(/slug:\s*["']([^"']+)["']/g)).map((m) => m[1]);
-}
-
-/**
- * True when a TS data file has at least one `id: ...` entry. Comments are
- * stripped first so a commented-out example (like the one in team.ts) doesn't count.
- */
-function hasEntries(filePath: string): boolean {
-  if (!fs.existsSync(filePath)) return false;
-  const src = fs
-    .readFileSync(filePath, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
-    .replace(/^\s*\/\/.*$/gm, ""); // whole-line // comments (not URLs inside strings)
-  return /\bid:/.test(src);
 }
 
 function escapeXml(value: string): string {
