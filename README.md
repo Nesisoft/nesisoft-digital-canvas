@@ -24,7 +24,7 @@ there).
 
 ## Getting started
 
-The only requirement is Node.js & npm (or [bun](https://bun.sh)).
+The only requirement is Node.js (20 or newer) & npm.
 
 ```sh
 # Install dependencies
@@ -65,7 +65,7 @@ site and the API read it). All client-exposed variables must be prefixed with
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production (with `ADMIN_PASSWORD_HASH` standing in for `ADMIN_PASSWORD`): admin login stays disabled if the username or both password variables are missing, or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
 | `ADMIN_PASSWORD_HASH` | Preferred over `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set; a malformed hash disables admin login in production. |
 | `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
-| `CORS_ORIGIN` | Optional comma-separated origins allowed to call the API during local development. |
+| `CORS_ORIGIN` | Optional comma-separated extra origins allowed to call the API (e.g. a dev server on another port). Same-origin requests are always allowed. |
 
 ## Project structure
 
@@ -157,13 +157,44 @@ Every table has row level security enabled with no policies, so Supabase's
 public REST API can't read or change them; the server connects as the table
 owner, which isn't subject to RLS.
 
-## Deployment
+## Deployment (Vercel)
 
-Deploy the repository root as one **Vercel** project. Set the server-only
-environment variables in Vercel project settings, then build with
-`npm run build`. `vercel.json` sends non-asset frontend routes that weren't
-prerendered to `200.html` while Vercel handles `/api/...` with the Express
-functions in `api/`.
+The repository root deploys as one **Vercel** project: the prerendered pages
+and assets from `dist/` are served by Vercel's CDN, and `api/` runs the Express
+app as a serverless function for `/api/...`, so the site, `/admin` and the API
+share one domain (and the admin session cookie stays first-party).
+
+1. **Import** the GitHub repository in Vercel. It detects Vite: build command
+   `npm run build`, output directory `dist`.
+2. **Environment variables** (Project Settings → Environment Variables), for
+   the Production environment:
+   - `DATABASE_URL` — Supabase's **Transaction pooler** URI (port 6543)
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` (from `npm run hash-password`;
+     or `ADMIN_PASSWORD`), `SESSION_SECRET`
+   - `VITE_WEB3FORMS_ACCESS_KEY`, and optionally `VITE_PLAUSIBLE_DOMAIN`.
+     `VITE_` values are baked in at build time, so redeploy after changing them.
+
+   Keep the database and Supabase variables out of the Preview environment
+   (or point it at a separate Supabase project) so preview deployments can't
+   change production content.
+3. **Database:** run `npm run seed` once from your machine with `DATABASE_URL`
+   (and the Supabase keys) in `.env.local`; see [Database](#database-supabase).
+   For later schema changes, run `npm run db:migrate` before deploying the
+   code that needs them.
+4. **Domains** (Project Settings → Domains): add `www.nesisoft.com` and
+   `nesisoft.com`, with `nesisoft.com` redirecting to `www`. Create the DNS
+   records Vercel shows; if DNS is on Cloudflare, set them to "DNS only" so
+   Vercel can issue the certificates.
+
+`vercel.json` adds security headers to every response, caches hashed assets
+for a year, and sends routes that weren't prerendered (`/admin`, unknown URLs)
+to the client-only shell `200.html`. Vercel serves real files before applying
+those rewrites, so prerendered pages are always served as-is.
+
+`npm start` runs the same Express app as a single Node server (API plus the
+built site, prerendered pages included) for self-hosting or a local check of a
+production build.
 
 ### Prerendering
 
@@ -177,8 +208,7 @@ and JSON-LD. The browser then hydrates that markup. The route list lives in
 
 Each page is written as both `dist/<path>/index.html` and `dist/<path>.html`,
 plus `dist/404.html` and `dist/200.html` — the plain client-only shell for
-everything that isn't prerendered (`/admin`, unknown URLs). On a static host,
-point the SPA fallback at the shell: on Render, the rewrite rule should be
-`/*` → `/200.html` (Render serves real files before applying rules). If the
-fallback still points at `/index.html`, pages keep working: a prerendered page
-served for another URL hides itself and the app renders the right one.
+everything that isn't prerendered (`/admin`, unknown URLs). Point a host's SPA
+fallback at the shell (`vercel.json` already does). If a host's fallback serves
+`/index.html` instead, pages keep working: a prerendered page served for
+another URL hides itself and the app renders the right one.

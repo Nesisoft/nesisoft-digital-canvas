@@ -3,6 +3,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cors from "cors";
 import multer from "multer";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,6 +30,35 @@ function securityHeaders(_req, res, next) {
   next();
 }
 
+function isSameOrigin(origin, host) {
+  try {
+    return Boolean(host) && new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The built file for a page: dist/index.html for "/", otherwise the
+ * prerendered dist/<path>.html or dist/<path>/index.html, and the client-only
+ * shell (200.html) for anything that wasn't prerendered (/admin, unknown URLs).
+ */
+function pageFile(urlPath) {
+  let clean;
+  try {
+    clean = decodeURIComponent(urlPath).replace(/\/+$/, "");
+  } catch {
+    return path.join(distDir, "200.html"); // malformed %-escape
+  }
+  const candidates = clean ? [`${clean}.html`, `${clean}/index.html`] : ["index.html"];
+  for (const candidate of candidates) {
+    const file = path.join(distDir, candidate);
+    // path.join resolves "..", so this keeps every lookup inside dist/.
+    if (file.startsWith(distDir + path.sep) && fs.existsSync(file)) return file;
+  }
+  return path.join(distDir, "200.html");
+}
+
 export function createApp() {
   const app = express();
   app.disable("x-powered-by");
@@ -45,15 +75,18 @@ export function createApp() {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  // Browsers send Origin on same-origin POSTs too (the /admin login on
+  // www.nesisoft.com), so a request from the API's own host is always
+  // allowed; CORS_ORIGIN only lists the extra, cross-origin dev servers.
   app.use(
-    cors({
-      origin: (origin, cb) => {
-        if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-        const err = new Error(`Origin ${origin} not allowed by CORS`);
-        err.status = 403;
-        cb(err);
-      },
-      credentials: true,
+    cors((req, cb) => {
+      const origin = req.get("Origin");
+      if (!origin || allowedOrigins.includes(origin) || isSameOrigin(origin, req.get("Host"))) {
+        return cb(null, { origin: true, credentials: true });
+      }
+      const err = new Error(`Origin ${origin} not allowed by CORS`);
+      err.status = 403;
+      cb(err);
     }),
   );
 
@@ -98,18 +131,23 @@ export function createApp() {
 
   app.use(session(sessionOptions));
 
+  // "/" belongs to the site (npm start serves the homepage there), so the
+  // status check lives here only.
   app.get("/health", (_req, res) => res.json({ ok: true }));
-  app.get("/", (_req, res) => res.json({ ok: true, status: "green" }));
 
   // Pure JSON API. The admin UI is a route in the public site
   // (www.nesisoft.com/admin) and talks to these endpoints.
   app.use("/api", publicRoutes);
   app.use("/api/admin", adminRoutes);
 
+  // `npm start` serves the built site too (on Vercel the CDN does). Assets and
+  // other real files come straight from dist/; no directory index or
+  // trailing-slash redirect, so /blog stays /blog and gets its prerendered
+  // page below, matching the canonical URLs.
   if (isProd && !process.env.VERCEL) {
-    app.use(express.static(distDir));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distDir, "index.html"));
+    app.use(express.static(distDir, { index: false, redirect: false }));
+    app.get("*", (req, res) => {
+      res.sendFile(pageFile(req.path));
     });
   }
 
