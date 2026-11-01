@@ -10,7 +10,7 @@ import { parsePasswordHash, verifyPassword } from "./password.js";
  * TODO: move to a real user store if we ever need more than one admin.
  */
 
-// Shared with app.js (secure cookies, Mongo session store, static serving).
+// Shared with app.js (secure cookies, static serving).
 export const isProd =
   process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 

@@ -1,11 +1,12 @@
 import express from "express";
 import session from "express-session";
-import MongoStore from "connect-mongo";
+import connectPgSimple from "connect-pg-simple";
 import cors from "cors";
+import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { connectDB, MONGODB_URI } from "./db.js";
+import { INVALID_INPUT_CODES, databaseConfigured, getPool, isConnectionError } from "./db.js";
 import { isProd, SESSION_SECRET } from "./auth.js";
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
@@ -48,7 +49,9 @@ export function createApp() {
     cors({
       origin: (origin, cb) => {
         if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-        cb(new Error(`Origin ${origin} not allowed by CORS`));
+        const err = new Error(`Origin ${origin} not allowed by CORS`);
+        err.status = 403;
+        cb(err);
       },
       credentials: true,
     }),
@@ -73,33 +76,30 @@ export function createApp() {
     },
   };
 
-  if (isProd) {
-    // Persist sessions in MongoDB so logins survive across serverless
-    // invocations. Local dev uses MemoryStore to avoid a second Mongo client
-    // crashing the API when Atlas is unavailable.
-    const store = MongoStore.create({ mongoUrl: MONGODB_URI });
-    store.on("error", (err) => {
+  if (databaseConfigured) {
+    // Sessions live in Postgres (the "session" table from the migrations), so
+    // admin logins survive restarts and serverless instances. Without a
+    // usable database there's no data to administer anyway; MemoryStore will
+    // do, and the data routes answer 503.
+    try {
+      const PgStore = connectPgSimple(session);
+      sessionOptions.store = new PgStore({
+        pool: getPool(),
+        tableName: "session",
+        // Serverless instances are short-lived; skip the background pruning
+        // timer there (the login route prunes expired rows instead).
+        pruneSessionInterval: process.env.VERCEL ? false : 15 * 60,
+        errorLog: (...args) => console.error("[session]", ...args),
+      });
+    } catch (err) {
       console.error("[session]", err.message);
-    });
-    sessionOptions.store = store;
+    }
   }
 
   app.use(session(sessionOptions));
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
   app.get("/", (_req, res) => res.json({ ok: true, status: "green" }));
-
-  // Ensure a live DB connection before handling any data route (serverless
-  // functions start cold). Cached, so this is a no-op once connected.
-  app.use(async (_req, _res, next) => {
-    try {
-      await connectDB();
-      next();
-    } catch (err) {
-      err.status = 503;
-      next(err);
-    }
-  });
 
   // Pure JSON API. The admin UI is a route in the public site
   // (www.nesisoft.com/admin) and talks to these endpoints.
@@ -113,12 +113,39 @@ export function createApp() {
     });
   }
 
+  // Unknown API paths answer in JSON like the rest of the API.
+  app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
+
   // JSON error handler (keeps CORS/multer errors from leaking HTML stacks).
-  app.use((err, _req, res, _next) => {
+  app.use((err, _req, res, next) => {
+    // Too late to send an error body; let Express close the connection.
+    if (res.headersSent) return next(err);
+
+    let status = err.status || err.statusCode;
+    let message = err.message;
+    if (err.code === "LIMIT_FILE_SIZE") {
+      status = 413;
+      message = "Image is too large (4 MB max)";
+    } else if (err instanceof multer.MulterError || /^(Multipart|Unexpected end of form)/.test(message)) {
+      status = 400; // malformed upload: wrong field, extra file, truncated body
+    } else if (!status && INVALID_INPUT_CODES.includes(err.code)) {
+      status = 400; // Postgres rejected the input (bad number/date, NUL byte…)
+      message = "Invalid input";
+    } else if (!status && isConnectionError(err)) {
+      status = 503; // e.g. the session store can't reach the database
+    }
+    status ||= 500;
     console.error("[error]", err.message);
-    res
-      .status(err.status || 500)
-      .json({ error: err.message || "Server error" });
+    // 4xx messages tell the client what to fix. 5xx ones can carry internals
+    // (database hosts, SQL), so production sends a generic line instead,
+    // unless the error carries one that's safe to show, and the details stay
+    // in the log.
+    if (status >= 500 && isProd) {
+      message =
+        err.publicMessage ||
+        (status === 503 ? "Service temporarily unavailable" : "Server error");
+    }
+    res.status(status).json({ error: message || "Server error" });
   });
 
   return app;

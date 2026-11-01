@@ -73,7 +73,7 @@ export function TeamForm({ member, saving, onSave, onDelete }: TeamFormProps) {
           className="min-h-[6rem]"
         />
       </Field>
-      <Field label="Photo" hint="Paste a URL or upload (stored in MongoDB)">
+      <Field label="Photo" hint="Paste a URL or upload (stored in Supabase Storage)">
         <ImageField value={form.image} onChange={(url) => set("image", url)} round />
       </Field>
       <FormRow>

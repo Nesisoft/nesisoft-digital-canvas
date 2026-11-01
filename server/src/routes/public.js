@@ -1,107 +1,51 @@
-import { BlogPost } from "../models/BlogPost.js";
-import { TeamMember } from "../models/TeamMember.js";
-import { Image } from "../models/Image.js";
-import { SiteContent, DEFAULT_CONTENT } from "../models/SiteContent.js";
-import { Project, serializeProject } from "../models/Project.js";
-import { IMAGE_TYPES } from "../imageTypes.js";
+import { findPublishedPost, listPublishedPosts, toPublicPost } from "../models/posts.js";
+import {
+  findPublishedProject,
+  listPublishedProjects,
+  toPublicProject,
+} from "../models/projects.js";
+import { listPublishedMembers, toPublicMember } from "../models/team.js";
+import { getContent } from "../models/content.js";
 import { asyncRouter } from "./asyncRouter.js";
 
 const router = asyncRouter();
 
-function estimateReadTime(body = "") {
-  const words = body.trim().split(/\s+/).filter(Boolean).length;
-  return `${Math.max(1, Math.round(words / 200))} min read`;
-}
-
-function serializePost(doc) {
-  return {
-    slug: doc.slug,
-    title: doc.title,
-    excerpt: doc.excerpt,
-    content: doc.content,
-    image: doc.image,
-    category: doc.category,
-    author: doc.author,
-    date: doc.date ? doc.date.toISOString() : "",
-    readTime: estimateReadTime(doc.content),
-  };
-}
-
-function serializeMember(doc) {
-  return {
-    id: doc._id.toString(),
-    name: doc.name,
-    role: doc.role,
-    bio: doc.bio,
-    image: doc.image,
-    order: doc.order,
-    socials: doc.socials || {},
-  };
-}
-
 // --- Blog ---
 router.get("/posts", async (_req, res) => {
-  const posts = await BlogPost.find({ published: true }).sort({ date: -1 });
-  res.json(posts.map(serializePost));
+  const posts = await listPublishedPosts();
+  res.json(posts.map(toPublicPost));
 });
 
 router.get("/posts/:slug", async (req, res) => {
-  const post = await BlogPost.findOne({
-    slug: req.params.slug,
-    published: true,
-  });
+  const post = await findPublishedPost(req.params.slug);
   if (!post) return res.status(404).json({ error: "Post not found" });
-  res.json(serializePost(post));
+  res.json(toPublicPost(post));
 });
 
 // --- Projects ---
 router.get("/projects", async (_req, res) => {
-  const docs = await Project.find({ published: true }).sort({ order: 1, createdAt: 1 });
-  res.json(docs.map(serializeProject));
+  const projects = await listPublishedProjects();
+  res.json(projects.map(toPublicProject));
 });
 
 router.get("/projects/:slug", async (req, res) => {
-  const doc = await Project.findOne({ slug: req.params.slug, published: true });
-  if (!doc) return res.status(404).json({ error: "Project not found" });
-  res.json(serializeProject(doc));
+  const project = await findPublishedProject(req.params.slug);
+  if (!project) return res.status(404).json({ error: "Project not found" });
+  res.json(toPublicProject(project));
 });
 
 // --- Site content (editable marketing copy) ---
 router.get("/content", async (_req, res) => {
-  const doc = await SiteContent.findOne({ key: "main" }).lean();
-  res.json(doc ? { hero: doc.hero, about: doc.about } : DEFAULT_CONTENT);
+  res.json(await getContent());
 });
 
 // --- Team ---
 router.get("/team", async (_req, res) => {
-  const members = await TeamMember.find({ published: true }).sort({
-    order: 1,
-    createdAt: 1,
-  });
-  res.json(members.map(serializeMember));
+  const members = await listPublishedMembers();
+  res.json(members.map(toPublicMember));
 });
 
-// --- Images (binary served straight from Mongo) ---
-router.get("/images/:id", async (req, res) => {
-  // Also set app-wide, but this route serves uploaded bytes, so make sure
-  // browsers never second-guess the declared type.
-  res.set("X-Content-Type-Options", "nosniff");
-  try {
-    const image = await Image.findById(req.params.id);
-    if (!image) return res.status(404).json({ error: "Image not found" });
-    if (IMAGE_TYPES.includes(image.contentType)) {
-      res.set("Content-Type", image.contentType);
-    } else {
-      // Uploads from before the allowlist (e.g. SVG) download instead of
-      // rendering on our origin.
-      res.set("Content-Type", "application/octet-stream");
-      res.set("Content-Disposition", "attachment");
-    }
-    res.set("Cache-Control", "public, max-age=31536000, immutable");
-    res.send(image.data);
-  } catch {
-    res.status(400).json({ error: "Invalid image id" });
-  }
-});
+// Uploaded images are served by Supabase Storage's CDN (see storage.js), so
+// there's no image route here any more.
 
 export default router;
