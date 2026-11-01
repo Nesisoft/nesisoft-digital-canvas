@@ -9,7 +9,7 @@ import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
-import { getAllPosts } from "@/lib/blog";
+import { formatPostDate, getAllPosts } from "@/lib/blog";
 import { fetchPosts, resolveImage } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { WEB3FORMS_KEY, submitToWeb3Forms } from "@/lib/web3forms";
@@ -201,11 +201,7 @@ const Blog = () => {
                     <div className="mb-4 flex flex-wrap gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        {new Date(post.date).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatPostDate(post.date)}
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <User className="h-3.5 w-3.5" />

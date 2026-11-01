@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/admin", "destination": "/index.html" },
-    { "source": "/admin/:path*", "destination": "/index.html" },
-    { "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/admin", "destination": "/200.html" },
+    { "source": "/admin/:path*", "destination": "/200.html" },
+    { "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/200.html" }
   ],
   "headers": [
     {

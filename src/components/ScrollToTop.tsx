@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
@@ -7,10 +7,15 @@ import { useLocation } from "react-router-dom";
  */
 export function ScrollToTop() {
   const { pathname, hash } = useLocation();
+  const firstLoad = useRef(true);
 
   useEffect(() => {
+    const isFirstLoad = firstLoad.current;
+    firstLoad.current = false;
     if (!hash) {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      // The first load is where the browser put it: on a prerendered page the
+      // visitor may already have scrolled before the app hydrated.
+      if (!isFirstLoad) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       return;
     }
     // Lazy routes and async content can mount after this effect; retry briefly.

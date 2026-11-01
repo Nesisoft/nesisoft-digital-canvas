@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { seoPlugin } from "./scripts/seo-plugin";
+import { prerenderPlugin } from "./scripts/prerender-plugin";
 import { siteConfig } from "./src/config/site";
 
 // https://vitejs.dev/config/
@@ -35,6 +36,7 @@ export default defineConfig(({ mode }) => {
       react(),
       mode === 'development' && componentTagger(),
       seoPlugin(siteConfig.url),
+      prerenderPlugin(),
     ].filter(Boolean),
     resolve: {
       alias: {

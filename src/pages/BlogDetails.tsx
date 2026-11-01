@@ -9,7 +9,7 @@ import { Seo, blogPostingJsonLd, breadcrumbsJsonLd } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
-import { getPostBySlug } from "@/lib/blog";
+import { formatPostDate, getPostBySlug } from "@/lib/blog";
 import { fetchPost, resolveImage } from "@/lib/api";
 
 const BlogDetails = () => {
@@ -115,7 +115,7 @@ const BlogDetails = () => {
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
               <Calendar className="h-4 w-4 text-violet-300" />
-              {new Date(blogPost.date).toLocaleDateString()}
+              {formatPostDate(blogPost.date)}
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
               <Clock className="h-4 w-4 text-violet-300" />

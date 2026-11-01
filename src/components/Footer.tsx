@@ -156,7 +156,9 @@ const Footer = () => {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <p>© {currentYear} Nesisoft. All rights reserved.</p>
+            {/* Prerendered with the build's year; once the year turns, the
+                browser's differs, and React should just update the text. */}
+            <p suppressHydrationWarning>© {currentYear} Nesisoft. All rights reserved.</p>
             <Link to="/privacy" className="transition-colors hover:text-white">
               Privacy
             </Link>

@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RouteFallback } from "@/components/RouteFallback";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { createQueryClient } from "@/lib/queryClient";
 import Index from "./pages/Index";
 
 // Secondary routes are code-split so the landing page (the primary entry
@@ -25,25 +26,23 @@ const BlogStudio = import.meta.env.DEV
   ? lazy(() => import("./pages/BlogStudio"))
   : null;
 
-// Cache fetched content so navigating between pages doesn't refetch on every
-// mount. Data stays "fresh" for 5 min and is served from cache meanwhile;
-// admin edits call invalidateQueries to refresh immediately.
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 30 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+const browserQueryClient = createQueryClient();
 
-const App = () => (
+interface AppProps {
+  /**
+   * The prerender (src/entry-server.tsx) renders this same tree with a
+   * StaticRouter for the page's URL and a query client of its own, so the
+   * browser can hydrate that markup instead of rendering the page again.
+   */
+  router?: ComponentType<{ children?: ReactNode }>;
+  queryClient?: QueryClient;
+}
+
+const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient }: AppProps) => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <Sonner />
-      <BrowserRouter>
+      <Router>
         <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
@@ -62,7 +61,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   </ErrorBoundary>
 );
