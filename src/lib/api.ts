@@ -1,5 +1,5 @@
 /**
- * Client for the same-origin Express + MongoDB API. Blog posts and the
+ * Client for the same-origin Express + PostgreSQL API. Blog posts and the
  * team are now managed in the /admin panel and served live from this API.
  *
  * Base URL is normally empty: /api is same-origin in dev and production.
@@ -79,9 +79,9 @@ export interface TeamMember {
 }
 
 /**
- * Resolve an image reference to a fully-qualified URL. Images stored in Mongo
- * come back as relative paths like "/api/images/:id" — prefix those with the
- * API origin. External URLs (http...) are returned untouched.
+ * Resolve an image reference to a fully-qualified URL. Uploads are stored in
+ * Supabase Storage and saved as absolute URLs, which are returned untouched,
+ * as are other external and data: URLs; a relative path gets the API origin.
  */
 export function resolveImage(src: string | undefined): string {
   if (!src) return "";

@@ -23,7 +23,7 @@ export function ImageField({ value, onChange, round }: ImageFieldProps) {
     try {
       const { url } = await uploadImage(file);
       onChange(url);
-      toast.success("Image uploaded to MongoDB");
+      toast.success("Image uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -45,7 +45,7 @@ export function ImageField({ value, onChange, round }: ImageFieldProps) {
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="/api/images/... or https://..."
+          placeholder="https://..."
           className="rounded-lg border-white/10 bg-black/20 text-white placeholder:text-slate-500"
         />
         <input

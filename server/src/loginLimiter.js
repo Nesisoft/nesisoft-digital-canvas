@@ -7,7 +7,7 @@
  *
  * Counters live in memory, which suits a single admin. Each serverless
  * instance (and each restart) keeps its own, so on Vercel the limits apply
- * per warm instance. Swap the store for MongoDB behind this same
+ * per warm instance. Swap the store for Postgres behind this same
  * consume/reset interface if that ever matters.
  */
 export function createLoginLimiter({

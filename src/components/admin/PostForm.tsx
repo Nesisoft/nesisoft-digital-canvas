@@ -75,7 +75,7 @@ export function PostForm({ post, saving, onSave, onDelete }: PostFormProps) {
           className="min-h-[5rem]"
         />
       </Field>
-      <Field label="Cover image" hint="Paste a URL or upload (stored in MongoDB)">
+      <Field label="Cover image" hint="Paste a URL or upload (stored in Supabase Storage)">
         <ImageField value={form.image} onChange={(url) => set("image", url)} />
       </Field>
       <Field label="Content (Markdown)">

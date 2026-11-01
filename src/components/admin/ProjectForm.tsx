@@ -127,7 +127,7 @@ export function ProjectForm({ project, saving, onSave, onDelete }: ProjectFormPr
       <Field label="Full description" hint="Shown at the top of the case study">
         <Textarea value={form.fullDescription} onChange={(e) => set("fullDescription", e.target.value)} className="min-h-[5rem]" />
       </Field>
-      <Field label="Cover image" hint="Paste a URL or upload (stored in MongoDB)">
+      <Field label="Cover image" hint="Paste a URL or upload (stored in Supabase Storage)">
         <ImageField value={form.image} onChange={(url) => set("image", url)} />
       </Field>
       <Field label="Gallery image URLs" hint="One per line">

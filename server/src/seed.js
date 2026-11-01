@@ -2,13 +2,24 @@ import "./env.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import mongoose from "mongoose";
 
-import { connectDB } from "./db.js";
-import { BlogPost } from "./models/BlogPost.js";
-import { TeamMember } from "./models/TeamMember.js";
-import { SiteContent, DEFAULT_CONTENT } from "./models/SiteContent.js";
-import { Project } from "./models/Project.js";
+import { closePool, query } from "./db.js";
+import { runMigrations } from "./migrate.js";
+import { DEFAULT_CONTENT } from "./models/content.js";
+import { PROJECT_COLUMNS } from "./models/projects.js";
+import { ensureBucket } from "./storage.js";
+
+/**
+ * Fills an empty database from the content the site already ships with: the
+ * Markdown posts, src/data/projects.ts and the default homepage copy. Applies
+ * pending migrations first and makes sure the image bucket exists (when the
+ * Supabase keys are set). Idempotent: anything already there (same slug, or
+ * saved homepage copy) is left alone, so it's safe to run again.
+ *
+ * Team members aren't seeded: add the real people in /admin.
+ *
+ *   npm run seed
+ */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BLOG_DIR = path.join(__dirname, "..", "..", "src", "content", "blog");
@@ -42,65 +53,27 @@ async function seedBlog() {
   const files = fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".md"));
   let created = 0;
   for (const file of files) {
-    const slug = file.replace(/\.md$/, "");
-    if (await BlogPost.findOne({ slug })) continue; // idempotent
     const raw = fs.readFileSync(path.join(BLOG_DIR, file), "utf8");
     const { data, body } = parseFrontmatter(raw);
-    await BlogPost.create({
-      slug,
-      title: data.title || slug,
-      excerpt: data.excerpt || "",
-      content: body.trim(),
-      image: data.image || "",
-      category: data.category || "Uncategorized",
-      author: data.author || "Nesisoft Team",
-      date: data.date ? new Date(data.date) : new Date(),
-      published: true,
-    });
-    created++;
+    const slug = file.replace(/\.md$/, "");
+    const { rowCount } = await query(
+      `insert into blog_posts (slug, title, excerpt, content, image, category, author, date)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)
+       on conflict (slug) do nothing`,
+      [
+        slug,
+        data.title || slug,
+        data.excerpt || "",
+        body.trim(),
+        data.image || "",
+        data.category || "Uncategorized",
+        data.author || "Nesisoft Team",
+        data.date ? new Date(data.date) : new Date(),
+      ]
+    );
+    created += rowCount;
   }
   console.log(`[seed] blog: imported ${created} new post(s) (${files.length} files seen)`);
-}
-
-const PLACEHOLDER_TEAM = [
-  {
-    name: "Ada Founder",
-    role: "Founder & CEO",
-    bio: "Sets the vision and keeps the studio pointed at problems worth solving.",
-    order: 1,
-    socials: { linkedin: "#", twitter: "#", github: "" },
-  },
-  {
-    name: "Kwame Engineer",
-    role: "Head of Engineering",
-    bio: "Owns delivery and the technical bar across web, mobile, and AI work.",
-    order: 2,
-    socials: { linkedin: "#", twitter: "", github: "#" },
-  },
-  {
-    name: "Zara Designer",
-    role: "Lead Product Designer",
-    bio: "Turns rough ideas into interfaces people actually want to use.",
-    order: 3,
-    socials: { linkedin: "#", twitter: "#", github: "" },
-  },
-  {
-    name: "Tunde Strategist",
-    role: "Product Strategist",
-    bio: "Bridges business goals and the roadmap so the right things ship first.",
-    order: 4,
-    socials: { linkedin: "#", twitter: "", github: "" },
-  },
-];
-
-async function seedTeam() {
-  let created = 0;
-  for (const member of PLACEHOLDER_TEAM) {
-    if (await TeamMember.findOne({ name: member.name })) continue; // idempotent
-    await TeamMember.create({ ...member, image: "", published: true });
-    created++;
-  }
-  console.log(`[seed] team: created ${created} placeholder member(s)`);
 }
 
 /**
@@ -120,36 +93,50 @@ function loadStaticProjects() {
 async function seedProjects() {
   const projects = loadStaticProjects();
   let created = 0;
-  for (let i = 0; i < projects.length; i++) {
-    const p = projects[i];
-    if (await Project.findOne({ slug: p.slug })) continue; // idempotent
-    await Project.create({ ...p, order: i, published: true });
-    created++;
+  for (const [index, project] of projects.entries()) {
+    // Same field-to-column map the admin API writes through.
+    const values = { slug: project.slug };
+    for (const [field, column] of Object.entries(PROJECT_COLUMNS)) {
+      if (project[field] !== undefined) values[column] = project[field];
+    }
+    values.sort_order = index;
+    const columns = Object.keys(values);
+    const { rowCount } = await query(
+      `insert into projects (${columns.join(", ")})
+       values (${columns.map((_, i) => `$${i + 1}`).join(", ")})
+       on conflict (slug) do nothing`,
+      columns.map((column) => values[column])
+    );
+    created += rowCount;
   }
   console.log(`[seed] projects: imported ${created} new (${projects.length} seen)`);
 }
 
 async function seedContent() {
-  const existing = await SiteContent.findOne({ key: "main" });
-  if (existing) {
-    console.log("[seed] content: already present, skipping");
-    return;
-  }
-  await SiteContent.create({ key: "main", ...DEFAULT_CONTENT });
-  console.log("[seed] content: created default site content");
+  const { rowCount } = await query(
+    `insert into site_content (key, hero, about) values ('main', $1, $2)
+     on conflict (key) do nothing`,
+    [JSON.stringify(DEFAULT_CONTENT.hero), JSON.stringify(DEFAULT_CONTENT.about)]
+  );
+  console.log(
+    rowCount ? "[seed] content: created default site content" : "[seed] content: already present, skipping"
+  );
 }
 
 async function run() {
-  await connectDB();
+  await runMigrations();
+  console.log(`[storage] ${await ensureBucket()}`);
   await seedBlog();
-  await seedTeam();
   await seedProjects();
   await seedContent();
-  await mongoose.disconnect();
   console.log("[seed] done");
 }
 
-run().catch((err) => {
-  console.error("[seed] failed:", err);
-  process.exit(1);
-});
+try {
+  await run();
+} catch (err) {
+  console.error("[seed] failed:", err.message);
+  process.exitCode = 1;
+} finally {
+  await closePool();
+}
