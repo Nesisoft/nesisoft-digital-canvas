@@ -166,7 +166,7 @@ export const organizationJsonLd: Record<string, unknown> = {
   "@type": "Organization",
   name: siteConfig.name,
   url: siteConfig.url,
-  logo: siteConfig.ogImage,
+  logo: siteConfig.logo,
   description: siteConfig.description,
   address: {
     "@type": "PostalAddress",
@@ -229,7 +229,7 @@ export function blogPostingJsonLd(post: {
     publisher: {
       "@type": "Organization",
       name: siteConfig.name,
-      logo: { "@type": "ImageObject", url: siteConfig.ogImage },
+      logo: { "@type": "ImageObject", url: siteConfig.logo },
     },
     mainEntityOfPage: {
       "@type": "WebPage",

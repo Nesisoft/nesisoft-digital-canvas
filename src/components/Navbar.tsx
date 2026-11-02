@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { team } from "@/data/team";
 import { useProjects } from "@/hooks/useProjects";
+import { LogoMark } from "@/components/LogoMark";
 
 type GroupKey = "services" | "work";
 
@@ -256,9 +257,7 @@ const Navbar = () => {
             className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
             aria-label="Nesisoft home"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/12 bg-white/[0.075] text-sm font-bold text-white transition-colors group-hover:border-violet-300/40 group-hover:bg-violet-500/20">
-              N
-            </span>
+            <LogoMark className="transition-transform duration-200 group-hover:scale-105" />
             <span className="text-lg font-bold leading-none tracking-[-0.02em] text-white">
               Nesisoft
             </span>
@@ -385,9 +384,7 @@ const Navbar = () => {
             <Link
               onClick={() => onNavigate("/")}
               to="/" className="flex items-center gap-2.5" aria-label="Nesisoft home">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/12 bg-white/[0.075] text-sm font-bold text-white">
-                N
-              </span>
+              <LogoMark />
               <span className="text-lg font-bold tracking-[-0.02em] text-white">Nesisoft</span>
             </Link>
             <button

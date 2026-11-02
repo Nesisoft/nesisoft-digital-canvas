@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { internalProjects } from "@/data/projects";
+import { LogoMark } from "@/components/LogoMark";
 import { trackEvent } from "@/lib/analytics";
 
 const { bookingUrl } = siteConfig.contact;
@@ -22,8 +23,9 @@ const Footer = () => {
           <div>
             <Link
               to="/"
-              className="text-xl font-bold tracking-[-0.02em] text-white"
+              className="inline-flex items-center gap-2.5 text-xl font-bold tracking-[-0.02em] text-white"
             >
+              <LogoMark />
               Nesisoft
             </Link>
             <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">

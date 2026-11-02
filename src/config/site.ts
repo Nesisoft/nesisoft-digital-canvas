@@ -31,8 +31,11 @@ export const siteConfig = {
    */
   url: "https://www.nesisoft.com",
 
-  /** Default social-share image. Replace with a hosted brand asset. */
-  ogImage: "https://i.ibb.co/8nvq5Kx2/appstore.png",
+  /** Default social-share image (1200 × 630), generated from the brand mark. */
+  ogImage: "https://www.nesisoft.com/og-image.png",
+
+  /** Square logo for structured data (Google's Organization / publisher logo). */
+  logo: "https://www.nesisoft.com/brand/nesisoft-logo-512.png",
 
   contact: {
     // Display strings and their machine-readable hrefs are paired so a tel:
