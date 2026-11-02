@@ -1,7 +1,7 @@
 import { Writable } from "node:stream";
 import type { ReactNode } from "react";
 import { renderToPipeableStream } from "react-dom/server";
-import { StaticRouter } from "react-router-dom/server";
+import { StaticRouter } from "react-router-dom";
 import App from "./App";
 import { createQueryClient } from "./lib/queryClient";
 import { SeoHeadCollector, seoHeadToHtml, type SeoHead } from "./lib/seo-head";
