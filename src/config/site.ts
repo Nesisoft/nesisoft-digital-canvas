@@ -49,7 +49,7 @@ export const siteConfig = {
     // Scheduling page for "Book a call": a Cal.com or Calendly link such as
     // "https://cal.com/your-name/30min". When set, the footer and /contact
     // open it in a new tab; leave it empty to keep the phone link instead.
-    bookingUrl: "" as string,
+    bookingUrl: "https://cal.com/nesisoft" as string,
   },
 
   social: {
