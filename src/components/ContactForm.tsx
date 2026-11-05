@@ -1,8 +1,6 @@
 import { useId, type BaseSyntheticEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useForm, type UseFormRegisterReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useForm, type RegisterOptions, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { ChevronDown, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,24 +35,54 @@ const TIMELINES = ["ASAP", "Within a month", "1–3 months", "3+ months", "Just 
 
 const SOURCES = ["Google search", "Social media", "Referral", "Event", "Other"];
 
-const contactSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required"),
-  lastName: z.string().trim().min(1, "Last name is required"),
-  email: z.string().trim().min(1, "Email is required").email("Enter a valid email"),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[\d\s()+-]*$/, "Use digits, spaces, +, - and brackets only"),
-  company: z.string().trim(),
-  service: z.string().min(1, "Choose what you need"),
-  budgetCurrency: z.enum(["GHS", "USD"]),
-  budget: z.string(),
-  timeline: z.string(),
-  message: z.string().trim().min(10, "Please tell us a bit more (min 10 characters)"),
-  source: z.string(),
-});
+interface ContactValues {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+  service: string;
+  budgetCurrency: Currency;
+  budget: string;
+  timeline: string;
+  message: string;
+  source: string;
+}
 
-type ContactValues = z.infer<typeof contactSchema>;
+// The same address pattern zod's .email() uses, so validation didn't change
+// when the form moved to react-hook-form's built-in rules (zod alone was
+// ~12 KB gzipped of the site's JavaScript, for this one form).
+const EMAIL = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
+
+/** Fails when the value is blank once surrounding spaces are ignored. */
+const filled = (message: string) => (value: string) => value.trim() !== "" || message;
+
+// Validation per field; anything not listed is optional and free-form.
+const RULES: Partial<Record<keyof ContactValues, RegisterOptions<ContactValues>>> = {
+  firstName: { validate: filled("First name is required") },
+  lastName: { validate: filled("Last name is required") },
+  email: {
+    validate: (value: string) =>
+      value.trim() === "" ? "Email is required" : EMAIL.test(value.trim()) || "Enter a valid email",
+  },
+  phone: {
+    pattern: { value: /^[\d\s()+-]*$/, message: "Use digits, spaces, +, - and brackets only" },
+  },
+  service: { required: "Choose what you need" },
+  message: {
+    validate: (value: string) =>
+      value.trim().length >= 10 || "Please tell us a bit more (min 10 characters)",
+  },
+};
+
+const TRIMMED: (keyof ContactValues)[] = ["firstName", "lastName", "email", "phone", "company", "message"];
+
+/** What gets sent: the text fields without stray surrounding spaces. */
+function tidy(values: ContactValues): ContactValues {
+  const out = { ...values };
+  for (const key of TRIMMED) (out[key] as string) = values[key].trim();
+  return out;
+}
 
 const defaultValues: ContactValues = {
   firstName: "",
@@ -186,7 +214,7 @@ export function ContactForm() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ContactValues>({ resolver: zodResolver(contactSchema), defaultValues });
+  } = useForm<ContactValues>({ defaultValues });
 
   const currency = watch("budgetCurrency");
   // A cedi range means nothing in dollars, so switching starts the range over.
@@ -194,7 +222,8 @@ export function ContactForm() {
     onChange: () => setValue("budget", ""),
   });
 
-  const onSubmit = async (values: ContactValues, event?: BaseSyntheticEvent) => {
+  const onSubmit = async (raw: ContactValues, event?: BaseSyntheticEvent) => {
+    const values = tidy(raw);
     // Honeypot: hidden from people, so only bots ever tick it. They get the
     // usual success message, but nothing is sent.
     if (new FormData(event?.target).has("botcheck")) {
@@ -257,7 +286,7 @@ export function ContactForm() {
     "aria-describedby"?: string;
     "aria-required"?: boolean;
   } => ({
-    ...register(name),
+    ...register(name, RULES[name]),
     id: ids.id,
     "aria-invalid": ids.invalid,
     "aria-describedby": ids.describedBy,
