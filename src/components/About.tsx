@@ -1,62 +1,41 @@
-import { CheckCircle2 } from "lucide-react";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { Section } from "@/components/ui/section";
+import { AboutPhotos, StatsGrid } from "@/components/AboutBits";
 import { useSiteContent } from "@/hooks/useSiteContent";
 
+/**
+ * Homepage About: a short introduction and photos of the team at work, with a
+ * link to the Company page for the full story (vision, mission, team...).
+ * Until photos are added in /admin, the stats stand in for them.
+ */
 const About = () => {
   const { about } = useSiteContent();
-  const stats = about.stats;
-  const benefits = about.benefits;
-  // Mission copy is stored as paragraphs separated by blank lines.
-  const missionParagraphs = about.missionBody
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const hasPhotos = about.photos.some((p) => p.url);
 
   return (
     <Section id="about">
-      <SectionHeading
-        eyebrow={about.eyebrow}
-        title={about.title}
-        description={about.description}
-      />
-
-      <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Mission */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-10">
-          <h3 className="mb-6 text-xl font-semibold text-white">{about.missionTitle}</h3>
-          <div className="space-y-4 text-slate-300 leading-relaxed">
-            {missionParagraphs.map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+      <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-2xl">
+          <span className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold-300">
+            {about.eyebrow}
+          </span>
+          <h2 className="mt-3 font-display text-4xl font-bold leading-tight tracking-[-0.035em] text-white md:text-5xl">
+            {about.title}
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-slate-300">{about.description}</p>
         </div>
-
-        {/* Why choose us */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-10">
-          <h3 className="mb-6 text-xl font-semibold text-white">{about.whyTitle}</h3>
-          <ul className="space-y-4">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold-400" />
-                <span className="text-slate-300">{benefit}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Link
+          to="/company"
+          className="group inline-flex shrink-0 items-center gap-2 self-start border border-violet-400/40 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-100 transition-colors hover:border-violet-300/60 hover:bg-violet-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+        >
+          More about us
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
-      {/* Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/5 md:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-slate-950/40 p-8 text-center">
-            <div className="text-3xl font-semibold tabular-nums text-white md:text-4xl">
-              {/* Numbers stay white; a trailing "+", "%" etc. gets the gold accent. */}
-              {stat.number.replace(/[^\d.,]+$/, "")}
-              <span className="text-gold-300">{stat.number.match(/[^\d.,]+$/)?.[0]}</span>
-            </div>
-            <div className="mt-2 text-sm text-slate-300">{stat.label}</div>
-          </div>
-        ))}
+      <div className="mt-10 md:mt-12">
+        {hasPhotos ? <AboutPhotos photos={about.photos} rise /> : <StatsGrid stats={about.stats} />}
       </div>
     </Section>
   );

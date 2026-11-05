@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RouteFallback } from "@/components/RouteFallback";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 // Secondary routes are code-split so the landing page (the primary entry
 // point) ships without their bundles. Index stays eager for a flash-free LCP.
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
-const Team = lazy(() => import("./pages/Team"));
+const Company = lazy(() => import("./pages/Company"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
@@ -48,7 +48,9 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/services/:serviceId" element={<ServiceDetails />} />
-            <Route path="/team" element={<Team />} />
+            <Route path="/company" element={<Company />} />
+            {/* The team moved onto the Company page. */}
+            <Route path="/team" element={<Navigate to={{ pathname: "/company", hash: "#team" }} replace />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:postId" element={<BlogDetails />} />
             <Route path="/projects/:projectId" element={<ProjectDetails />} />

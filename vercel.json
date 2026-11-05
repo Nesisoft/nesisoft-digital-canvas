@@ -3,6 +3,9 @@
   "buildCommand": "npm run build && npm run db:deploy",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/team", "destination": "/company#team", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/admin", "destination": "/200" },

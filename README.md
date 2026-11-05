@@ -107,6 +107,13 @@ scripts/
   "Book a call" (footer and `/contact`) open it in a new tab; left empty,
   the footer link dials the main phone number.
 - **Services** and **projects** are data-driven from `src/data/`.
+- **The Company page** (`/company`) and the homepage's About block are
+  edited in `/admin` under **Site content**: the intro, up to three photos,
+  stats, vision, mission, reasons to work with us, and corporate social
+  responsibility programmes (such as Trainingships). The homepage shows only
+  the intro and photos (or the stats until photos are added), with a link to
+  the Company page. Team members are managed under **Team** and appear on the
+  Company page (`/team` redirects there).
 - **Blog posts** are Markdown files in `src/content/blog/`. The build's SEO
   plugin reads these (plus services and projects) to regenerate
   `sitemap.xml` and `rss.xml` automatically, so the feeds never drift.
@@ -126,7 +133,7 @@ and `/api/*` to the root `api/` functions in this same project, so the admin
 session cookie is first-party on `www.nesisoft.com`.
 
 The admin panel lives at `/admin` and supports CRUD for posts, projects, team
-members, uploaded images, and editable homepage content.
+members, uploaded images, and the editable homepage and Company page content.
 
 ### Admin accounts
 
@@ -280,7 +287,7 @@ production build.
 ### Prerendering
 
 `npm run build` also renders every public page (home, blog and posts,
-services, projects, contact, privacy, team) to static HTML with React's server
+services, projects, contact, privacy, company) to static HTML with React's server
 renderer (`scripts/prerender-plugin.ts`, `src/entry-server.tsx`), so search
 engines, AI crawlers and link previews that don't run JavaScript get each
 page's real content and its own title, description, canonical, Open Graph tags

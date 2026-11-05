@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ImageField } from "./ImageField";
@@ -19,7 +18,6 @@ export function TeamForm({ member, saving, onSave, onDelete }: TeamFormProps) {
   const [form, setForm] = useState({
     name: "",
     role: "",
-    bio: "",
     image: "",
     order: 0,
     linkedin: "",
@@ -32,7 +30,6 @@ export function TeamForm({ member, saving, onSave, onDelete }: TeamFormProps) {
     setForm({
       name: member?.name ?? "",
       role: member?.role ?? "",
-      bio: member?.bio ?? "",
       image: member?.image ?? "",
       order: member?.order ?? 0,
       linkedin: member?.socials?.linkedin ?? "",
@@ -49,7 +46,6 @@ export function TeamForm({ member, saving, onSave, onDelete }: TeamFormProps) {
     onSave({
       name: form.name,
       role: form.role,
-      bio: form.bio,
       image: form.image,
       order: Number(form.order) || 0,
       published: form.published,
@@ -66,15 +62,11 @@ export function TeamForm({ member, saving, onSave, onDelete }: TeamFormProps) {
           <Input value={form.role} onChange={(e) => set("role", e.target.value)} />
         </Field>
       </FormRow>
-      <Field label="Bio">
-        <Textarea
-          value={form.bio}
-          onChange={(e) => set("bio", e.target.value)}
-          className="min-h-[6rem]"
-        />
-      </Field>
-      <Field label="Photo" hint="Paste a URL or upload (stored in Supabase Storage)">
-        <ImageField value={form.image} onChange={(url) => set("image", url)} round />
+      <Field
+        label="Photo"
+        hint="Shown large on the Company page: a portrait-style photo (taller than wide, about 4:5), face centred. Paste a URL or upload."
+      >
+        <ImageField value={form.image} onChange={(url) => set("image", url)} />
       </Field>
       <FormRow>
         <Field label="LinkedIn URL">
