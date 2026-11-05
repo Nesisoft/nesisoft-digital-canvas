@@ -14,6 +14,7 @@
     "start": "NODE_ENV=production node server/src/index.js",
     "db:migrate": "node server/src/migrate.js",
     "seed": "node server/src/seed.js",
+    "db:deploy": "node server/src/deploy.js",
     "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {

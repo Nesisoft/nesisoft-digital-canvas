@@ -114,7 +114,8 @@ async function failIfNotOk(res, action) {
  * Makes sure the bucket exists and is public, limited to the image types and
  * size the API accepts: creates it, or fixes an existing one that isn't
  * public (uploads would otherwise get URLs nobody can load). Run by
- * `npm run db:migrate` and `npm run seed`; returns what it did, for the log.
+ * `npm run db:migrate`, `npm run seed` and production deploys (deploy.js,
+ * where a failure is only a warning); returns what it did, for the log.
  */
 export async function ensureBucket() {
   if (!storageConfigured) return "skipped (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set)";

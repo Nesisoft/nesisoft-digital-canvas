@@ -42,7 +42,8 @@ npm run build:dev   # Development-mode build
 npm run preview     # Preview the production build locally
 npm start           # Serve dist/ + API from Express after a build
 npm run db:migrate  # Create/upgrade the database tables (+ the image bucket)
-npm run seed        # Migrate, then fill an empty database from the site's content
+npm run seed        # Migrate, then import any bundled post/project/homepage copy that's missing
+npm run db:deploy   # What Vercel production builds run (does nothing unless VERCEL_ENV=production)
 npm run lint        # ESLint
 npm run hash-password  # Prompt for the admin password, print ADMIN_PASSWORD_HASH
 ```
@@ -61,7 +62,8 @@ site and the API read it). All client-exposed variables must be prefixed with
 | `DATABASE_URL` | PostgreSQL connection string for the API (Supabase: see [Database](#database-supabase)). Without it, data routes answer `503` at once and the public site uses its built-in content. |
 | `DATABASE_CA_CERT` | Recommended in production. Supabase's CA certificate (PEM, from **Database Settings → SSL**) so the database's TLS certificate is verified; without it the connection is encrypted but unverified, and production logs a warning. Hosted databases always use TLS unless the URL has `sslmode=disable` (or `DATABASE_SSL=false`), e.g. for a plain Postgres on a private network. |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase project URL and service-role key, for storing images uploaded in `/admin`. **Server only** — never prefix these with `VITE_`. |
-| `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate` creates it). |
+| `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate`, `npm run seed` and production deploys create it). |
+| `MIGRATE_ON_DEPLOY` | Optional. Set to `false` to stop production deploys on Vercel from updating the database (see [Deployment](#deployment-vercel)). |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production (with `ADMIN_PASSWORD_HASH` standing in for `ADMIN_PASSWORD`): admin login stays disabled if the username or both password variables are missing, or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
 | `ADMIN_PASSWORD_HASH` | Preferred over `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set; a malformed hash disables admin login in production. |
 | `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
@@ -142,16 +144,27 @@ the content bundled in `src/`.
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Database:** click **Connect** in the dashboard and copy a connection
-   string into `DATABASE_URL`, with your database password filled in. Use the
-   **Transaction pooler** URI (port 6543) on Vercel; locally either pooler
-   works.
+   string into `DATABASE_URL`, with your database password filled in
+   (percent-encode `% @ # / ?` in it, e.g. with `encodeURIComponent`). On Vercel, use the **Transaction pooler**
+   string: host `aws-…pooler.supabase.com`, port 6543, user
+   `postgres.<project-ref>`. Vercel only connects over IPv4, and the **Direct
+   connection** host (`db.<project-ref>.supabase.co`) is IPv6-only. Locally,
+   either pooler works.
 3. **Storage:** from **Project Settings → API**, copy the project URL into
    `SUPABASE_URL` and the `service_role` (secret) key into
    `SUPABASE_SERVICE_ROLE_KEY`. Keep that key server-side only.
-4. Run `npm run seed`. It applies the migrations, creates the public
+4. **Fill the database.** On Vercel, the first production deploy does this
+   for you (see [Deployment](#deployment-vercel)). Elsewhere, run
+   `npm run seed`: it applies the migrations, creates the public
    `site-images` bucket, and imports the bundled posts, projects and homepage
-   copy (skipping anything already there). Later schema changes only need
-   `npm run db:migrate`.
+   copy (skipping anything already there). Running it again re-adds any
+   bundled post or project deleted in `/admin`, so don't run it against a
+   database you edit there. Later schema changes only need
+   `npm run db:migrate`, which Vercel production deploys also run for you.
+
+Migration files (`server/db/migrations/*.sql`, applied in name order) each run
+inside a transaction, so they mustn't contain `BEGIN`/`COMMIT` or statements
+that can't run in one (`CREATE INDEX CONCURRENTLY`, `VACUUM`).
 
 Every table has row level security enabled with no policies, so Supabase's
 public REST API can't read or change them; the server connects as the table
@@ -164,11 +177,13 @@ and assets from `dist/` are served by Vercel's CDN, and `api/` runs the Express
 app as a serverless function for `/api/...`, so the site, `/admin` and the API
 share one domain (and the admin session cookie stays first-party).
 
-1. **Import** the GitHub repository in Vercel. It detects Vite: build command
-   `npm run build`, output directory `dist`.
+1. **Import** the GitHub repository in Vercel. It detects Vite (output
+   directory `dist`); `vercel.json` sets the build command to
+   `npm run build && npm run db:deploy`.
 2. **Environment variables** (Project Settings → Environment Variables), for
    the Production environment:
-   - `DATABASE_URL` — Supabase's **Transaction pooler** URI (port 6543)
+   - `DATABASE_URL` — Supabase's **Transaction pooler** string
+     (`…pooler.supabase.com:6543`; see [Database](#database-supabase))
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
    - `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` (from `npm run hash-password`;
      or `ADMIN_PASSWORD`), `SESSION_SECRET`
@@ -176,12 +191,40 @@ share one domain (and the admin session cookie stays first-party).
      `VITE_` values are baked in at build time, so redeploy after changing them.
 
    Keep the database and Supabase variables out of the Preview environment
-   (or point it at a separate Supabase project) so preview deployments can't
-   change production content.
-3. **Database:** run `npm run seed` once from your machine with `DATABASE_URL`
-   (and the Supabase keys) in `.env.local`; see [Database](#database-supabase).
-   For later schema changes, run `npm run db:migrate` before deploying the
-   code that needs them.
+   (or point it at a separate Supabase project, which you then migrate
+   yourself with `npm run db:migrate`) so preview deployments can't change
+   production content.
+3. **Database:** nothing to run by hand. After the site builds, every
+   production deploy runs `npm run db:deploy` (`server/src/deploy.js`), which:
+   - applies pending migrations;
+   - on the first deploy to an empty database, imports the bundled posts,
+     projects and homepage copy, once. A database that already has content is
+     never refilled, so anything deleted in `/admin` stays deleted;
+   - creates the `site-images` bucket if it's missing (a problem there is only
+     a warning).
+
+   If the database can't be updated, the build fails and the current
+   deployment keeps serving. The build log shows the database's error and,
+   for the causes it recognises, what to check: a paused Supabase project
+   (free projects pause after about a week without use), the wrong pooler
+   host, user or password, or Supabase Network Restrictions that block
+   Vercel's build servers. To deploy without touching the database, set
+   `MIGRATE_ON_DEPLOY=false` and redeploy.
+
+   Only production builds update the database, going by the `VERCEL_ENV`
+   Vercel sets, so keep **Enable access to System Environment Variables**
+   checked (Settings → Environment Variables; it's on by default). Preview
+   deployments and local builds leave it alone, but **Promote to Production**
+   rebuilds a preview as a production deploy, so its migrations run then. A
+   production build you run yourself with `vercel build --prod` (whose output
+   `vercel deploy --prebuilt --prod` uploads) runs them on that machine, with
+   the `VERCEL_ENV` and `DATABASE_URL` that `vercel pull --environment=production`
+   saved.
+
+   The database changes before the new code goes live, and an Instant
+   Rollback doesn't undo that, so the deployment being served can run against
+   the new schema for a while: write migrations it can live with (add tables
+   and columns; rename or drop only in a later deploy).
 4. **Domains** (Project Settings → Domains): add `www.nesisoft.com` and
    `nesisoft.com`, with `nesisoft.com` redirecting to `www`. Create the DNS
    records Vercel shows; if DNS is on Cloudflare, set them to "DNS only" so

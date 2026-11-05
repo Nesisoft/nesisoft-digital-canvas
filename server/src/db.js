@@ -23,14 +23,26 @@ function unavailable(message) {
 }
 
 function poolConfig(url) {
+  const invalid = () =>
+    unavailable(
+      "DATABASE_URL is not a valid URL (percent-encode special characters such as % @ # / ? in the password)"
+    );
   let parsed;
   try {
     parsed = new URL(url);
   } catch {
     // Never echo the URL: it holds the database password.
-    throw unavailable(
-      "DATABASE_URL is not a valid URL (percent-encode special characters such as # / ? @ in the password)"
-    );
+    throw invalid();
+  }
+  // An unencoded "@" followed by "#", "/" or "?" in the password cuts it
+  // short: part of the password is taken for the host name (and shown in
+  // connection errors), and the real "@host..." ends up in the path, query or
+  // fragment. Catch that: a fragment, or an "@" there followed by something
+  // host-like (a dot or a port). An "@" in a database name or query value
+  // without one is left alone.
+  const strayHost = /@[^/?#&=]*[.:]/;
+  if (parsed.hash || strayHost.test(parsed.pathname) || strayHost.test(parsed.search)) {
+    throw invalid();
   }
   // TLS is decided here, not by the URL: recent pg treats sslmode=require as
   // full certificate verification. sslmode=disable (or DATABASE_SSL=false)
@@ -87,6 +99,24 @@ export function getPool() {
   return pool;
 }
 
+/**
+ * Runs `fn` with one client checked out of the pool, for a transaction.
+ * pg-pool stops listening for "error" on a client while it's checked out, so
+ * this listens instead: a connection that drops mid-transaction then fails
+ * the query in progress rather than crashing the process.
+ */
+export async function withClient(fn) {
+  const client = await getPool().connect();
+  const onError = (err) => console.error(`[db] ${err.message}`);
+  client.on("error", onError);
+  try {
+    return await fn(client);
+  } finally {
+    client.removeListener("error", onError);
+    client.release();
+  }
+}
+
 /** Lets one-off scripts (migrate, seed) exit once they're done. */
 export async function closePool() {
   await pool?.end();
@@ -94,7 +124,15 @@ export async function closePool() {
 }
 
 // Can't reach the database, as opposed to a bad query.
-const CONNECTION_ERRORS = ["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EAI_AGAIN"];
+const CONNECTION_ERRORS = [
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "EAI_AGAIN",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
+];
 
 export function isConnectionError(err) {
   if (CONNECTION_ERRORS.includes(err?.code)) return true;
