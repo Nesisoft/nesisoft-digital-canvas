@@ -187,10 +187,13 @@ share one domain (and the admin session cookie stays first-party).
    records Vercel shows; if DNS is on Cloudflare, set them to "DNS only" so
    Vercel can issue the certificates.
 
-`vercel.json` adds security headers to every response, caches hashed assets
-for a year, and sends routes that weren't prerendered (`/admin`, unknown URLs)
-to the client-only shell `200.html`. Vercel serves real files before applying
-those rewrites, so prerendered pages are always served as-is.
+`vercel.json` serves each prerendered page at its canonical, extensionless URL
+(`cleanUrls`: `/blog` is `blog.html`, and `/blog.html` and `/blog/` redirect to
+`/blog`), adds security headers to every response, caches hashed assets for a
+year, and sends routes that weren't prerendered (`/admin`, unknown URLs) to
+the client-only shell `200.html` (written `/200` because of `cleanUrls`).
+Vercel serves real files before applying those rewrites, so prerendered pages
+are always served as-is.
 
 `npm start` runs the same Express app as a single Node server (API plus the
 built site, prerendered pages included) for self-hosting or a local check of a
