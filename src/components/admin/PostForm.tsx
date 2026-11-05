@@ -14,7 +14,8 @@ interface PostFormProps {
   post: AdminPost | null;
   saving: boolean;
   onSave: (payload: Partial<AdminPost>) => void;
-  onDelete: () => void;
+  /** Left out for roles that can't delete posts. */
+  onDelete?: () => void;
 }
 
 export function PostForm({ post, saving, onSave, onDelete }: PostFormProps) {
@@ -99,7 +100,7 @@ export function PostForm({ post, saving, onSave, onDelete }: PostFormProps) {
           {saving ? "Saving…" : post ? "Save changes" : "Create post"}
         </Button>
         <span className="flex-1" />
-        {post && (
+        {post && onDelete && (
           <Button
             variant="outline"
             onClick={onDelete}

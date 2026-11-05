@@ -15,7 +15,8 @@
     "db:migrate": "node server/src/migrate.js",
     "seed": "node server/src/seed.js",
     "db:deploy": "node server/src/deploy.js",
-    "hash-password": "node scripts/hash-password.js"
+    "hash-password": "node scripts/hash-password.js",
+    "admin:password": "node scripts/admin-password.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
