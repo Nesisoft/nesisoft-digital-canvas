@@ -5,7 +5,7 @@ import { getSiteRoutes, readBlogPosts } from "./site-routes";
 
 /**
  * Build-time SEO plugin — generates dist/sitemap.xml and dist/rss.xml from
- * the live content sources (markdown blog posts + services + projects + team data).
+ * the live content sources (markdown blog posts + services + projects).
  * Adding a post or a service auto-updates both feeds at next build.
  *
  * Why a plugin rather than a static file: any time the content drifts, the

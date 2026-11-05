@@ -1,8 +1,9 @@
 import type { TeamMember } from "@/lib/api";
 
 /**
- * Team members, bundled with the frontend (no API needed). Shown in `order`,
- * lowest first. Photos go in `public/team/` and are referenced as
+ * Fallback team, bundled with the frontend. The live team is managed in /admin
+ * (Team) and served by the API; this list only shows until the API answers, or
+ * if it can't. Shown in `order`, lowest first. Photos go in `public/team/` and are referenced as
  * "/team/<file>" — square, at least 400×400, JPG or WebP. Leave `image` empty
  * to show the person's initials instead. Socials are optional; empty ones
  * are hidden.
