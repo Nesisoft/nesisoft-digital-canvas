@@ -34,6 +34,13 @@ export interface SiteContent {
     whyTitle: string;
     benefits: string[];
     stats: { number: string; label: string }[];
+    visionTitle: string;
+    visionBody: string;
+    csrTitle: string;
+    csrBody: string;
+    csrPrograms: { title: string; description: string }[];
+    /** Up to three, for the homepage teaser and the Company page. */
+    photos: { url: string; alt: string }[];
   };
 }
 
@@ -65,8 +72,30 @@ export const DEFAULT_CONTENT: SiteContent = {
       { number: "5+", label: "Years building" },
       { number: "2+", label: "Countries served" },
     ],
+    visionTitle: "Our vision",
+    visionBody:
+      "To be the software partner African businesses trust to turn ideas into products that work for the people who use them, every day.",
+    csrTitle: "Corporate social responsibility",
+    csrBody:
+      "We grow the next generation of African software talent by opening our studio to people who want to learn the craft.",
+    csrPrograms: [
+      {
+        title: "Trainingships",
+        description:
+          "Students and early-career developers and designers train with our team on real projects, learning how software is planned, built and shipped.",
+      },
+    ],
+    photos: [],
   },
 };
+
+/** Fills fields missing from saved copy (added since it was saved) with the defaults. */
+export function withContentDefaults(content: Partial<SiteContent> | undefined): SiteContent {
+  return {
+    hero: { ...DEFAULT_CONTENT.hero, ...content?.hero },
+    about: { ...DEFAULT_CONTENT.about, ...content?.about },
+  };
+}
 
 export interface TeamMember {
   id: string;

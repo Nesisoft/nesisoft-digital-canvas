@@ -34,19 +34,59 @@ export const DEFAULT_CONTENT = {
       { number: "5+", label: "Years building" },
       { number: "2+", label: "Countries served" },
     ],
+    // The Company page (/company); the homepage shows a short teaser.
+    visionTitle: "Our vision",
+    visionBody:
+      "To be the software partner African businesses trust to turn ideas into products that work for the people who use them, every day.",
+    csrTitle: "Corporate social responsibility",
+    csrBody:
+      "We grow the next generation of African software talent by opening our studio to people who want to learn the craft.",
+    csrPrograms: [
+      {
+        title: "Trainingships",
+        description:
+          "Students and early-career developers and designers train with our team on real projects, learning how software is planned, built and shipped.",
+      },
+    ],
+    // Up to three photos for the homepage teaser and the Company page.
+    photos: [],
   },
 };
 
+export const MAX_ABOUT_PHOTOS = 3;
+const MAX_CSR_PROGRAMS = 6;
+
 const KEY = "main";
 
-/** The saved copy, or the defaults when nothing has been saved yet. */
+/**
+ * The saved copy over the defaults, so fields added since it was saved (and
+ * anything never saved) still have a value.
+ */
 export async function getContent() {
   const { rows } = await query("select hero, about from site_content where key = $1", [KEY]);
-  return rows[0] ?? DEFAULT_CONTENT;
+  const saved = rows[0] ?? {};
+  return {
+    hero: { ...DEFAULT_CONTENT.hero, ...saved.hero },
+    about: { ...DEFAULT_CONTENT.about, ...saved.about },
+  };
 }
 
 const HERO_TEXT = ["titleLead", "subtitle"];
-const ABOUT_TEXT = ["eyebrow", "title", "description", "missionTitle", "missionBody", "whyTitle"];
+const ABOUT_TEXT = [
+  "eyebrow",
+  "title",
+  "description",
+  "missionTitle",
+  "missionBody",
+  "whyTitle",
+  "visionTitle",
+  "visionBody",
+  "csrTitle",
+  "csrBody",
+];
+
+// An uploaded (Supabase) or external image, or a file under public/.
+const isImageUrl = (value) => value === "" || /^https?:\/\/\S+$/i.test(value) || /^\/[^/]/.test(value);
 
 function invalid(message) {
   const err = new Error(message);
@@ -83,6 +123,33 @@ function mergeSection(name, current, input, textFields) {
     merged.stats = input.stats.map(({ number, label }) => ({ number, label }));
   } else throw invalid("about.stats must be a list of { number, label } text pairs");
 
+  if (input.csrPrograms === undefined) merged.csrPrograms = current.csrPrograms;
+  else if (
+    Array.isArray(input.csrPrograms) &&
+    input.csrPrograms.length <= MAX_CSR_PROGRAMS &&
+    input.csrPrograms.every((p) => p && isText(p.title) && isText(p.description))
+  ) {
+    merged.csrPrograms = input.csrPrograms.map(({ title, description }) => ({ title, description }));
+  } else {
+    throw invalid(
+      `about.csrPrograms must be at most ${MAX_CSR_PROGRAMS} { title, description } text pairs`
+    );
+  }
+
+  if (input.photos === undefined) merged.photos = current.photos;
+  else if (
+    Array.isArray(input.photos) &&
+    input.photos.length <= MAX_ABOUT_PHOTOS &&
+    input.photos.every((p) => p && isText(p.url) && isImageUrl(p.url) && isText(p.alt))
+  ) {
+    // Empty slots are dropped.
+    merged.photos = input.photos.filter((p) => p.url).map(({ url, alt }) => ({ url, alt }));
+  } else {
+    throw invalid(
+      `about.photos must be at most ${MAX_ABOUT_PHOTOS} { url, alt } pairs with image URLs`
+    );
+  }
+
   return merged;
 }
 
@@ -91,11 +158,7 @@ function mergeSection(name, current, input, textFields) {
  * value (falling back to the defaults). Returns the stored copy.
  */
 export async function saveContent({ hero, about }) {
-  const saved = await getContent();
-  const current = {
-    hero: { ...DEFAULT_CONTENT.hero, ...saved.hero },
-    about: { ...DEFAULT_CONTENT.about, ...saved.about },
-  };
+  const current = await getContent();
   const next = {
     hero: hero === undefined ? current.hero : mergeSection("hero", current.hero, hero, HERO_TEXT),
     about: about === undefined ? current.about : mergeSection("about", current.about, about, ABOUT_TEXT),

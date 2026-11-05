@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchContent, DEFAULT_CONTENT, type SiteContent } from "@/lib/api";
+import { fetchContent, DEFAULT_CONTENT, withContentDefaults, type SiteContent } from "@/lib/api";
 
 /**
  * Editable marketing copy. Seeds with DEFAULT_CONTENT as placeholder data so
@@ -12,5 +12,5 @@ export function useSiteContent(): SiteContent {
     queryFn: fetchContent,
     placeholderData: DEFAULT_CONTENT,
   });
-  return data ?? DEFAULT_CONTENT;
+  return data ? withContentDefaults(data) : DEFAULT_CONTENT;
 }

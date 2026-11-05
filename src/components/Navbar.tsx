@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { useProjects } from "@/hooks/useProjects";
-import { useTeam } from "@/hooks/useTeam";
 import { LogoMark } from "@/components/LogoMark";
 
 type GroupKey = "services" | "work";
@@ -53,9 +52,6 @@ const Navbar = () => {
   const panelId = useId();
   const location = useLocation();
   const projects = useProjects();
-  // Same rule as the homepage Team section: no link to /team until there's
-  // someone on the team, so the nav never leads to an empty page.
-  const hasTeam = useTeam().members.length > 0;
   const featuredProjects = [
     ...projects.filter((p) => p.type === "Internal platform").slice(0, 3),
     ...projects.filter((p) => p.type === "Client work").slice(0, 1),
@@ -138,7 +134,7 @@ const Navbar = () => {
     services: path.startsWith("/services"),
     work: path.startsWith("/projects"),
     writing: path.startsWith("/blog"),
-    team: path === "/team",
+    company: path === "/company",
   };
 
   const panelLink =
@@ -215,11 +211,10 @@ const Navbar = () => {
   };
 
   const mobileLinks: { label: string; to: To; description: string }[] = [
-    { label: "Studio", to: { pathname: "/", hash: "#about" }, description: "Who we are and how we work" },
+    { label: "Company", to: "/company", description: "Who we are, our team and how we work" },
     { label: "Services", to: { pathname: "/", hash: "#services" }, description: "Web, mobile, custom systems, design" },
     { label: "Work", to: { pathname: "/", hash: "#projects" }, description: "Our platforms and client builds" },
     { label: "Writing", to: "/blog", description: "Engineering notes and insights" },
-    ...(hasTeam ? [{ label: "Team", to: "/team", description: "The people behind the work" }] : []),
     { label: "Contact", to: "/contact", description: "Send a project brief" },
   ];
 
@@ -267,11 +262,13 @@ const Navbar = () => {
             <ul className="flex items-center gap-1">
               <li>
                 <Link
-                  onClick={() => onNavigate({ pathname: "/", hash: "#about" })}
-                  to={{ pathname: "/", hash: "#about" }}
-                  className={cn(linkBase, "text-slate-300 hover:text-white")}
+                  onClick={() => onNavigate("/company")}
+                  to="/company"
+                  aria-current={isActive.company ? "page" : undefined}
+                  className={cn(linkBase, isActive.company ? "text-white" : "text-slate-300 hover:text-white")}
                 >
-                  Studio
+                  Company
+                  <Indicator on={isActive.company} />
                 </Link>
               </li>
               {(Object.keys(groups) as GroupKey[]).map((key) => {
@@ -315,19 +312,6 @@ const Navbar = () => {
                   <Indicator on={isActive.writing} />
                 </Link>
               </li>
-              {hasTeam && (
-                <li>
-                  <Link
-                    onClick={() => onNavigate("/team")}
-                    to="/team"
-                    aria-current={isActive.team ? "page" : undefined}
-                    className={cn(linkBase, isActive.team ? "text-white" : "text-slate-300 hover:text-white")}
-                  >
-                    Team
-                    <Indicator on={isActive.team} />
-                  </Link>
-                </li>
-              )}
             </ul>
           </div>
 

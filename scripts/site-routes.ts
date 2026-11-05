@@ -25,8 +25,8 @@ export function getSiteRoutes(root: string): SiteRoute[] {
 
   return [
     { path: "/", priority: "1.0", changefreq: "weekly" },
-    // The team itself loads from the API (managed in /admin).
-    { path: "/team", priority: "0.7", changefreq: "monthly" },
+    // The Company page (the team on it loads from the API; /team redirects here).
+    { path: "/company", priority: "0.8", changefreq: "monthly" },
     { path: "/contact", priority: "0.8", changefreq: "monthly" },
     { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
     { path: "/privacy", priority: "0.3", changefreq: "yearly" },
