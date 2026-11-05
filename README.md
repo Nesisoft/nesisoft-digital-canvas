@@ -82,8 +82,7 @@ src/
   config/site.ts  Single source of truth for brand/contact data
   lib/            blog.ts, groq.ts, analytics.ts, utils.ts
 api/
-  index.js        Vercel Express function for /api
-  [...path].js    Vercel catch-all for /api/*
+  index.js        Vercel Express function; vercel.json rewrites every /api/* to it
 server/src/
   app.js          Express app used by Vercel and local start
   routes/         Public and admin API routes
@@ -230,7 +229,10 @@ share one domain (and the admin session cookie stays first-party).
    records Vercel shows; if DNS is on Cloudflare, set them to "DNS only" so
    Vercel can issue the certificates.
 
-`vercel.json` serves each prerendered page at its canonical, extensionless URL
+`vercel.json` sends every `/api/...` request to the one Express function in
+`api/index.js` (a file named `api/[...path].js` would only match a single
+path segment outside Next.js, so `/api/admin/login` would 404). It also
+serves each prerendered page at its canonical, extensionless URL
 (`cleanUrls`: `/blog` is `blog.html`, and `/blog.html` and `/blog/` redirect to
 `/blog`), adds security headers to every response, caches hashed assets for a
 year, and sends routes that weren't prerendered (`/admin`, unknown URLs) to

@@ -4,6 +4,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/admin", "destination": "/200" },
     { "source": "/admin/:path*", "destination": "/200" },
     { "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/200" }
