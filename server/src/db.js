@@ -23,15 +23,21 @@ function unavailable(message) {
 }
 
 function poolConfig(url) {
+  const invalid = () =>
+    unavailable(
+      "DATABASE_URL is not a valid URL (percent-encode special characters such as # / ? @ in the password)"
+    );
   let parsed;
   try {
     parsed = new URL(url);
   } catch {
     // Never echo the URL: it holds the database password.
-    throw unavailable(
-      "DATABASE_URL is not a valid URL (percent-encode special characters such as # / ? @ in the password)"
-    );
+    throw invalid();
   }
+  // A connection string never has a #fragment: there's an unencoded # in the
+  // password, which cut it short, and the rest would be taken for the host
+  // name (and shown in connection errors).
+  if (parsed.hash) throw invalid();
   // TLS is decided here, not by the URL: recent pg treats sslmode=require as
   // full certificate verification. sslmode=disable (or DATABASE_SSL=false)
   // turns TLS off, e.g. for a plain Postgres on a private network.

@@ -20,8 +20,10 @@ const MIGRATIONS_DIR = path.resolve(
   "../db/migrations"
 );
 
-// Any fixed number; just has to be the same for every run.
-const LOCK_ID = 727_001;
+// Any fixed number; just has to be the same for every run. The deploy-time
+// content import (seed.js) takes it too.
+export const MIGRATION_LOCK_ID = 727_001;
+const LOCK_ID = MIGRATION_LOCK_ID;
 
 export async function runMigrations(log = console.log) {
   const client = await getPool().connect();

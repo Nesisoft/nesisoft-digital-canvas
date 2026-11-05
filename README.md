@@ -43,6 +43,7 @@ npm run preview     # Preview the production build locally
 npm start           # Serve dist/ + API from Express after a build
 npm run db:migrate  # Create/upgrade the database tables (+ the image bucket)
 npm run seed        # Migrate, then fill an empty database from the site's content
+npm run db:deploy   # What Vercel production builds run: migrate, then fill a new database once
 npm run lint        # ESLint
 npm run hash-password  # Prompt for the admin password, print ADMIN_PASSWORD_HASH
 ```
@@ -61,7 +62,8 @@ site and the API read it). All client-exposed variables must be prefixed with
 | `DATABASE_URL` | PostgreSQL connection string for the API (Supabase: see [Database](#database-supabase)). Without it, data routes answer `503` at once and the public site uses its built-in content. |
 | `DATABASE_CA_CERT` | Recommended in production. Supabase's CA certificate (PEM, from **Database Settings → SSL**) so the database's TLS certificate is verified; without it the connection is encrypted but unverified, and production logs a warning. Hosted databases always use TLS unless the URL has `sslmode=disable` (or `DATABASE_SSL=false`), e.g. for a plain Postgres on a private network. |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase project URL and service-role key, for storing images uploaded in `/admin`. **Server only** — never prefix these with `VITE_`. |
-| `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate` creates it). |
+| `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate`, `npm run seed` and production deploys create it). |
+| `MIGRATE_ON_DEPLOY` | Optional. Set to `false` to stop production deploys on Vercel from updating the database (see [Deployment](#deployment-vercel)). |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production (with `ADMIN_PASSWORD_HASH` standing in for `ADMIN_PASSWORD`): admin login stays disabled if the username or both password variables are missing, or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
 | `ADMIN_PASSWORD_HASH` | Preferred over `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set; a malformed hash disables admin login in production. |
 | `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
@@ -148,10 +150,12 @@ the content bundled in `src/`.
 3. **Storage:** from **Project Settings → API**, copy the project URL into
    `SUPABASE_URL` and the `service_role` (secret) key into
    `SUPABASE_SERVICE_ROLE_KEY`. Keep that key server-side only.
-4. Run `npm run seed`. It applies the migrations, creates the public
+4. **Fill the database.** On Vercel, the first production deploy does this
+   for you (see [Deployment](#deployment-vercel)). Elsewhere, run
+   `npm run seed`: it applies the migrations, creates the public
    `site-images` bucket, and imports the bundled posts, projects and homepage
    copy (skipping anything already there). Later schema changes only need
-   `npm run db:migrate`.
+   `npm run db:migrate`, which Vercel production deploys also run for you.
 
 Every table has row level security enabled with no policies, so Supabase's
 public REST API can't read or change them; the server connects as the table
@@ -164,8 +168,9 @@ and assets from `dist/` are served by Vercel's CDN, and `api/` runs the Express
 app as a serverless function for `/api/...`, so the site, `/admin` and the API
 share one domain (and the admin session cookie stays first-party).
 
-1. **Import** the GitHub repository in Vercel. It detects Vite: build command
-   `npm run build`, output directory `dist`.
+1. **Import** the GitHub repository in Vercel. It detects Vite (output
+   directory `dist`); `vercel.json` sets the build command to
+   `npm run build && npm run db:deploy`.
 2. **Environment variables** (Project Settings → Environment Variables), for
    the Production environment:
    - `DATABASE_URL` — Supabase's **Transaction pooler** URI (port 6543)
@@ -178,10 +183,24 @@ share one domain (and the admin session cookie stays first-party).
    Keep the database and Supabase variables out of the Preview environment
    (or point it at a separate Supabase project) so preview deployments can't
    change production content.
-3. **Database:** run `npm run seed` once from your machine with `DATABASE_URL`
-   (and the Supabase keys) in `.env.local`; see [Database](#database-supabase).
-   For later schema changes, run `npm run db:migrate` before deploying the
-   code that needs them.
+3. **Database:** nothing to run by hand. After the site builds, every
+   production deploy runs `npm run db:deploy` (`server/src/deploy.js`), which:
+   - applies pending migrations;
+   - creates the `site-images` bucket if it's missing (a problem there is only
+     a warning);
+   - on the first deploy to an empty database, imports the bundled posts,
+     projects and homepage copy, once. A database that already has content is
+     never refilled, so anything deleted in `/admin` stays deleted.
+
+   If the database can't be updated (say the Supabase project is paused), the
+   build fails, the build log says why, and the current deployment keeps
+   serving. Preview and local builds leave the database alone. To deploy
+   without touching it, set `MIGRATE_ON_DEPLOY=false`.
+
+   Migrations run just before the new code goes live, so the current
+   deployment briefly runs against the new schema, and an Instant Rollback
+   keeps it: write migrations the previous version can live with (add tables
+   and columns; rename or drop only in a later deploy).
 4. **Domains** (Project Settings → Domains): add `www.nesisoft.com` and
    `nesisoft.com`, with `nesisoft.com` redirecting to `www`. Create the DNS
    records Vercel shows; if DNS is on Cloudflare, set them to "DNS only" so
