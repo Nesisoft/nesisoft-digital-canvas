@@ -21,9 +21,9 @@ import { ensureBucket } from "./storage.js";
  *
  * Only production builds run it (promoting a preview to production rebuilds
  * it as one); preview and local builds leave the database alone. It goes by
- * VERCEL_ENV as Vercel sets it, never as a pulled .env file has it, so
- * Vercel's "Automatically expose System Environment Variables" setting must
- * stay on. Set MIGRATE_ON_DEPLOY=false to skip it, e.g. to ship while
+ * VERCEL_ENV as Vercel (or `vercel build`) sets it, never as the app's own
+ * .env files have it, so Vercel's "Enable access to System Environment
+ * Variables" setting must stay on. Set MIGRATE_ON_DEPLOY=false to skip it, e.g. to ship while
  * Supabase is down.
  *
  * The database changes before the new code goes live, and an Instant
@@ -43,7 +43,7 @@ async function deployDatabase() {
     log(
       platformVercelEnv
         ? `a ${platformVercelEnv} build: leaving the database as it is (only production deploys update it)`
-        : "VERCEL_ENV isn't set (a local build, or Vercel's \"Automatically expose System " +
+        : "VERCEL_ENV isn't set (a local build, or Vercel's \"Enable access to System " +
             'Environment Variables" setting is off): leaving the database as it is'
     );
     return;
@@ -71,17 +71,28 @@ async function deployDatabase() {
 function hint(err) {
   const cause = err.cause ?? err;
   const message = String(cause.message);
-  if (/tenant or user not found/i.test(message)) {
+  // Supabase's pooler words these "(ENOTFOUND) tenant/user ... not found",
+  // "(ECIRCUITBREAKER) too many authentication failures" and
+  // "(EADDRNOTALLOWED) address not in tenant allow_list" (older versions:
+  // "Tenant or user not found", "circuit breaker").
+  if (/tenant(?: or |\/)user\b.*not found/i.test(message)) {
     return (
       "Supabase doesn't recognise that user or project: copy the Transaction pooler " +
       "connection string again from Connect in the Supabase dashboard " +
       "(user postgres.<project-ref>, host ...pooler.supabase.com, port 6543)."
     );
   }
-  if (/password authentication failed|circuit breaker/i.test(message)) {
+  if (/password authentication failed|ECIRCUITBREAKER|circuit breaker/i.test(message)) {
     return (
       "The database password in DATABASE_URL is wrong. After fixing it, wait a couple of " +
       "minutes before redeploying: Supabase briefly blocks repeated failed logins."
+    );
+  }
+  if (/EADDRNOTALLOWED|allow_list|no pg_hba\.conf entry/i.test(message)) {
+    return (
+      "Supabase's Network Restrictions are blocking Vercel's build servers: allow them " +
+      "(Database Settings → Network Restrictions in the Supabase dashboard) or turn the " +
+      "restrictions off."
     );
   }
   if (/\bdb\.[a-z0-9]+\.supabase\.co\b/i.test(message)) {
@@ -96,8 +107,7 @@ function hint(err) {
   if (isConnectionError(cause) || /^57P0[123]$/.test(cause.code ?? "")) {
     return (
       "Couldn't reach the database. Check that the Supabase project isn't paused (free " +
-      "projects pause after about a week without use; restore it from the dashboard) and, " +
-      "if Network Restrictions are on, that they allow Vercel's build servers."
+      "projects pause after about a week without use; restore it from the dashboard)."
     );
   }
   return null;

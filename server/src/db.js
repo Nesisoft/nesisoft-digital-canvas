@@ -25,7 +25,7 @@ function unavailable(message) {
 function poolConfig(url) {
   const invalid = () =>
     unavailable(
-      "DATABASE_URL is not a valid URL (percent-encode special characters such as # / ? @ in the password)"
+      "DATABASE_URL is not a valid URL (percent-encode special characters such as % @ # / ? in the password)"
     );
   let parsed;
   try {
@@ -35,9 +35,13 @@ function poolConfig(url) {
     throw invalid();
   }
   // An unencoded "@" followed by "#", "/" or "?" in the password cuts it
-  // short: the rest is taken for the host name (and shown in connection
-  // errors), leaving an "@" after it, which a real connection string never has.
-  if (parsed.hash || parsed.pathname.includes("@") || parsed.search.includes("@")) {
+  // short: part of the password is taken for the host name (and shown in
+  // connection errors), and the real "@host..." ends up in the path, query or
+  // fragment. Catch that: a fragment, or an "@" there followed by something
+  // host-like (a dot or a port). An "@" in a database name or query value
+  // without one is left alone.
+  const strayHost = /@[^/?#&=]*[.:]/;
+  if (parsed.hash || strayHost.test(parsed.pathname) || strayHost.test(parsed.search)) {
     throw invalid();
   }
   // TLS is decided here, not by the URL: recent pg treats sslmode=require as

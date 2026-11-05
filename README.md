@@ -145,7 +145,7 @@ the content bundled in `src/`.
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Database:** click **Connect** in the dashboard and copy a connection
    string into `DATABASE_URL`, with your database password filled in
-   (percent-encode `@ # / ?` in it). On Vercel, use the **Transaction pooler**
+   (percent-encode `% @ # / ?` in it, e.g. with `encodeURIComponent`). On Vercel, use the **Transaction pooler**
    string: host `aws-…pooler.supabase.com`, port 6543, user
    `postgres.<project-ref>`. Vercel only connects over IPv4, and the **Direct
    connection** host (`db.<project-ref>.supabase.co`) is IPv6-only. Locally,
@@ -204,19 +204,22 @@ share one domain (and the admin session cookie stays first-party).
      a warning).
 
    If the database can't be updated, the build fails and the current
-   deployment keeps serving. The build log says what went wrong and what to
-   check: a paused Supabase project (free projects pause after about a week
-   without use), the wrong connection string or password, or Supabase
-   Network Restrictions that don't allow Vercel's build servers. To deploy
-   without touching the database, set `MIGRATE_ON_DEPLOY=false` and redeploy.
+   deployment keeps serving. The build log shows the database's error and,
+   for the causes it recognises, what to check: a paused Supabase project
+   (free projects pause after about a week without use), the wrong pooler
+   host, user or password, or Supabase Network Restrictions that block
+   Vercel's build servers. To deploy without touching the database, set
+   `MIGRATE_ON_DEPLOY=false` and redeploy.
 
    Only production builds update the database, going by the `VERCEL_ENV`
-   Vercel sets, so keep **Automatically expose System Environment Variables**
-   on (Settings → Environment Variables; it's on by default). Preview
+   Vercel sets, so keep **Enable access to System Environment Variables**
+   checked (Settings → Environment Variables; it's on by default). Preview
    deployments and local builds leave it alone, but **Promote to Production**
    rebuilds a preview as a production deploy, so its migrations run then. A
-   production build made outside Vercel's Git integration (`vercel build
-   --prod`, as `vercel deploy --prebuilt` uses) runs them from that machine.
+   production build you run yourself with `vercel build --prod` (whose output
+   `vercel deploy --prebuilt --prod` uploads) runs them on that machine, with
+   the `VERCEL_ENV` and `DATABASE_URL` that `vercel pull --environment=production`
+   saved.
 
    The database changes before the new code goes live, and an Instant
    Rollback doesn't undo that, so the deployment being served can run against
