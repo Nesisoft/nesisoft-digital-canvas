@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { closePool, getPool, query } from "./db.js";
+import { closePool, query, withClient } from "./db.js";
 import { MIGRATION_LOCK_ID, runMigrations } from "./migrate.js";
 import { DEFAULT_CONTENT } from "./models/content.js";
 import { PROJECT_COLUMNS } from "./models/projects.js";
@@ -13,10 +13,12 @@ import { ensureBucket } from "./storage.js";
  * Fills an empty database from the content the site already ships with: the
  * Markdown posts, src/data/projects.ts and the default homepage copy. Applies
  * pending migrations first and makes sure the image bucket exists (when the
- * Supabase keys are set). Idempotent: anything already there (same slug, or
- * saved homepage copy) is left alone, so it's safe to run again. Production
- * deploys on Vercel do this automatically for a new, empty database (see
- * deploy.js), so running it by hand is only needed elsewhere.
+ * Supabase keys are set). Anything already there (same slug, or saved
+ * homepage copy) is left alone, so running it again never duplicates, but it
+ * does re-add any bundled post or project deleted in /admin since. Production
+ * deploys on Vercel fill a new, empty database by themselves, once, and never
+ * re-add anything (see deploy.js), so running this by hand is only needed
+ * elsewhere.
  *
  * Team members aren't seeded: add the real people in /admin.
  *
@@ -130,6 +132,11 @@ async function seedContent(q) {
 // ever fill the database the first time.
 const INITIAL_CONTENT = "seed:initial-content";
 
+const markImported = (q) =>
+  q("insert into schema_migrations (name) values ($1) on conflict (name) do nothing", [
+    INITIAL_CONTENT,
+  ]);
+
 /**
  * Imports the bundled posts, projects and homepage copy, skipping anything
  * already there, and records the import. `q` runs each statement: the pool by
@@ -139,9 +146,7 @@ async function importBundledContent(q = query) {
   await seedBlog(q);
   await seedProjects(q);
   await seedContent(q);
-  await q("insert into schema_migrations (name) values ($1) on conflict (name) do nothing", [
-    INITIAL_CONTENT,
-  ]);
+  await markImported(q);
 }
 
 /**
@@ -153,42 +158,40 @@ async function importBundledContent(q = query) {
  * that fails part-way leaves nothing behind, so the next deploy starts over.
  * Returns what it did, for the log.
  */
-export async function importBundledContentOnce() {
-  const client = await getPool().connect();
-  const q = (text, params) => client.query(text, params);
-  try {
+export function importBundledContentOnce() {
+  return withClient(async (client) => {
+    const q = (text, params) => client.query(text, params);
     await q("begin");
     try {
       await q("select pg_advisory_xact_lock($1)", [MIGRATION_LOCK_ID]);
-      const { rows } = await q(
-        `select exists (select 1 from schema_migrations where name = $1) as imported,
-                exists (select 1 from blog_posts)
-                  or exists (select 1 from projects)
-                  or exists (select 1 from team_members)
-                  or exists (select 1 from site_content) as has_content`,
-        [INITIAL_CONTENT]
-      );
-      let result;
-      if (rows[0].imported) {
-        result = "already imported, skipping";
-      } else if (rows[0].has_content) {
-        await q("insert into schema_migrations (name) values ($1) on conflict (name) do nothing", [
-          INITIAL_CONTENT,
-        ]);
-        result = "the database already has content, skipping";
-      } else {
-        await importBundledContent(q);
-        result = "imported the bundled posts, projects and homepage copy";
-      }
+      const result = await importIfNew(q);
       await q("commit");
       return result;
     } catch (err) {
       await q("rollback").catch(() => {});
       throw err;
     }
-  } finally {
-    client.release();
+  });
+}
+
+async function importIfNew(q) {
+  // The marker first: once it's recorded, the content tables aren't even
+  // looked at, so a later migration is free to rename or drop them.
+  const marked = await q("select 1 from schema_migrations where name = $1", [INITIAL_CONTENT]);
+  if (marked.rowCount > 0) return "already imported, skipping";
+
+  const { rows } = await q(
+    `select exists (select 1 from blog_posts)
+         or exists (select 1 from projects)
+         or exists (select 1 from team_members)
+         or exists (select 1 from site_content) as has_content`
+  );
+  if (rows[0].has_content) {
+    await markImported(q);
+    return "the database already has content, skipping";
   }
+  await importBundledContent(q);
+  return "imported the bundled posts, projects and homepage copy";
 }
 
 async function run() {

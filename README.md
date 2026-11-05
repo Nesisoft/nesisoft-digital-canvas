@@ -42,8 +42,8 @@ npm run build:dev   # Development-mode build
 npm run preview     # Preview the production build locally
 npm start           # Serve dist/ + API from Express after a build
 npm run db:migrate  # Create/upgrade the database tables (+ the image bucket)
-npm run seed        # Migrate, then fill an empty database from the site's content
-npm run db:deploy   # What Vercel production builds run: migrate, then fill a new database once
+npm run seed        # Migrate, then import any bundled post/project/homepage copy that's missing
+npm run db:deploy   # What Vercel production builds run (does nothing unless VERCEL_ENV=production)
 npm run lint        # ESLint
 npm run hash-password  # Prompt for the admin password, print ADMIN_PASSWORD_HASH
 ```
@@ -144,9 +144,12 @@ the content bundled in `src/`.
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Database:** click **Connect** in the dashboard and copy a connection
-   string into `DATABASE_URL`, with your database password filled in. Use the
-   **Transaction pooler** URI (port 6543) on Vercel; locally either pooler
-   works.
+   string into `DATABASE_URL`, with your database password filled in
+   (percent-encode `@ # / ?` in it). On Vercel, use the **Transaction pooler**
+   string: host `aws-…pooler.supabase.com`, port 6543, user
+   `postgres.<project-ref>`. Vercel only connects over IPv4, and the **Direct
+   connection** host (`db.<project-ref>.supabase.co`) is IPv6-only. Locally,
+   either pooler works.
 3. **Storage:** from **Project Settings → API**, copy the project URL into
    `SUPABASE_URL` and the `service_role` (secret) key into
    `SUPABASE_SERVICE_ROLE_KEY`. Keep that key server-side only.
@@ -154,8 +157,14 @@ the content bundled in `src/`.
    for you (see [Deployment](#deployment-vercel)). Elsewhere, run
    `npm run seed`: it applies the migrations, creates the public
    `site-images` bucket, and imports the bundled posts, projects and homepage
-   copy (skipping anything already there). Later schema changes only need
+   copy (skipping anything already there). Running it again re-adds any
+   bundled post or project deleted in `/admin`, so don't run it against a
+   database you edit there. Later schema changes only need
    `npm run db:migrate`, which Vercel production deploys also run for you.
+
+Migration files (`server/db/migrations/*.sql`, applied in name order) each run
+inside a transaction, so they mustn't contain `BEGIN`/`COMMIT` or statements
+that can't run in one (`CREATE INDEX CONCURRENTLY`, `VACUUM`).
 
 Every table has row level security enabled with no policies, so Supabase's
 public REST API can't read or change them; the server connects as the table
@@ -173,7 +182,8 @@ share one domain (and the admin session cookie stays first-party).
    `npm run build && npm run db:deploy`.
 2. **Environment variables** (Project Settings → Environment Variables), for
    the Production environment:
-   - `DATABASE_URL` — Supabase's **Transaction pooler** URI (port 6543)
+   - `DATABASE_URL` — Supabase's **Transaction pooler** string
+     (`…pooler.supabase.com:6543`; see [Database](#database-supabase))
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
    - `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` (from `npm run hash-password`;
      or `ADMIN_PASSWORD`), `SESSION_SECRET`
@@ -181,25 +191,36 @@ share one domain (and the admin session cookie stays first-party).
      `VITE_` values are baked in at build time, so redeploy after changing them.
 
    Keep the database and Supabase variables out of the Preview environment
-   (or point it at a separate Supabase project) so preview deployments can't
-   change production content.
+   (or point it at a separate Supabase project, which you then migrate
+   yourself with `npm run db:migrate`) so preview deployments can't change
+   production content.
 3. **Database:** nothing to run by hand. After the site builds, every
    production deploy runs `npm run db:deploy` (`server/src/deploy.js`), which:
    - applies pending migrations;
-   - creates the `site-images` bucket if it's missing (a problem there is only
-     a warning);
    - on the first deploy to an empty database, imports the bundled posts,
      projects and homepage copy, once. A database that already has content is
-     never refilled, so anything deleted in `/admin` stays deleted.
+     never refilled, so anything deleted in `/admin` stays deleted;
+   - creates the `site-images` bucket if it's missing (a problem there is only
+     a warning).
 
-   If the database can't be updated (say the Supabase project is paused), the
-   build fails, the build log says why, and the current deployment keeps
-   serving. Preview and local builds leave the database alone. To deploy
-   without touching it, set `MIGRATE_ON_DEPLOY=false`.
+   If the database can't be updated, the build fails and the current
+   deployment keeps serving. The build log says what went wrong and what to
+   check: a paused Supabase project (free projects pause after about a week
+   without use), the wrong connection string or password, or Supabase
+   Network Restrictions that don't allow Vercel's build servers. To deploy
+   without touching the database, set `MIGRATE_ON_DEPLOY=false` and redeploy.
 
-   Migrations run just before the new code goes live, so the current
-   deployment briefly runs against the new schema, and an Instant Rollback
-   keeps it: write migrations the previous version can live with (add tables
+   Only production builds update the database, going by the `VERCEL_ENV`
+   Vercel sets, so keep **Automatically expose System Environment Variables**
+   on (Settings → Environment Variables; it's on by default). Preview
+   deployments and local builds leave it alone, but **Promote to Production**
+   rebuilds a preview as a production deploy, so its migrations run then. A
+   production build made outside Vercel's Git integration (`vercel build
+   --prod`, as `vercel deploy --prebuilt` uses) runs them from that machine.
+
+   The database changes before the new code goes live, and an Instant
+   Rollback doesn't undo that, so the deployment being served can run against
+   the new schema for a while: write migrations it can live with (add tables
    and columns; rename or drop only in a later deploy).
 4. **Domains** (Project Settings → Domains): add `www.nesisoft.com` and
    `nesisoft.com`, with `nesisoft.com` redirecting to `www`. Create the DNS

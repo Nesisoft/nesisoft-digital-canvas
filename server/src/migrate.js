@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { closePool, getPool } from "./db.js";
+import { closePool, withClient } from "./db.js";
 import { ensureBucket } from "./storage.js";
 
 /**
@@ -11,6 +11,10 @@ import { ensureBucket } from "./storage.js";
  * own transaction, recording what ran in schema_migrations. Safe to run on
  * every deploy: a transaction-scoped advisory lock keeps two runs from
  * applying the same file, and it works through Supabase's pooler too.
+ * Production deploys on Vercel run it before going live (see deploy.js).
+ *
+ * Each file runs inside that transaction, so it mustn't contain BEGIN/COMMIT
+ * or statements that can't run in one (CREATE INDEX CONCURRENTLY, VACUUM).
  *
  *   npm run db:migrate
  */
@@ -26,8 +30,7 @@ export const MIGRATION_LOCK_ID = 727_001;
 const LOCK_ID = MIGRATION_LOCK_ID;
 
 export async function runMigrations(log = console.log) {
-  const client = await getPool().connect();
-  try {
+  await withClient(async (client) => {
     // Under the lock too, so two first-ever runs don't race to create it.
     await client.query("begin");
     try {
@@ -47,7 +50,7 @@ export async function runMigrations(log = console.log) {
       `);
       await client.query("commit");
     } catch (err) {
-      await client.query("rollback");
+      await client.query("rollback").catch(() => {});
       throw err;
     }
 
@@ -73,14 +76,12 @@ export async function runMigrations(log = console.log) {
         }
         await client.query("commit");
       } catch (err) {
-        await client.query("rollback");
-        throw new Error(`[migrate] ${file} failed: ${err.message}`);
+        await client.query("rollback").catch(() => {});
+        throw new Error(`[migrate] ${file} failed: ${err.message}`, { cause: err });
       }
     }
     log(`[migrate] ${applied ? `${applied} applied` : "already up to date"} (${files.length} total)`);
-  } finally {
-    client.release();
-  }
+  });
 }
 
 // Run directly: migrate the database, then make sure the image bucket exists.

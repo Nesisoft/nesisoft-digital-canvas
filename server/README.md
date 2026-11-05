@@ -21,5 +21,6 @@ In production, Vercel serves the React app and the API from the same project:
 - `https://www.nesisoft.com/api/...` -> Express API from `api/index.js`
 
 The schema lives in `server/db/migrations/` (plain SQL, applied in name order
-by `npm run db:migrate`). Server-only environment variables are documented in
+by `npm run db:migrate`, and automatically on every Vercel production deploy
+by `npm run db:deploy`). Server-only environment variables are documented in
 the root `.env.example`.

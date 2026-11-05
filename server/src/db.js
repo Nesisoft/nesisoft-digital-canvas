@@ -34,10 +34,12 @@ function poolConfig(url) {
     // Never echo the URL: it holds the database password.
     throw invalid();
   }
-  // A connection string never has a #fragment: there's an unencoded # in the
-  // password, which cut it short, and the rest would be taken for the host
-  // name (and shown in connection errors).
-  if (parsed.hash) throw invalid();
+  // An unencoded "@" followed by "#", "/" or "?" in the password cuts it
+  // short: the rest is taken for the host name (and shown in connection
+  // errors), leaving an "@" after it, which a real connection string never has.
+  if (parsed.hash || parsed.pathname.includes("@") || parsed.search.includes("@")) {
+    throw invalid();
+  }
   // TLS is decided here, not by the URL: recent pg treats sslmode=require as
   // full certificate verification. sslmode=disable (or DATABASE_SSL=false)
   // turns TLS off, e.g. for a plain Postgres on a private network.
@@ -93,6 +95,24 @@ export function getPool() {
   return pool;
 }
 
+/**
+ * Runs `fn` with one client checked out of the pool, for a transaction.
+ * pg-pool stops listening for "error" on a client while it's checked out, so
+ * this listens instead: a connection that drops mid-transaction then fails
+ * the query in progress rather than crashing the process.
+ */
+export async function withClient(fn) {
+  const client = await getPool().connect();
+  const onError = (err) => console.error(`[db] ${err.message}`);
+  client.on("error", onError);
+  try {
+    return await fn(client);
+  } finally {
+    client.removeListener("error", onError);
+    client.release();
+  }
+}
+
 /** Lets one-off scripts (migrate, seed) exit once they're done. */
 export async function closePool() {
   await pool?.end();
@@ -100,7 +120,15 @@ export async function closePool() {
 }
 
 // Can't reach the database, as opposed to a bad query.
-const CONNECTION_ERRORS = ["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EAI_AGAIN"];
+const CONNECTION_ERRORS = [
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "EAI_AGAIN",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
+];
 
 export function isConnectionError(err) {
   if (CONNECTION_ERRORS.includes(err?.code)) return true;
