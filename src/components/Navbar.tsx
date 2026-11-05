@@ -5,15 +5,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
-import { team } from "@/data/team";
 import { useProjects } from "@/hooks/useProjects";
+import { useTeam } from "@/hooks/useTeam";
 import { LogoMark } from "@/components/LogoMark";
 
 type GroupKey = "services" | "work";
 
-// Same rule as the homepage Team section: no link to /team until
-// src/data/team.ts has someone in it, so the nav never leads to an empty page.
-const hasTeam = team.length > 0;
 
 const groups: Record<GroupKey, { label: string; eyebrow: string; description: string; all: To; allLabel: string }> = {
   services: {
@@ -56,6 +53,9 @@ const Navbar = () => {
   const panelId = useId();
   const location = useLocation();
   const projects = useProjects();
+  // Same rule as the homepage Team section: no link to /team until there's
+  // someone on the team, so the nav never leads to an empty page.
+  const hasTeam = useTeam().members.length > 0;
   const featuredProjects = [
     ...projects.filter((p) => p.type === "Internal platform").slice(0, 3),
     ...projects.filter((p) => p.type === "Client work").slice(0, 1),

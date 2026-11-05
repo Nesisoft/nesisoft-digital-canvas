@@ -22,12 +22,11 @@ export function getSiteRoutes(root: string): SiteRoute[] {
   const blogPosts = readBlogPosts(path.join(root, "src", "content", "blog"));
   const serviceSlugs = extractSlugs(path.join(root, "src", "data", "services.ts"));
   const projectSlugs = extractSlugs(path.join(root, "src", "data", "projects.ts"));
-  const hasTeam = hasEntries(path.join(root, "src", "data", "team.ts"));
 
   return [
     { path: "/", priority: "1.0", changefreq: "weekly" },
-    // /team is a "coming soon" placeholder (and noindex) until team.ts has members.
-    { path: "/team", priority: "0.7", changefreq: "monthly", noindex: !hasTeam },
+    // The team itself loads from the API (managed in /admin).
+    { path: "/team", priority: "0.7", changefreq: "monthly" },
     { path: "/contact", priority: "0.8", changefreq: "monthly" },
     { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
     { path: "/privacy", priority: "0.3", changefreq: "yearly" },
@@ -102,17 +101,4 @@ function extractSlugs(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
   const src = fs.readFileSync(filePath, "utf8");
   return Array.from(src.matchAll(/slug:\s*["']([^"']+)["']/g)).map((m) => m[1]);
-}
-
-/**
- * True when a TS data file has at least one `id: ...` entry. Comments are
- * stripped first so a commented-out example (like the one in team.ts) doesn't count.
- */
-function hasEntries(filePath: string): boolean {
-  if (!fs.existsSync(filePath)) return false;
-  const src = fs
-    .readFileSync(filePath, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "") // block comments
-    .replace(/^\s*\/\/.*$/gm, ""); // whole-line // comments (not URLs inside strings)
-  return /\bid:/.test(src);
 }

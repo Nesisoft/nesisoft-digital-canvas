@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { resolveImage, type TeamMember } from "@/lib/api";
 import { initials } from "@/lib/utils";
-import { team as teamData } from "@/data/team";
+import { useTeam } from "@/hooks/useTeam";
 
 function MemberCard({ member }: { member: TeamMember }) {
   const image = resolveImage(member.image);
@@ -123,13 +123,31 @@ function MemberCard({ member }: { member: TeamMember }) {
   );
 }
 
-// The team is bundled with the frontend (src/data/team.ts) for now, so there
-// is no loading or error state — just the list, in display order.
-const sortedTeam = [...teamData].sort((a, b) => a.order - b.order);
+const GRID = "grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4";
+
+/** Card-shaped placeholders while the team loads (the same size, so nothing jumps). */
+function TeamSkeleton() {
+  return (
+    <div className={GRID} aria-busy="true" aria-label="Loading the team">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div
+          key={i}
+          className="flex min-h-[13.5rem] animate-pulse flex-col items-center rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:min-h-[16rem] sm:p-6"
+        >
+          <div className="h-20 w-20 rounded-full bg-white/[0.06] sm:h-24 sm:w-24" />
+          <div className="mt-5 h-4 w-3/4 rounded bg-white/[0.06]" />
+          <div className="mt-2 h-3 w-1/2 rounded bg-white/[0.04]" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Bare grid of team members — used on both the homepage and the Team page. */
 export function TeamGrid() {
-  const team = sortedTeam;
+  const { members: team, loading } = useTeam();
+
+  if (loading) return <TeamSkeleton />;
 
   if (!team.length) {
     return (
@@ -147,7 +165,7 @@ export function TeamGrid() {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+    <div className={GRID}>
       {team.map((member) => (
         <MemberCard key={member.id} member={member} />
       ))}
@@ -155,9 +173,13 @@ export function TeamGrid() {
   );
 }
 
-/** Homepage "Team" section — omitted entirely until there are members to show. */
+/**
+ * Homepage "Team" section: placeholders while the team loads, then the team;
+ * left out entirely when there's nobody to show.
+ */
 const Team = () => {
-  if (!sortedTeam.length) return null;
+  const { members, loading } = useTeam();
+  if (!loading && !members.length) return null;
 
   return (
     <Section id="team">

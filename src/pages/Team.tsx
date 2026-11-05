@@ -4,18 +4,19 @@ import { TeamGrid } from "@/components/Team";
 import { Seo } from "@/components/Seo";
 import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
-import { team } from "@/data/team";
+import { useTeam } from "@/hooks/useTeam";
 
 const Team = () => {
+  const { members, loading } = useTeam();
 
   return (
     <>
-      {/* Still reachable, but kept out of search results while it would only
-          show the "coming soon" placeholder (src/data/team.ts is empty). */}
+      {/* Kept out of search results only once the API says there's nobody to
+          show, so the page would just be the "coming soon" placeholder. */}
       <Seo
         title="Meet Our Software Engineers & Designers in Accra"
         description="Meet the designers, engineers and strategists behind Nesisoft, a software development company in Accra, Ghana, building web and mobile products for Africa."
-        noindex={!team.length}
+        noindex={!loading && !members.length}
       />
       <PageShell>
         <Navbar />
