@@ -25,14 +25,31 @@ import {
   updateProject,
 } from "../models/projects.js";
 import { getContent, saveContent } from "../models/content.js";
+import {
+  ROLES,
+  createUser,
+  deleteUser,
+  findUserById,
+  listUsers,
+  recordLogin,
+  setPassword,
+  toAdminUser,
+  updateUser,
+} from "../models/users.js";
 import { databaseConfigured, isId, query } from "../db.js";
 import { MAX_IMAGE_BYTES, uploadImage } from "../storage.js";
 import {
   adminLoginEnabled,
-  checkCredentials,
-  isAuthed,
-  requireAuthApi,
+  allow,
+  authenticate,
+  currentAdmin,
+  passwordMatches,
+  passwordProblem,
+  requireAdmin,
+  requirePasswordChosen,
+  signIn,
 } from "../auth.js";
+import { hashPassword } from "../password.js";
 import { loginLimiter } from "../loginLimiter.js";
 import { detectImageType } from "../imageTypes.js";
 import { asyncRouter } from "./asyncRouter.js";
@@ -110,9 +127,13 @@ function pickText(body, fields) {
 
 // --- Auth ---
 router.post("/login", async (req, res) => {
-  // Production refuses every sign-in until real credentials are configured.
+  // Production refuses every sign-in until a real SESSION_SECRET is set, and
+  // accounts live in the database.
   if (!adminLoginEnabled) {
     return res.status(503).json({ error: "Admin login is not configured" });
+  }
+  if (!databaseConfigured) {
+    return res.status(503).json({ error: "Admin login needs the database (DATABASE_URL)" });
   }
   // req.ip honours app.js's trust proxy setting (the client, not Vercel).
   const client = req.ip || "unknown";
@@ -124,39 +145,66 @@ router.post("/login", async (req, res) => {
       error: `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
     });
   }
-  const { username, password } = req.body || {};
-  if (!(await checkCredentials(username, password))) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  // "email" from the current UI; "username" from older clients.
+  const { email = req.body?.username, password } = req.body || {};
+  const user = await authenticate(email, password);
+  if (!user) {
+    return res.status(401).json({ error: "Wrong email or password" });
   }
   loginLimiter.reset(client);
-  if (databaseConfigured) {
-    // Sessions aren't pruned in the background on serverless; tidy up here.
-    await query("delete from session where expire < now()").catch((err) =>
-      console.error("[session] prune failed:", err.message)
-    );
-  }
-  // A fresh session id (no fixation), and "ok" only once it's really stored.
-  await new Promise((resolve, reject) =>
-    req.session.regenerate((err) => (err ? reject(err) : resolve()))
+  // Sessions aren't pruned in the background on serverless; tidy up here.
+  await query("delete from session where expire < now()").catch((err) =>
+    console.error("[session] prune failed:", err.message)
   );
-  req.session.authed = true;
-  req.session.username = username;
-  await new Promise((resolve, reject) =>
-    req.session.save((err) => (err ? reject(err) : resolve()))
-  );
-  res.json({ ok: true });
+  await signIn(req, user);
+  await recordLogin(user.id);
+  res.json({ ok: true, user: toAdminUser(user) });
 });
 
 router.post("/logout", (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-router.get("/me", (req, res) => {
-  res.json({ authed: isAuthed(req), username: req.session?.username });
+router.get("/me", async (req, res) => {
+  const user = await currentAdmin(req);
+  res.json(user ? { authed: true, user: toAdminUser(user) } : { authed: false });
 });
 
-// Everything below requires a session.
-router.use(requireAuthApi);
+// Everything below needs a signed-in account (req.admin).
+router.use(requireAdmin);
+
+// Your own password: needs the current one (even a temporary one). Other
+// sessions of the account are signed out; this one stays signed in.
+router.post("/password", async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!(await passwordMatches(req.admin, currentPassword))) {
+    return res.status(400).json({ error: "Your current password is wrong" });
+  }
+  const problem = passwordProblem(newPassword, req.admin.email);
+  if (problem) return res.status(400).json({ error: problem });
+  if (newPassword === currentPassword) {
+    return res.status(400).json({ error: "Choose a password different from the current one" });
+  }
+  const user = await setPassword(req.admin.id, await hashPassword(newPassword), {
+    mustChange: false,
+  });
+  if (!user) return res.status(401).json({ error: "Not authenticated" });
+  await signIn(req, user);
+  res.json({ ok: true, user: toAdminUser(user) });
+});
+
+// Someone holding a temporary password can't do anything else yet.
+router.use(requirePasswordChosen);
+
+// What each role may reach. Editors write blog posts (and upload their
+// images) but don't delete them; admins manage all content; super admins
+// also manage accounts.
+const CONTENT_ROLES = ["superadmin", "admin"];
+router.use(["/content", "/team", "/projects"], allow(...CONTENT_ROLES));
+router.use("/posts", (req, res, next) =>
+  req.method === "DELETE" ? allow(...CONTENT_ROLES)(req, res, next) : next()
+);
+router.use("/users", allow("superadmin"));
 
 // Ids are UUIDs; anything else can't exist, so answer 404 without a query.
 router.param("id", (req, res, next, id) => {
@@ -369,6 +417,99 @@ router.put("/projects/:id", async (req, res) => {
 router.delete("/projects/:id", async (req, res) => {
   if (!(await deleteProject(req.params.id))) {
     return res.status(404).json({ error: "Project not found" });
+  }
+  res.json({ ok: true });
+});
+
+// --- Accounts (super admins only; see the guards above) ---
+// Changing your own role, disabling or deleting yourself is refused, so
+// nobody locks themselves out by accident; your own password goes through
+// POST /password.
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function toEmail(value) {
+  const email = toText("email", value ?? "").trim();
+  if (!EMAIL.test(email) || email.length > 254) throw badRequest("Enter a valid email address");
+  return email;
+}
+
+function toRole(value) {
+  if (!ROLES.includes(value)) throw badRequest(`Role must be one of: ${ROLES.join(", ")}`);
+  return value;
+}
+
+function toName(value) {
+  const name = toText("name", value).trim();
+  if (name.length > 120) throw badRequest("Name is too long");
+  return name;
+}
+
+function notYourself(req) {
+  if (req.params.id === req.admin.id) {
+    const err = new Error(
+      "You can't change your own role, disable or delete yourself: ask another super admin"
+    );
+    err.status = 409;
+    throw err;
+  }
+}
+
+router.get("/users", async (_req, res) => {
+  res.json((await listUsers()).map(toAdminUser));
+});
+
+// New accounts get a temporary password their owner must replace at first
+// sign-in.
+router.post("/users", async (req, res) => {
+  const body = req.body || {};
+  const email = toEmail(body.email);
+  const problem = passwordProblem(body.password, email);
+  if (problem) throw badRequest(problem);
+  const user = await createUser({
+    email,
+    name: body.name == null ? "" : toName(body.name),
+    role: toRole(body.role),
+    passwordHash: await hashPassword(body.password),
+    mustChangePassword: true,
+    createdBy: req.admin.id,
+  });
+  res.status(201).json(toAdminUser(user));
+});
+
+router.put("/users/:id", async (req, res) => {
+  const body = req.body || {};
+  const changes = {};
+  if (body.name != null) changes.name = toName(body.name);
+  if (body.role != null) changes.role = toRole(body.role);
+  if (body.active != null) changes.active = toBool("active", body.active);
+  if (changes.role !== undefined || changes.active !== undefined) notYourself(req);
+  const user = Object.keys(changes).length
+    ? await updateUser(req.params.id, changes)
+    : await findUserById(req.params.id);
+  if (!user) return res.status(404).json({ error: "Account not found" });
+  res.json(toAdminUser(user));
+});
+
+// A new temporary password: signs the account out and makes its owner choose
+// a new one at next sign-in.
+router.post("/users/:id/password", async (req, res) => {
+  notYourself(req);
+  const existing = await findUserById(req.params.id);
+  if (!existing) return res.status(404).json({ error: "Account not found" });
+  const problem = passwordProblem(req.body?.password, existing.email);
+  if (problem) throw badRequest(problem);
+  const user = await setPassword(existing.id, await hashPassword(req.body.password), {
+    mustChange: true,
+  });
+  if (!user) return res.status(404).json({ error: "Account not found" });
+  res.json(toAdminUser(user));
+});
+
+router.delete("/users/:id", async (req, res) => {
+  notYourself(req);
+  if (!(await deleteUser(req.params.id))) {
+    return res.status(404).json({ error: "Account not found" });
   }
   res.json({ ok: true });
 });
