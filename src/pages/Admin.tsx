@@ -208,11 +208,12 @@ function Dashboard({ user }: { user: AdminUser }) {
   return (
     <div className="flex h-screen flex-col">
       {/* Top bar */}
-      <header className="flex h-14 items-center gap-4 border-b border-white/10 px-5 sm:gap-6">
+      {/* On phones the tabs get their own row under the name and buttons. */}
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/10 px-5 py-3 sm:h-14 sm:flex-nowrap sm:gap-6 sm:py-0">
         <span className="shrink-0 font-bold text-white">
           Nesisoft <span className="font-medium text-violet-400">Admin</span>
         </span>
-        <nav className="flex min-w-0 gap-1 overflow-x-auto">
+        <nav className="order-last flex w-full min-w-0 gap-1 overflow-x-auto sm:order-none sm:w-auto">
           {views.map((v) => (
             <button
               key={v}
@@ -232,6 +233,7 @@ function Dashboard({ user }: { user: AdminUser }) {
           </span>
           <Button
             variant="outline"
+            aria-label="Account"
             onClick={() => switchView("account")}
             className={cn(
               "h-9 rounded-lg border-white/15 bg-transparent text-slate-300 hover:bg-white/[0.06] hover:text-white",
@@ -243,6 +245,7 @@ function Dashboard({ user }: { user: AdminUser }) {
           </Button>
           <Button
             variant="outline"
+            aria-label="Sign out"
             onClick={() => logoutMutation.mutate()}
             className="h-9 rounded-lg border-white/15 bg-transparent text-slate-300 hover:bg-white/[0.06] hover:text-white"
           >

@@ -5,7 +5,7 @@
  * across all clients stops a brute force that rotates IPs — at the cost that,
  * while one is underway, the real admin is locked out too until it subsides.
  *
- * Counters live in memory, which suits a single admin. Each serverless
+ * Counters live in memory, which suits a handful of admins. Each serverless
  * instance (and each restart) keeps its own, so on Vercel the limits apply
  * per warm instance. Swap the store for Postgres behind this same
  * consume/reset interface if that ever matters.

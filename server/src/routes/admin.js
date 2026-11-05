@@ -44,12 +44,11 @@ import {
   authenticate,
   currentAdmin,
   passwordMatches,
-  passwordProblem,
   requireAdmin,
   requirePasswordChosen,
   signIn,
 } from "../auth.js";
-import { hashPassword } from "../password.js";
+import { hashPassword, passwordProblem } from "../password.js";
 import { loginLimiter } from "../loginLimiter.js";
 import { detectImageType } from "../imageTypes.js";
 import { asyncRouter } from "./asyncRouter.js";

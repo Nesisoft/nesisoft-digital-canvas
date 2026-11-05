@@ -1,6 +1,11 @@
 import crypto from "node:crypto";
 import { databaseConfigured, isId } from "./db.js";
-import { hashPassword, parsePasswordHash, verifyPassword } from "./password.js";
+import {
+  MAX_PASSWORD_LENGTH,
+  hashPassword,
+  parsePasswordHash,
+  verifyPassword,
+} from "./password.js";
 import {
   bootstrapSuperadmin,
   findUserByEmail,
@@ -98,25 +103,6 @@ async function envCredentialsMatch(email, password) {
 }
 
 // --- Passwords ---
-
-export const MIN_PASSWORD_LENGTH = 10;
-// Generous for any passphrase; keeps scrypt's input (and request bodies) sane.
-const MAX_PASSWORD_LENGTH = 200;
-
-/** Why a new password isn't acceptable, or null when it's fine. */
-export function passwordProblem(password, email) {
-  if (typeof password !== "string") return "Password must be text";
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return `Use at least ${MIN_PASSWORD_LENGTH} characters`;
-  }
-  if (password.length > MAX_PASSWORD_LENGTH) {
-    return `Use at most ${MAX_PASSWORD_LENGTH} characters`;
-  }
-  if (email && password.trim().toLowerCase() === String(email).trim().toLowerCase()) {
-    return "The password can't be the email address";
-  }
-  return null;
-}
 
 /** Checks a password against an account's stored hash. */
 export async function passwordMatches(user, password) {

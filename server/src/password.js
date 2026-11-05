@@ -35,6 +35,26 @@ function decodeBase64(value) {
   return buffer.toString("base64") === value ? buffer : null;
 }
 
+/** Shortest password an account may choose (src/components/admin/PasswordForm.tsx matches). */
+export const MIN_PASSWORD_LENGTH = 10;
+// Generous for any passphrase; keeps scrypt's input (and request bodies) sane.
+export const MAX_PASSWORD_LENGTH = 200;
+
+/** Why a new account password isn't acceptable, or null when it's fine. */
+export function passwordProblem(password, email) {
+  if (typeof password !== "string") return "Password must be text";
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `Use at least ${MIN_PASSWORD_LENGTH} characters`;
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return `Use at most ${MAX_PASSWORD_LENGTH} characters`;
+  }
+  if (email && password.trim().toLowerCase() === String(email).trim().toLowerCase()) {
+    return "The password can't be the email address";
+  }
+  return null;
+}
+
 /** Hashes a password with a fresh random salt at the default cost. */
 export async function hashPassword(password) {
   const salt = crypto.randomBytes(SALT_BYTES);

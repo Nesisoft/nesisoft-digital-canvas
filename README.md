@@ -45,7 +45,8 @@ npm run db:migrate  # Create/upgrade the database tables (+ the image bucket)
 npm run seed        # Migrate, then import any bundled post/project/homepage copy that's missing
 npm run db:deploy   # What Vercel production builds run (does nothing unless VERCEL_ENV=production)
 npm run lint        # ESLint
-npm run hash-password  # Prompt for the admin password, print ADMIN_PASSWORD_HASH
+npm run hash-password  # Prompt for a password, print ADMIN_PASSWORD_HASH
+npm run admin:password -- you@example.com  # Set an account's password (locked out of /admin)
 ```
 
 ## Configuration
@@ -64,8 +65,8 @@ site and the API read it). All client-exposed variables must be prefixed with
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase project URL and service-role key, for storing images uploaded in `/admin`. **Server only** — never prefix these with `VITE_`. |
 | `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate`, `npm run seed` and production deploys create it). |
 | `MIGRATE_ON_DEPLOY` | Optional. Set to `false` to stop production deploys on Vercel from updating the database (see [Deployment](#deployment-vercel)). |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Admin login credentials. Required in production (with `ADMIN_PASSWORD_HASH` standing in for `ADMIN_PASSWORD`): admin login stays disabled if the username or both password variables are missing, or the password is the `changeme` placeholder. Dev falls back to `admin` / `changeme`. |
-| `ADMIN_PASSWORD_HASH` | Preferred over `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set; a malformed hash disables admin login in production. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | The first super admin's email and a starting password. They only count while the database has no active super admin: signing in with them then creates that account (or restores it), and it must choose a new password. After that, accounts live in the database (see [Admin accounts](#admin-accounts)) and `ADMIN_PASSWORD` can be removed. Production ignores the `changeme` placeholder; dev falls back to `admin` / `changeme`. |
+| `ADMIN_PASSWORD_HASH` | Optional instead of `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set. |
 | `SESSION_SECRET` | Session signing secret. Required in production: a missing or placeholder value disables admin login. |
 | `CORS_ORIGIN` | Optional comma-separated extra origins allowed to call the API (e.g. a dev server on another port). Same-origin requests are always allowed. |
 
@@ -86,7 +87,7 @@ api/
 server/src/
   app.js          Express app used by Vercel and local start
   routes/         Public and admin API routes
-  models/         Data access per table (posts, projects, team, content)
+  models/         Data access per table (posts, projects, team, content, users)
   db.js           PostgreSQL pool and query helpers
   migrate.js      Applies server/db/migrations/*.sql
   storage.js      Supabase Storage uploads
@@ -126,6 +127,37 @@ session cookie is first-party on `www.nesisoft.com`.
 
 The admin panel lives at `/admin` and supports CRUD for posts, projects, team
 members, uploaded images, and editable homepage content.
+
+### Admin accounts
+
+Accounts live in the database's `users` table, each with an email, a hashed
+password and a role:
+
+| Role | Can |
+| --- | --- |
+| Super admin | Everything, plus create accounts, change roles, disable, reset passwords and delete |
+| Admin | All site content: posts, projects, team, homepage, images |
+| Editor | Write and edit blog posts (and upload their images); not delete them |
+
+- **First account:** sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. While the
+  database has no active super admin, that creates one (or restores it), and
+  it's asked to choose a new password straight away. From then on those env
+  vars are ignored, so `ADMIN_PASSWORD` can be removed from the host.
+- **New accounts:** a super admin adds them under **Users** with a temporary
+  password (generated, with a copy button) and shares it privately. Its owner
+  must choose their own at first sign-in. **Reset password** works the same
+  way for someone who forgot theirs.
+- **Everyone** can change their own password under **Account**; that signs
+  out their other devices.
+- **Signing out at once:** disabling an account, resetting its password or
+  deleting it ends its sessions immediately, and role changes apply to the
+  next request.
+- **No lock-outs:** super admins can't change their own role, disable or
+  delete themselves, and there's always at least one active super admin.
+- **Locked out anyway?** Run `npm run admin:password -- you@example.com` with
+  `DATABASE_URL` in `.env.local`. It sets that account's password (keeping its
+  role), re-enables it, and signs it out everywhere; an email without an
+  account becomes a new super admin.
 
 - **Login rate limit:** after 5 failed sign-ins from one IP within 15 minutes,
   further attempts get `429` until the window passes; 50 failures across all
@@ -184,8 +216,9 @@ share one domain (and the admin session cookie stays first-party).
    - `DATABASE_URL` — Supabase's **Transaction pooler** string
      (`…pooler.supabase.com:6543`; see [Database](#database-supabase))
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-   - `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` (from `npm run hash-password`;
-     or `ADMIN_PASSWORD`), `SESSION_SECRET`
+   - `SESSION_SECRET`, plus `ADMIN_USERNAME` and `ADMIN_PASSWORD` (or
+     `ADMIN_PASSWORD_HASH` from `npm run hash-password`) for creating the
+     first super admin (see [Admin accounts](#admin-accounts))
    - `VITE_WEB3FORMS_ACCESS_KEY`, and optionally `VITE_PLAUSIBLE_DOMAIN`.
      `VITE_` values are baked in at build time, so redeploy after changing them.
 

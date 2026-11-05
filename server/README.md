@@ -10,6 +10,7 @@ npm install
 npm run dev
 npm run db:migrate
 npm run seed
+npm run admin:password -- you@example.com   # if locked out of /admin
 npm run build
 npm start
 ```
