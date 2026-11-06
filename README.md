@@ -57,13 +57,19 @@ site and the API read it). All client-exposed variables must be prefixed with
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_WEB3FORMS_ACCESS_KEY` | Contact-form and blog newsletter-signup delivery via [Web3Forms](https://web3forms.com); both arrive in the inbox tied to the key. Without it, the contact form falls back to opening the visitor's mail client and the newsletter signup is hidden. |
+| `VITE_WEB3FORMS_ACCESS_KEY` | Blog newsletter-signup delivery via [Web3Forms](https://web3forms.com), to the inbox tied to the key. Without it, the newsletter signup is hidden. (The contact form posts to the site's own API: see [Contact form and inquiries](#contact-form-and-inquiries).) |
 | `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
 | `DATABASE_URL` | PostgreSQL connection string for the API (Supabase: see [Database](#database-supabase)). Without it, data routes answer `503` at once and the public site uses its built-in content. |
 | `DATABASE_CA_CERT` | Recommended in production. Supabase's CA certificate (PEM, from **Database Settings → SSL**) so the database's TLS certificate is verified; without it the connection is encrypted but unverified, and production logs a warning. Hosted databases always use TLS unless the URL has `sslmode=disable` (or `DATABASE_SSL=false`), e.g. for a plain Postgres on a private network. |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase project URL and service-role key, for storing images uploaded in `/admin`. **Server only** — never prefix these with `VITE_`. |
 | `SUPABASE_STORAGE_BUCKET` | Optional. Public Storage bucket for uploads (default `site-images`; `npm run db:migrate`, `npm run seed` and production deploys create it). |
+| `SUPABASE_DOCUMENTS_BUCKET` | Optional. **Private** bucket for briefs attached to the contact form (default `inquiry-files`; created alongside the image bucket). |
+| `SMTP_USER` / `SMTP_PASSWORD` | The company mailbox (e.g. `info@nesisoft.com`) and its password, used to email new contact-form inquiries and to send replies from `/admin`. On Hostinger it's the mailbox's own password (hPanel → Emails). Without them, inquiries are still saved in `/admin`, but nobody is emailed and replying from `/admin` is off. |
+| `SMTP_HOST` / `SMTP_PORT` | Optional. Default `smtp.hostinger.com` / `465` (TLS); port `587` uses STARTTLS. |
+| `MAIL_FROM` | Optional. The From line, default `"Nesisoft" <SMTP_USER>`. Must be the mailbox or one of its aliases. |
+| `INQUIRY_NOTIFY_EMAIL` | Where new inquiries are emailed, e.g. `info@nesisoft.com` (default `SMTP_USER`). |
+| `SITE_URL` | Optional. The site's address for links in emails (default `https://www.nesisoft.com`). |
 | `MIGRATE_ON_DEPLOY` | Optional. Set to `false` to stop production deploys on Vercel from updating the database (see [Deployment](#deployment-vercel)). |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | The first super admin's email and a starting password. They only count while the database has no active super admin: signing in with them then creates that account (or restores it), and it must choose a new password. After that, accounts live in the database (see [Admin accounts](#admin-accounts)) and `ADMIN_PASSWORD` can be removed. Production ignores the `changeme` placeholder; dev falls back to `admin` / `changeme`. |
 | `ADMIN_PASSWORD_HASH` | Optional instead of `ADMIN_PASSWORD`: an scrypt hash, so the host never stores the raw password. Generate it with `npm run hash-password` (type the password when prompted, or pipe it on stdin) and paste the printed value. Takes precedence when both are set. |
@@ -142,8 +148,8 @@ password and a role:
 
 | Role | Can |
 | --- | --- |
-| Super admin | Everything, plus create accounts, change roles, disable, reset passwords and delete |
-| Admin | All site content: posts, projects, team, homepage, images |
+| Super admin | Everything (inquiries included), plus create accounts, change roles, disable, reset passwords and delete |
+| Admin | All site content: posts, projects, team, homepage, images; contact-form inquiries |
 | Editor | Write and edit blog posts (and upload their images); not delete them |
 
 - **First account:** sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. While the
@@ -172,6 +178,34 @@ password and a role:
   Counters are in memory, so each serverless instance keeps its own.
 - **Uploads** accept only JPEG, PNG, WebP, AVIF and GIF, checked by the file's
   bytes; anything else (including SVG) gets `415`.
+
+### Contact form and inquiries
+
+The contact form (homepage and `/contact`) posts to `POST /api/inquiries`,
+with an optional brief attached: a PDF or Word (`.docx`) file up to 4 MB
+(Vercel's request limit), checked by its bytes. Macro-enabled Word files are
+refused. Each inquiry is:
+
+1. **saved** in the `inquiries` table, with the file in the private documents
+   bucket;
+2. **emailed** to `INQUIRY_NOTIFY_EMAIL` through the company mailbox's SMTP
+   server, with the file attached and Reply-To set to the sender (so you can
+   also answer straight from the mailbox), plus a link that opens it in
+   `/admin`.
+
+If the email fails, the inquiry is still in `/admin`, flagged. Submissions are
+limited to 6 per IP per 15 minutes (60 overall), and a hidden honeypot field
+drops bots.
+
+In `/admin`, **Inquiries** (admins and super admins) lists them newest first,
+with a count of new ones on the tab. Each one moves through **New → Read →
+Open → Responded → Closed**: opening it marks it read, replying marks it
+responded, and the rest is set by hand.
+
+From an inquiry you can download the brief and **reply**. The reply is emailed
+from the company address to the sender, signed with your name and quoting
+their message, and their answer comes back to the company inbox. Replies are
+kept with the inquiry. Inquiries can be deleted (their file too).
 
 ## Database (Supabase)
 
@@ -226,6 +260,8 @@ share one domain (and the admin session cookie stays first-party).
    - `SESSION_SECRET`, plus `ADMIN_USERNAME` and `ADMIN_PASSWORD` (or
      `ADMIN_PASSWORD_HASH` from `npm run hash-password`) for creating the
      first super admin (see [Admin accounts](#admin-accounts))
+   - `SMTP_USER`, `SMTP_PASSWORD` and `INQUIRY_NOTIFY_EMAIL` for the contact
+     form's emails (see [Contact form and inquiries](#contact-form-and-inquiries))
    - `VITE_WEB3FORMS_ACCESS_KEY`, and optionally `VITE_PLAUSIBLE_DOMAIN`.
      `VITE_` values are baked in at build time, so redeploy after changing them.
 

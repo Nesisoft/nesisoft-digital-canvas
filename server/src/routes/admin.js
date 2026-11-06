@@ -36,8 +36,22 @@ import {
   toAdminUser,
   updateUser,
 } from "../models/users.js";
+import {
+  STATUSES as INQUIRY_STATUSES,
+  addReply,
+  deleteInquiry,
+  findInquiry,
+  listInquiries,
+  listReplies,
+  markRead,
+  setStatus as setInquiryStatus,
+  toAdminInquiry,
+  toAdminReply,
+} from "../models/inquiries.js";
 import { databaseConfigured, isId, query } from "../db.js";
-import { MAX_IMAGE_BYTES, uploadImage } from "../storage.js";
+import { MAX_IMAGE_BYTES, deleteDocument, downloadDocument, uploadImage } from "../storage.js";
+import { mailConfigured, sendMail } from "../mailer.js";
+import { replyEmail } from "../inquiryMail.js";
 import {
   adminLoginEnabled,
   allow,
@@ -204,6 +218,8 @@ router.use("/posts", (req, res, next) =>
   req.method === "DELETE" ? allow(...CONTENT_ROLES)(req, res, next) : next()
 );
 router.use("/users", allow("superadmin"));
+// Contact-form inquiries hold people's details: admins and super admins only.
+router.use("/inquiries", allow(...CONTENT_ROLES));
 
 // Ids are UUIDs; anything else can't exist, so answer 404 without a query.
 router.param("id", (req, res, next, id) => {
@@ -509,6 +525,114 @@ router.delete("/users/:id", async (req, res) => {
   notYourself(req);
   if (!(await deleteUser(req.params.id))) {
     return res.status(404).json({ error: "Account not found" });
+  }
+  res.json({ ok: true });
+});
+
+// --- Inquiries (the website's contact form) ---
+
+const notFoundInquiry = (res) => res.status(404).json({ error: "Inquiry not found" });
+
+/** A download header that keeps any file name (RFC 6266), with a plain fallback. */
+function attachmentDisposition(name) {
+  const fallback = name.replace(/[^\x20-\x7e]|["\\]/g, "_");
+  // RFC 5987 also wants ' ( ) * escaped, which encodeURIComponent leaves.
+  const encoded = encodeURIComponent(name).replace(
+    /['()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
+}
+
+router.get("/inquiries", async (_req, res) => {
+  res.json({ items: (await listInquiries()).map(toAdminInquiry), mailConfigured });
+});
+
+// Opening one marks it read.
+router.get("/inquiries/:id", async (req, res) => {
+  let inquiry = await findInquiry(req.params.id);
+  if (!inquiry) return notFoundInquiry(res);
+  if (inquiry.status === "new") {
+    await markRead(inquiry.id);
+    inquiry = { ...inquiry, status: "read" };
+  }
+  const replies = await listReplies(inquiry.id);
+  res.json({ inquiry: toAdminInquiry(inquiry), replies: replies.map(toAdminReply), mailConfigured });
+});
+
+router.put("/inquiries/:id", async (req, res) => {
+  const status = req.body?.status;
+  if (!INQUIRY_STATUSES.includes(status)) {
+    throw badRequest(`Status must be one of: ${INQUIRY_STATUSES.join(", ")}`);
+  }
+  if (!(await setInquiryStatus(req.params.id, status))) return notFoundInquiry(res);
+  res.json(toAdminInquiry(await findInquiry(req.params.id)));
+});
+
+// The attached brief, from the private bucket, as a download.
+router.get("/inquiries/:id/attachment", async (req, res) => {
+  const inquiry = await findInquiry(req.params.id);
+  if (!inquiry) return notFoundInquiry(res);
+  const file = inquiry.attachment_path ? await downloadDocument(inquiry.attachment_path) : null;
+  if (!file) {
+    return res.status(404).json({
+      error: inquiry.notify_error
+        ? "This file couldn't be stored or emailed. Ask the sender to send it again."
+        : "This file wasn't stored. It was attached to the email sent to the company inbox.",
+    });
+  }
+  res.set({
+    "Content-Type": inquiry.attachment_type,
+    "Content-Disposition": attachmentDisposition(inquiry.attachment_name),
+    "Cache-Control": "private, no-store",
+  });
+  res.send(file);
+});
+
+// Emails a reply to the person who wrote in, from the company address, and
+// keeps it with the inquiry (which becomes "responded").
+router.post("/inquiries/:id/replies", async (req, res) => {
+  const inquiry = await findInquiry(req.params.id);
+  if (!inquiry) return notFoundInquiry(res);
+  const body = req.body || {};
+  const subject = toText("subject", body.subject ?? "").trim();
+  const message = toText("message", body.message ?? "").trim();
+  if (!subject) throw badRequest("Add a subject");
+  if (subject.length > 200) throw badRequest("The subject is too long");
+  if (!message) throw badRequest("Write a reply first");
+  if (message.length > 10_000) throw badRequest("The reply is too long");
+
+  const earlier = await listReplies(inquiry.id);
+  const info = await sendMail(
+    replyEmail({
+      inquiry,
+      subject,
+      body: message,
+      signedBy: req.admin.name,
+      previousMessageIds: earlier.map((reply) => reply.message_id).filter(Boolean),
+    })
+  );
+  const reply = await addReply({
+    inquiryId: inquiry.id,
+    subject,
+    body: message,
+    sentBy: req.admin.id,
+    sentByName: req.admin.name || req.admin.email,
+    messageId: info.messageId,
+  });
+  res.status(201).json({
+    reply: toAdminReply(reply),
+    inquiry: toAdminInquiry(await findInquiry(inquiry.id)),
+  });
+});
+
+router.delete("/inquiries/:id", async (req, res) => {
+  const deleted = await deleteInquiry(req.params.id);
+  if (!deleted) return notFoundInquiry(res);
+  if (deleted.attachmentPath) {
+    await deleteDocument(deleted.attachmentPath).catch((err) =>
+      console.error("[inquiries] deleting the stored file failed:", err.message)
+    );
   }
   res.json({ ok: true });
 });

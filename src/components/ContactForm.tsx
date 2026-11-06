@@ -1,15 +1,15 @@
-import { useId, type BaseSyntheticEvent, type ReactNode } from "react";
+import { useId, useState, type BaseSyntheticEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useForm, type RegisterOptions, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { ChevronDown, Send, Loader2 } from "lucide-react";
+import { ChevronDown, FileText, Loader2, Paperclip, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { trackEvent } from "@/lib/analytics";
-import { WEB3FORMS_KEY, submitToWeb3Forms } from "@/lib/web3forms";
+import { API_BASE } from "@/lib/api";
 
 const NOT_SURE = "Not sure yet";
 
@@ -100,9 +100,36 @@ const defaultValues: ContactValues = {
 
 const SENT_MESSAGE = "Message sent! We'll reply within one business day.";
 
+// An optional brief: PDF or Word (.docx), up to 4 MB (the server checks the
+// bytes too; see server/src/documentTypes.js).
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const FILE_ACCEPT =
+  ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+function fileProblem(file: File): string | null {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension !== "pdf" && extension !== "docx") return "Attach a PDF or Word (.docx) document";
+  if (file.size === 0) return "That file is empty";
+  if (file.size > MAX_FILE_BYTES) return "That file is too large: attach one up to 4 MB";
+  return null;
+}
+
+const formatSize = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+/** A failed submission, with whether it's worth offering email instead. */
+class SubmitError extends Error {
+  constructor(
+    message: string,
+    readonly offerEmail: boolean
+  ) {
+    super(message);
+  }
+}
+
 /**
  * The optional answers as readable [label, value] pairs, in form order,
- * leaving out anything skipped. Feeds the Web3Forms email and the mailto: body.
+ * leaving out anything skipped. Feeds the submission and the mailto: fallback.
  */
 function describeDetails(values: ContactValues): [string, string][] {
   // "Not sure yet" exists in both currencies, so keep the one they picked.
@@ -193,20 +220,115 @@ function Field({ label, name, error, optional, formId, children }: FieldProps) {
   );
 }
 
+/** Optional brief upload: click to choose, or drop a file on it. */
+function AttachmentField({
+  formId,
+  file,
+  error,
+  onChange,
+}: {
+  formId: string;
+  file: File | null;
+  error: string | null;
+  onChange: (file: File | null) => void;
+}) {
+  const id = `${formId}-attachment`;
+  const hintId = `${id}-hint`;
+  const errorId = `${id}-error`;
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        Project brief
+        <OptionalTag />
+      </label>
+      {file ? (
+        <div className="flex items-center gap-3 border border-white/10 bg-black/20 px-3 py-2.5">
+          <FileText aria-hidden className="h-5 w-5 flex-shrink-0 text-violet-300" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm text-white">{file.name}</p>
+            <p className="text-xs text-slate-400">{formatSize(file.size)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            aria-label={`Remove ${file.name}`}
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <label
+          htmlFor={id}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            onChange(e.dataTransfer.files?.[0] ?? null);
+          }}
+          className={`flex cursor-pointer items-center gap-3 border border-dashed px-3 py-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400 ${
+            dragging
+              ? "border-violet-400 bg-violet-500/10 text-white"
+              : "border-white/15 bg-black/20 text-slate-300 hover:border-violet-400/50 hover:text-white"
+          }`}
+        >
+          <Paperclip aria-hidden className="h-5 w-5 flex-shrink-0 text-violet-300" />
+          <span>
+            <span className="font-medium text-white">Attach a brief</span> or drop it here
+          </span>
+          <input
+            id={id}
+            type="file"
+            accept={FILE_ACCEPT}
+            className="sr-only"
+            aria-describedby={error ? `${hintId} ${errorId}` : hintId}
+            aria-invalid={!!error}
+            onChange={(e) => {
+              onChange(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      )}
+      <p id={hintId} className="mt-1 text-xs text-slate-400">
+        PDF or Word (.docx), up to 4 MB.
+      </p>
+      {error && (
+        <p id={errorId} role="alert" className="mt-1 text-xs text-rose-300">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /**
  * Functional, validated, accessible contact form shared by the homepage
  * section and the dedicated /contact page. Besides name, email and message
  * it asks what the owner needs to qualify a lead (service, budget, timeline,
  * phone, company, referral source); only the service is required of those.
+ * A brief (PDF or .docx) can be attached.
  *
- * Submission strategy:
- *   1. If VITE_WEB3FORMS_ACCESS_KEY is set → POST to Web3Forms (no backend
- *      needed; get a free key at https://web3forms.com tied to your inbox).
- *   2. Otherwise → fall back to a prefilled mailto: so the form is never a
- *      dead end, even before the key is configured.
+ * It posts to the site's own API (POST /api/inquiries), which keeps the
+ * inquiry for /admin and emails the company inbox. If that fails, the error
+ * offers a prefilled email instead, so the form is never a dead end.
  */
 export function ContactForm() {
   const formId = useId();
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
+  const chooseAttachment = (file: File | null) => {
+    const problem = file ? fileProblem(file) : null;
+    setAttachmentError(problem);
+    setAttachment(problem ? null : file);
+  };
   const {
     register,
     handleSubmit,
@@ -229,50 +351,86 @@ export function ContactForm() {
     if (new FormData(event?.target).has("botcheck")) {
       toast.success(SENT_MESSAGE);
       reset();
+      setAttachment(null);
       return;
     }
+    if (attachmentError) return;
 
     // What was asked about, never who asked.
     trackEvent("Contact Form Submit", {
       service: values.service,
       budgetCurrency: values.budget ? values.budgetCurrency : "none",
+      attachment: attachment ? "yes" : "no",
     });
 
-    const name = `${values.firstName} ${values.lastName}`;
-    const topic = values.service === NOT_SURE ? "General" : values.service;
-    const subject = `[Website] ${topic} enquiry from ${name}`;
     const details = describeDetails(values);
+    const detail = (label: string) => details.find(([l]) => l === label)?.[1] ?? "";
+    const body = new FormData();
+    body.set("firstName", values.firstName);
+    body.set("lastName", values.lastName);
+    body.set("email", values.email);
+    body.set("phone", values.phone);
+    body.set("company", values.company);
+    body.set("service", values.service);
+    body.set("budget", detail("Budget"));
+    body.set("timeline", values.timeline);
+    body.set("source", values.source);
+    body.set("message", values.message);
+    body.set("page", window.location.pathname);
+    if (attachment) body.set("attachment", attachment);
 
-    if (!WEB3FORMS_KEY) {
-      // Graceful fallback: open the user's mail client with everything filled.
-      const body = [
+    try {
+      let res: Response;
+      try {
+        res = await fetch(`${API_BASE}/api/inquiries`, { method: "POST", body });
+      } catch {
+        throw new SubmitError("We couldn't reach our server.", true);
+      }
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        // 4xx: something to fix (or wait out); 5xx: our side, so offer email.
+        throw new SubmitError(
+          data.error || "We couldn't send your message right now.",
+          res.status >= 500
+        );
+      }
+      const result = (await res.json().catch(() => ({}))) as { fileReceived?: boolean };
+      if (attachment && result.fileReceived === false) {
+        toast.warning("Message sent, but your file didn't come through.", {
+          description: `Please email it to ${siteConfig.contact.emailGeneral}.`,
+          duration: 15000,
+        });
+      } else {
+        toast.success(SENT_MESSAGE);
+      }
+      reset();
+      setAttachment(null);
+    } catch (err) {
+      const offerEmail = !(err instanceof SubmitError) || err.offerEmail;
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      if (!offerEmail) {
+        toast.error(message);
+        return;
+      }
+      // Never a dead end: their email app, with everything filled in.
+      const name = `${values.firstName} ${values.lastName}`;
+      const topic = values.service === NOT_SURE ? "General" : values.service;
+      const mailBody = [
         `Name: ${name}`,
         `Email: ${values.email}`,
         ...details.map(([label, value]) => `${label}: ${value}`),
         "",
         values.message,
+        ...(attachment ? ["", `(Please attach ${attachment.name} to this email.)`] : []),
       ].join("\n");
-      window.location.href = `mailto:${siteConfig.contact.emailGeneral}?subject=${encodeURIComponent(
-        subject
-      )}&body=${encodeURIComponent(body)}`;
-      toast.info("Opening your email app to send the message…");
-      return;
-    }
-
-    try {
-      await submitToWeb3Forms({
-        from_name: name,
-        subject,
-        email: values.email,
-        Name: name,
-        ...Object.fromEntries(details),
-        message: values.message,
+      const mailto = `mailto:${siteConfig.contact.emailGeneral}?subject=${encodeURIComponent(
+        `[Website] ${topic} enquiry from ${name}`
+      )}&body=${encodeURIComponent(mailBody)}`;
+      toast.error(message, {
+        description: "Please try again, or send it by email instead.",
+        action: { label: "Email us", onClick: () => (window.location.href = mailto) },
+        duration: 15000,
       });
-      toast.success(SENT_MESSAGE);
-      reset();
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong. Please email us directly.");
     }
   };
 
@@ -427,6 +585,12 @@ export function ContactForm() {
           />
         )}
       </Field>
+      <AttachmentField
+        formId={formId}
+        file={attachment}
+        error={attachmentError}
+        onChange={chooseAttachment}
+      />
       <input type="checkbox" name="botcheck" className="hidden" tabIndex={-1} aria-hidden="true" />
       <div>
         <Button

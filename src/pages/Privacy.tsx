@@ -7,14 +7,15 @@ import { Section } from "@/components/ui/section";
 import { siteConfig } from "@/config/site";
 
 // Bump whenever the policy text changes.
-const LAST_UPDATED = "31 October 2026";
+const LAST_UPDATED = "6 November 2026";
 
 const { contact } = siteConfig;
 const siteHost = siteConfig.url.replace(/^https?:\/\//, "");
 
 /**
  * Plain-English privacy policy, written from what the site actually does:
- * contact + newsletter submissions via Web3Forms (or a mailto: fallback),
+ * contact-form enquiries (and attached briefs) kept on our own server and
+ * emailed to our inbox (or a mailto: fallback), newsletter signups via Web3Forms,
  * WhatsApp click-to-chat, an optional call-scheduling link (described
  * conditionally, so the text holds whether or not one is configured),
  * optional cookie-free Plausible analytics, and
@@ -73,10 +74,13 @@ const Privacy = () => {
                 email address, the service you need and your message, plus
                 anything optional you choose to add: your phone or WhatsApp
                 number, company or organisation, budget range, timeline and
-                how you heard about us. We use them to reply and to discuss
-                your project. If the form can't send directly, it opens your
-                own email app with your details filled in instead; nothing is
-                sent until you press send there.
+                how you heard about us, and a project brief if you attach one
+                (a PDF or Word document). We keep them in our own system,
+                email them to our team, and use them to reply and to discuss
+                your project. Attached briefs are stored privately and only our
+                team can open them. If the form can't send directly, it can
+                open your own email app with your details filled in instead;
+                nothing is sent until you press send there.
               </li>
               <li>
                 <strong>Newsletter signups.</strong> If you subscribe on our{" "}
@@ -112,8 +116,17 @@ const Privacy = () => {
             </p>
             <ul>
               <li>
-                <strong>Web3Forms</strong> delivers contact form and newsletter
-                submissions to our inbox.
+                <strong>Supabase</strong> hosts the database and private file
+                storage where we keep contact-form enquiries and attached
+                briefs, and <strong>Vercel</strong> hosts this website.
+              </li>
+              <li>
+                <strong>Hostinger</strong> provides our email: enquiries are
+                emailed to our inbox, and our replies are sent from it.
+              </li>
+              <li>
+                <strong>Web3Forms</strong> delivers newsletter signups to our
+                inbox.
               </li>
               <li>
                 <strong>Google Maps</strong> shows the map in our contact
@@ -164,9 +177,10 @@ const Privacy = () => {
 
             <h2>How long we keep it</h2>
             <p>
-              We keep enquiries and newsletter signups only as long as we need
-              them to respond to you and for legitimate business records, then
-              we delete them. If you unsubscribe from the newsletter, we stop
+              We keep enquiries (including any attached brief and our replies)
+              and newsletter signups only as long as we need them to respond to
+              you and for legitimate business records, then we delete them.
+              You can ask us to delete yours sooner. If you unsubscribe from the newsletter, we stop
               sending it to you.
             </p>
 

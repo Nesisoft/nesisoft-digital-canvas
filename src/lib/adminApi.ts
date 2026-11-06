@@ -176,3 +176,69 @@ export const updateTeam = (id: string, body: Partial<AdminTeamMember>) =>
   request<AdminTeamMember>(`/api/admin/team/${id}`, { method: "PUT", body: JSON.stringify(body) });
 export const deleteTeam = (id: string) =>
   request<{ ok: true }>(`/api/admin/team/${id}`, { method: "DELETE" });
+
+// --- inquiries (the website's contact form; admins and super admins) ---
+export type InquiryStatus = "new" | "read" | "open" | "responded" | "closed";
+
+export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
+  new: "New",
+  read: "Read",
+  open: "Open",
+  responded: "Responded",
+  closed: "Closed",
+};
+
+export interface AdminInquiry {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+  service: string;
+  budget: string;
+  timeline: string;
+  source: string;
+  message: string;
+  page: string;
+  /** stored: false when only the notification email carried it. */
+  attachment: { name: string; type: string; size: number; stored: boolean } | null;
+  status: InquiryStatus;
+  notifiedAt: string | null;
+  notifyError: string | null;
+  replyCount: number;
+  lastReplyAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminInquiryReply {
+  _id: string;
+  subject: string;
+  body: string;
+  sentByName: string;
+  createdAt: string;
+}
+
+export const listInquiries = () =>
+  request<{ items: AdminInquiry[]; mailConfigured: boolean }>("/api/admin/inquiries");
+/** Opening one marks it read. */
+export const getInquiry = (id: string) =>
+  request<{ inquiry: AdminInquiry; replies: AdminInquiryReply[]; mailConfigured: boolean }>(
+    `/api/admin/inquiries/${id}`
+  );
+export const setInquiryStatus = (id: string, status: InquiryStatus) =>
+  request<AdminInquiry>(`/api/admin/inquiries/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+/** Emails the reply to the person who wrote in and keeps it with the inquiry. */
+export const replyToInquiry = (id: string, subject: string, message: string) =>
+  request<{ reply: AdminInquiryReply; inquiry: AdminInquiry }>(`/api/admin/inquiries/${id}/replies`, {
+    method: "POST",
+    body: JSON.stringify({ subject, message }),
+  });
+export const deleteInquiry = (id: string) =>
+  request<{ ok: true }>(`/api/admin/inquiries/${id}`, { method: "DELETE" });
+/** Same-origin download link; the session cookie authorises it. */
+export const inquiryAttachmentUrl = (id: string) =>
+  `${API_BASE}/api/admin/inquiries/${id}/attachment`;
