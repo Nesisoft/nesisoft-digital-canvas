@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, LogOut, Plus } from "lucide-react";
+import { KeyRound, LogOut, Paperclip, Plus } from "lucide-react";
 import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { ProjectForm } from "@/components/admin/ProjectForm";
 import { ContentForm } from "@/components/admin/ContentForm";
 import { PasswordForm } from "@/components/admin/PasswordForm";
 import { UserForm } from "@/components/admin/UserForm";
+import { InquiryDetail, StatusBadge } from "@/components/admin/InquiryDetail";
 import {
   getMe,
   login,
@@ -22,6 +23,9 @@ import {
   deleteUser,
   ROLE_LABELS,
   SESSION_CHANGED_EVENT,
+  INQUIRY_STATUS_LABELS,
+  listInquiries,
+  type InquiryStatus,
   type AdminRole,
   type AdminUser,
   listPosts,
@@ -42,9 +46,10 @@ import {
 } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
 
-type View = "posts" | "projects" | "team" | "content" | "users" | "account";
+type View = "inquiries" | "posts" | "projects" | "team" | "content" | "users" | "account";
 
 const VIEW_LABELS: Record<View, string> = {
+  inquiries: "Inquiries",
   posts: "Blog posts",
   projects: "Projects",
   team: "Team",
@@ -56,9 +61,25 @@ const VIEW_LABELS: Record<View, string> = {
 /** The tabs each role sees (the API enforces the same rules). */
 const VIEWS_BY_ROLE: Record<AdminRole, View[]> = {
   editor: ["posts"],
-  admin: ["posts", "projects", "team", "content"],
-  superadmin: ["posts", "projects", "team", "content", "users"],
+  admin: ["inquiries", "posts", "projects", "team", "content"],
+  superadmin: ["inquiries", "posts", "projects", "team", "content", "users"],
 };
+
+/**
+ * The inquiry an emailed "Open in the admin" link points at
+ * (/admin?inquiry=<id>), read once and then dropped from the address bar.
+ */
+function takeLinkedInquiry(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("inquiry");
+  if (id) {
+    params.delete("inquiry");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }
+  return id;
+}
 
 const Admin = () => {
   const qc = useQueryClient();
@@ -183,8 +204,19 @@ function NewPasswordScreen({ user }: { user: AdminUser }) {
 function Dashboard({ user }: { user: AdminUser }) {
   const qc = useQueryClient();
   const views = VIEWS_BY_ROLE[user.role] ?? ["posts"];
-  const [view, setView] = useState<View>("posts");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const canSeeInquiries = views.includes("inquiries");
+  const [linkedInquiry] = useState(() => (canSeeInquiries ? takeLinkedInquiry() : null));
+  const [view, setView] = useState<View>(linkedInquiry ? "inquiries" : views[0]);
+  const [selectedId, setSelectedId] = useState<string | null>(linkedInquiry);
+
+  // New inquiries show as a count on the tab; checked every minute.
+  const inquiries = useQuery({
+    queryKey: ["admin", "inquiries"],
+    queryFn: listInquiries,
+    enabled: canSeeInquiries,
+    refetchInterval: 60_000,
+  });
+  const newInquiries = inquiries.data?.items.filter((i) => i.status === "new").length ?? 0;
   const [creating, setCreating] = useState(false);
 
   const reset = () => {
@@ -224,6 +256,14 @@ function Dashboard({ user }: { user: AdminUser }) {
               )}
             >
               {VIEW_LABELS[v]}
+              {v === "inquiries" && newInquiries > 0 && (
+                <span
+                  className="ml-1.5 bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                  aria-label={`${newInquiries} new`}
+                >
+                  {newInquiries}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -283,6 +323,7 @@ function Dashboard({ user }: { user: AdminUser }) {
             },
             onAfterDelete: reset,
           };
+          if (current === "inquiries") return <InquiriesPanel {...panelProps} />;
           if (current === "posts") {
             return <PostsPanel {...panelProps} canDelete={user.role !== "editor"} />;
           }
@@ -312,19 +353,22 @@ function ListShell({
   children,
 }: {
   title: string;
-  onNew: () => void;
+  /** Left out where there's nothing to create (inquiries). */
+  onNew?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+      <div className="flex min-h-[3.25rem] items-center justify-between border-b border-white/10 px-4 py-3">
         <h2 className="text-sm font-semibold text-white">{title}</h2>
-        <Button
-          onClick={onNew}
-          className="h-8 rounded-lg bg-violet-600 px-3 text-xs text-white hover:bg-violet-500"
-        >
-          <Plus className="mr-1 h-3.5 w-3.5" /> New
-        </Button>
+        {onNew && (
+          <Button
+            onClick={onNew}
+            className="h-8 rounded-lg bg-violet-600 px-3 text-xs text-white hover:bg-violet-500"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" /> New
+          </Button>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">{children}</div>
     </section>
@@ -606,6 +650,88 @@ function ProjectsPanel(props: PanelProps) {
           />
         ) : (
           <Empty />
+        )}
+      </EditorShell>
+    </>
+  );
+}
+
+/* ---------------- Inquiries (admins and super admins) ---------------- */
+type InquiryFilter = "all" | InquiryStatus;
+
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+function InquiriesPanel(props: PanelProps) {
+  const { data } = useQuery({ queryKey: ["admin", "inquiries"], queryFn: listInquiries });
+  const items = data?.items ?? [];
+  const [filter, setFilter] = useState<InquiryFilter>("all");
+  const shown = filter === "all" ? items : items.filter((i) => i.status === filter);
+  const count = (f: InquiryFilter) =>
+    f === "all" ? items.length : items.filter((i) => i.status === f).length;
+
+  return (
+    <>
+      <ListShell title="Inquiries">
+        <div className="mb-2 flex flex-wrap gap-1 px-1" role="group" aria-label="Filter by status">
+          {(["all", ...Object.keys(INQUIRY_STATUS_LABELS)] as InquiryFilter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              aria-pressed={filter === f}
+              className={cn(
+                "px-2 py-1 text-xs transition-colors",
+                filter === f ? "bg-white/[0.08] text-white" : "text-slate-400 hover:text-white"
+              )}
+            >
+              {f === "all" ? "All" : INQUIRY_STATUS_LABELS[f]} {count(f)}
+            </button>
+          ))}
+        </div>
+        {shown.length === 0 ? (
+          <p className="px-3 py-4 text-sm text-slate-500">
+            {items.length === 0 ? "No inquiries yet. Contact-form messages appear here." : "None with this status."}
+          </p>
+        ) : (
+          shown.map((i) => (
+            <button
+              key={i._id}
+              onClick={() => props.onSelect(i._id)}
+              className={cn(
+                "block w-full px-3 py-2.5 text-left transition-colors",
+                i._id === props.selectedId ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
+              )}
+            >
+              <span className="flex items-center gap-2">
+                {i.status === "new" && <span aria-hidden className="h-2 w-2 flex-shrink-0 bg-violet-400" />}
+                <span
+                  className={cn(
+                    "truncate text-sm text-white",
+                    i.status === "new" ? "font-semibold" : "font-medium"
+                  )}
+                >
+                  {i.firstName} {i.lastName}
+                </span>
+                {i.attachment && <Paperclip aria-label="Has an attachment" className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />}
+                <span className="ml-auto flex-shrink-0 text-xs text-slate-500">{shortDate(i.createdAt)}</span>
+              </span>
+              <span className="mt-1 flex items-center gap-2">
+                <StatusBadge status={i.status} />
+                <span className="truncate text-xs text-slate-500">
+                  {[i.company, i.service].filter(Boolean).join(" · ") || i.email}
+                </span>
+              </span>
+            </button>
+          ))
+        )}
+      </ListShell>
+      <EditorShell>
+        {props.selectedId ? (
+          <InquiryDetail key={props.selectedId} id={props.selectedId} onDeleted={props.onAfterDelete} />
+        ) : (
+          <div className="grid h-full place-items-center text-sm text-slate-500">
+            Select an inquiry to read and reply.
+          </div>
         )}
       </EditorShell>
     </>
