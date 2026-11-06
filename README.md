@@ -120,6 +120,20 @@ scripts/
   the intro and photos (or the stats until photos are added), with a link to
   the Company page. Team members are managed under **Team** and appear on the
   Company page (`/team` redirects there).
+- **Platform pages.** Our own products (Agoo, Sua, Adesuapa, Jua) each get a
+  product page at `/platforms/<slug>`, listed at `/platforms`. Edit them in
+  `/admin` under **Projects**: with the type set to *Internal platform*, a
+  **Product page** section appears with the tagline (the page's headline),
+  logo, website and app-store links, who it's for, how it works and FAQs.
+  Screenshots go in Gallery. Empty sections are left off the page. Client
+  work keeps its case study at `/projects/<slug>`;
+  `/projects/<platform>` redirects to the platform's page.
+- **Early access.** Until a platform's status is *Completed* (shown as Live),
+  its page offers early access ("Join the beta" while in beta). Signups,
+  with the role picked from its audiences, appear in `/admin` under
+  **Waitlists** (admins and super admins), filterable by platform and
+  exportable as CSV. Once a platform has a website link, its main button
+  points there.
 - **Blog posts** are Markdown files in `src/content/blog/`. The build's SEO
   plugin reads these (plus services and projects) to regenerate
   `sitemap.xml` and `rss.xml` automatically, so the feeds never drift.

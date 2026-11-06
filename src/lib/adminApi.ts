@@ -242,3 +242,22 @@ export const deleteInquiry = (id: string) =>
 /** Same-origin download link; the session cookie authorises it. */
 export const inquiryAttachmentUrl = (id: string) =>
   `${API_BASE}/api/admin/inquiries/${id}/attachment`;
+
+// --- early-access signups from the platforms' pages (admins and super admins) ---
+export interface AdminWaitlistSignup {
+  _id: string;
+  platform: { slug: string; name: string };
+  name: string;
+  email: string;
+  role: string;
+  page: string;
+  createdAt: string;
+}
+
+export const listWaitlist = () =>
+  request<{ items: AdminWaitlistSignup[] }>("/api/admin/waitlist");
+export const deleteWaitlistSignup = (id: string) =>
+  request<{ ok: true }>(`/api/admin/waitlist/${id}`, { method: "DELETE" });
+/** CSV download (all platforms, or one by slug); the session cookie authorises it. */
+export const waitlistExportUrl = (platform?: string) =>
+  `${API_BASE}/api/admin/waitlist/export.csv${platform ? `?platform=${encodeURIComponent(platform)}` : ""}`;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, LogOut, Paperclip, Plus } from "lucide-react";
+import { Download, KeyRound, LogOut, Paperclip, Plus, Trash2 } from "lucide-react";
 import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,9 @@ import {
   SESSION_CHANGED_EVENT,
   INQUIRY_STATUS_LABELS,
   listInquiries,
+  listWaitlist,
+  deleteWaitlistSignup,
+  waitlistExportUrl,
   type InquiryStatus,
   type AdminRole,
   type AdminUser,
@@ -46,10 +49,19 @@ import {
 } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
 
-type View = "inquiries" | "posts" | "projects" | "team" | "content" | "users" | "account";
+type View =
+  | "inquiries"
+  | "waitlists"
+  | "posts"
+  | "projects"
+  | "team"
+  | "content"
+  | "users"
+  | "account";
 
 const VIEW_LABELS: Record<View, string> = {
   inquiries: "Inquiries",
+  waitlists: "Waitlists",
   posts: "Blog posts",
   projects: "Projects",
   team: "Team",
@@ -61,8 +73,8 @@ const VIEW_LABELS: Record<View, string> = {
 /** The tabs each role sees (the API enforces the same rules). */
 const VIEWS_BY_ROLE: Record<AdminRole, View[]> = {
   editor: ["posts"],
-  admin: ["inquiries", "posts", "projects", "team", "content"],
-  superadmin: ["inquiries", "posts", "projects", "team", "content", "users"],
+  admin: ["inquiries", "waitlists", "posts", "projects", "team", "content"],
+  superadmin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "users"],
 };
 
 /**
@@ -302,6 +314,10 @@ function Dashboard({ user }: { user: AdminUser }) {
       ) : current === "content" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <ContentForm />
+        </div>
+      ) : current === "waitlists" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+          <WaitlistsPanel />
         </div>
       ) : (
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-[320px_1fr]">
@@ -735,6 +751,108 @@ function InquiriesPanel(props: PanelProps) {
         )}
       </EditorShell>
     </>
+  );
+}
+
+/* ---------------- Waitlists (early-access signups; admins and super admins) ---------------- */
+function WaitlistsPanel() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["admin", "waitlist"], queryFn: listWaitlist });
+  const items = data?.items ?? [];
+  const [platform, setPlatform] = useState<string>("all");
+
+  // Platforms that have signups, with their counts, in first-seen order.
+  const platforms = Array.from(
+    items.reduce((map, s) => map.set(s.platform.slug, { name: s.platform.name, count: (map.get(s.platform.slug)?.count ?? 0) + 1 }), new Map<string, { name: string; count: number }>())
+  );
+  const shown = platform === "all" ? items : items.filter((s) => s.platform.slug === platform);
+
+  const remove = useMutation({
+    mutationFn: deleteWaitlistSignup,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "waitlist"] });
+      toast.success("Signup removed");
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Couldn't remove it"),
+  });
+
+  return (
+    <section className="mx-auto max-w-5xl">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Waitlists</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Early-access signups from the platforms' pages. Export them to email people when a platform opens up.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="border-white/15 bg-transparent text-slate-200 hover:bg-white/[0.06] hover:text-white">
+          <a href={waitlistExportUrl(platform === "all" ? undefined : platform)} download>
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </a>
+        </Button>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-1" role="group" aria-label="Filter by platform">
+        {[["all", { name: "All", count: items.length }] as const, ...platforms].map(([slug, info]) => (
+          <button
+            key={slug}
+            onClick={() => setPlatform(slug)}
+            aria-pressed={platform === slug}
+            className={cn(
+              "px-3 py-1.5 text-sm transition-colors",
+              platform === slug ? "bg-white/[0.08] text-white" : "text-slate-400 hover:text-white"
+            )}
+          >
+            {info.name} {info.count}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 overflow-x-auto border border-white/10">
+        {isLoading ? (
+          <p className="p-4 text-sm text-slate-400">Loading…</p>
+        ) : shown.length === 0 ? (
+          <p className="p-4 text-sm text-slate-500">No signups yet. They appear here as people join from a platform's page.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-white/10 text-xs uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Platform</th>
+                <th className="px-4 py-3 font-medium">Signed up</th>
+                <th className="px-4 py-3"><span className="sr-only">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {shown.map((s) => (
+                <tr key={s._id}>
+                  <td className="px-4 py-3 text-white">{s.name}</td>
+                  <td className="px-4 py-3">
+                    <a href={`mailto:${s.email}`} className="text-violet-300 hover:text-violet-200">{s.email}</a>
+                  </td>
+                  <td className="px-4 py-3 text-slate-300">{s.role || "—"}</td>
+                  <td className="px-4 py-3 text-slate-300">{s.platform.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">{new Date(s.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => {
+                        if (confirm(`Remove ${s.email} from the ${s.platform.name} waitlist?`)) remove.mutate(s._id);
+                      }}
+                      aria-label={`Remove ${s.email}`}
+                      className="p-1 text-slate-500 hover:text-red-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
   );
 }
 

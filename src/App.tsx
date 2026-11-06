@@ -12,6 +12,8 @@ import Index from "./pages/Index";
 // point) ships without their bundles. Index stays eager for a flash-free LCP.
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const Company = lazy(() => import("./pages/Company"));
+const Platforms = lazy(() => import("./pages/Platforms"));
+const Platform = lazy(() => import("./pages/Platform"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
@@ -54,6 +56,8 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:postId" element={<BlogDetails />} />
             <Route path="/projects/:projectId" element={<ProjectDetails />} />
+            <Route path="/platforms" element={<Platforms />} />
+            <Route path="/platforms/:slug" element={<Platform />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin" element={<Admin />} />

@@ -7,7 +7,12 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/team", "destination": "/company#team", "permanent": true }
+    { "source": "/team", "destination": "/company#team", "permanent": true },
+    {
+      "source": "/projects/:slug(agoo|sua|adesuapa|jua)",
+      "destination": "/platforms/:slug",
+      "permanent": true
+    }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },

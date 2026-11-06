@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { useProjects } from "@/hooks/useProjects";
+import { projectPath } from "@/data/projects";
 import { LogoMark } from "@/components/LogoMark";
 
 type GroupKey = "services" | "work";
@@ -186,8 +187,8 @@ const Navbar = () => {
               : featuredProjects.map((project) => (
                   <li key={project.slug}>
                     <Link
-                      onClick={() => onNavigate(`/projects/${project.slug}`)}
-                      to={`/projects/${project.slug}`} className={panelLink}>
+                      onClick={() => onNavigate(projectPath(project))}
+                      to={projectPath(project)} className={panelLink}>
                       <img
                         src={project.image}
                         alt=""

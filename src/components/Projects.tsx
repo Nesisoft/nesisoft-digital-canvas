@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { useProjects } from "@/hooks/useProjects";
-import type { Project } from "@/data/projects";
+import { projectPath, type Project } from "@/data/projects";
 
 const Projects = () => {
   const projects = useProjects();
@@ -45,7 +45,7 @@ const Projects = () => {
     );
 
     return (
-      <Link to={`/projects/${project.slug}`} className={className}>
+      <Link to={projectPath(project)} className={className}>
         {inner}
       </Link>
     );
@@ -60,9 +60,14 @@ const Projects = () => {
       />
 
       <div className="mt-16">
-        <h3 className="mb-6 text-sm font-medium uppercase tracking-wider text-slate-400">
-          Our platforms
-        </h3>
+        <div className="mb-6 flex items-baseline justify-between gap-4">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-400">
+            Our platforms
+          </h3>
+          <Link to="/platforms" className="text-sm font-medium text-violet-300 hover:text-violet-200">
+            All platforms →
+          </Link>
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {internalProjects.map((project) => (
             <ProjectCard key={project.name} project={project} />

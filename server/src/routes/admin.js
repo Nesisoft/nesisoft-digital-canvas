@@ -48,6 +48,7 @@ import {
   toAdminInquiry,
   toAdminReply,
 } from "../models/inquiries.js";
+import { deleteSignup, listSignups, toAdminSignup } from "../models/waitlist.js";
 import { databaseConfigured, isId, query } from "../db.js";
 import { MAX_IMAGE_BYTES, deleteDocument, downloadDocument, uploadImage } from "../storage.js";
 import { mailConfigured, sendMail } from "../mailer.js";
@@ -220,6 +221,8 @@ router.use("/posts", (req, res, next) =>
 router.use("/users", allow("superadmin"));
 // Contact-form inquiries hold people's details: admins and super admins only.
 router.use("/inquiries", allow(...CONTENT_ROLES));
+// Early-access signups (names and emails): admins and super admins only.
+router.use("/waitlist", allow(...CONTENT_ROLES));
 
 // Ids are UUIDs; anything else can't exist, so answer 404 without a query.
 router.param("id", (req, res, next, id) => {
@@ -374,6 +377,51 @@ router.delete("/team/:id", async (req, res) => {
 // --- Projects CRUD ---
 const PROJECT_ARRAY_FIELDS = ["gallery", "technologies", "features"];
 
+// Product-page fields (internal platforms). These can be cleared: an empty
+// string means "none", unlike the case-study text fields.
+const PROJECT_LINK_FIELDS = ["logo", "websiteUrl", "appStoreUrl", "playStoreUrl"];
+const PROJECT_ITEM_SPECS = {
+  // field: max items; per key, max length, or [max entries, max length] for a list
+  audiences: { max: 4, keys: { role: 40, title: 80, description: 300, points: [8, 200] } },
+  steps: { max: 6, keys: { title: 80, description: 300 } },
+  faqs: { max: 12, keys: { question: 200, answer: 1500 } },
+};
+
+/** A link: https:// (or, for the logo, a file on this site), or "" for none. */
+function toLink(field, value) {
+  const link = toText(field, value).trim();
+  if (link.length > 500) throw badRequest(`${field} is too long`);
+  const ok = !link || /^https?:\/\/\S+$/i.test(link) || (field === "logo" && /^\/[^/]/.test(link));
+  if (!ok) throw badRequest(`${field} must be a link starting with https://`);
+  return link;
+}
+
+/** A list of small objects (audiences, steps, FAQs), checked and trimmed; empty rows dropped. */
+function toItems(field, value, { max, keys }) {
+  if (!Array.isArray(value)) throw badRequest(`${field} must be a list`);
+  const items = value.map((item, i) => {
+    if (!isPlainObject(item)) throw badRequest(`${field}[${i}] must be an object`);
+    const out = {};
+    for (const [key, limit] of Object.entries(keys)) {
+      if (Array.isArray(limit)) {
+        const [maxEntries, maxLength] = limit;
+        const list = item[key] ?? [];
+        if (!Array.isArray(list)) throw badRequest(`${field}[${i}].${key} must be a list`);
+        out[key] = list.map((entry) => toText(`${field}.${key}`, entry).trim()).filter(Boolean);
+        if (out[key].length > maxEntries) throw badRequest(`${field}: at most ${maxEntries} ${key} each`);
+        if (out[key].some((entry) => entry.length > maxLength)) throw badRequest(`${field}: a ${key} entry is too long`);
+      } else {
+        out[key] = toText(`${field}.${key}`, item[key] ?? "").trim();
+        if (out[key].length > limit) throw badRequest(`${field}: ${key} is too long`);
+      }
+    }
+    return out;
+  });
+  const kept = items.filter((item) => Object.values(item).some((v) => (Array.isArray(v) ? v.length : v)));
+  if (kept.length > max) throw badRequest(`${field}: at most ${max}`);
+  return kept;
+}
+
 function toArray(field, value) {
   if (!Array.isArray(value)) return [];
   return value.map((item) => toText(field, item).trim()).filter(Boolean);
@@ -388,7 +436,13 @@ function buildProjectValues(body) {
     const value = body[field];
     if (value === undefined || value === null) continue;
     if (PROJECT_ARRAY_FIELDS.includes(field)) values[column] = toArray(field, value);
-    else if (field === "order") values[column] = toOrder(value);
+    else if (PROJECT_ITEM_SPECS[field]) {
+      values[column] = JSON.stringify(toItems(field, value, PROJECT_ITEM_SPECS[field]));
+    } else if (PROJECT_LINK_FIELDS.includes(field)) values[column] = toLink(field, value);
+    else if (field === "tagline") {
+      values[column] = toText(field, value).trim();
+      if (values[column].length > 160) throw badRequest("The tagline is too long");
+    } else if (field === "order") values[column] = toOrder(value);
     else if (field === "published") values[column] = toBool(field, value);
     else if (value !== "") values[column] = toText(field, value);
   }
@@ -526,6 +580,48 @@ router.delete("/users/:id", async (req, res) => {
   if (!(await deleteUser(req.params.id))) {
     return res.status(404).json({ error: "Account not found" });
   }
+  res.json({ ok: true });
+});
+
+// --- Early-access signups (the platforms' pages) ---
+
+// A platform's slug (it also names the CSV file), or null for all.
+const platformFilter = (value) =>
+  typeof value === "string" && /^[a-z0-9-]{1,200}$/.test(value) ? value : null;
+
+router.get("/waitlist", async (req, res) => {
+  res.json({ items: (await listSignups(platformFilter(req.query.platform))).map(toAdminSignup) });
+});
+
+/**
+ * A spreadsheet-safe CSV cell: quoted, with quotes doubled, and a leading
+ * = + - @ neutralised so the file can't run a formula when opened.
+ */
+function csvCell(value) {
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+router.get("/waitlist/export.csv", async (req, res) => {
+  const slug = platformFilter(req.query.platform);
+  const rows = await listSignups(slug);
+  const lines = [
+    ["Platform", "Name", "Email", "Role", "Signed up"],
+    ...rows.map((r) => [r.platform_name, r.name, r.email, r.role, r.created_at.toISOString()]),
+  ].map((cells) => cells.map(csvCell).join(","));
+  const day = new Date().toISOString().slice(0, 10);
+  res.set({
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": `attachment; filename="waitlist-${slug ?? "all"}-${day}.csv"`.replace(/[^\x20-\x7e]/g, "_"),
+    "Cache-Control": "private, no-store",
+  });
+  // A byte-order mark so Excel reads the names as UTF-8.
+  res.send(`\ufeff${lines.join("\r\n")}\r\n`);
+});
+
+router.delete("/waitlist/:id", async (req, res) => {
+  if (!(await deleteSignup(req.params.id))) return res.status(404).json({ error: "Signup not found" });
   res.json({ ok: true });
 });
 

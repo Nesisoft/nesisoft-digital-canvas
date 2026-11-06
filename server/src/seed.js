@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { closePool, query, withClient } from "./db.js";
 import { MIGRATION_LOCK_ID, runMigrations } from "./migrate.js";
 import { DEFAULT_CONTENT } from "./models/content.js";
-import { PROJECT_COLUMNS } from "./models/projects.js";
+import { PROJECT_COLUMNS, PROJECT_JSON_FIELDS } from "./models/projects.js";
 import { ensureBucket } from "./storage.js";
 
 /**
@@ -101,7 +101,10 @@ async function seedProjects(q) {
     // Same field-to-column map the admin API writes through.
     const values = { slug: project.slug };
     for (const [field, column] of Object.entries(PROJECT_COLUMNS)) {
-      if (project[field] !== undefined) values[column] = project[field];
+      if (project[field] === undefined) continue;
+      values[column] = PROJECT_JSON_FIELDS.includes(field)
+        ? JSON.stringify(project[field])
+        : project[field];
     }
     values.sort_order = index;
     const columns = Object.keys(values);
