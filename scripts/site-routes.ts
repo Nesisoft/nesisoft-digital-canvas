@@ -21,7 +21,9 @@ export interface SiteRoute {
 export function getSiteRoutes(root: string): SiteRoute[] {
   const blogPosts = readBlogPosts(path.join(root, "src", "content", "blog"));
   const serviceSlugs = extractSlugs(path.join(root, "src", "data", "services.ts"));
-  const projectSlugs = extractSlugs(path.join(root, "src", "data", "projects.ts"));
+  const projects = extractProjects(path.join(root, "src", "data", "projects.ts"));
+  const platformSlugs = projects.filter((p) => p.platform).map((p) => p.slug);
+  const clientSlugs = projects.filter((p) => !p.platform).map((p) => p.slug);
 
   return [
     { path: "/", priority: "1.0", changefreq: "weekly" },
@@ -35,7 +37,14 @@ export function getSiteRoutes(root: string): SiteRoute[] {
       priority: "0.6",
       changefreq: "monthly",
     })),
-    ...projectSlugs.map((slug) => ({
+    // Platforms have product pages; /projects/<platform> redirects to them.
+    { path: "/platforms", priority: "0.8", changefreq: "monthly" },
+    ...platformSlugs.map((slug) => ({
+      path: `/platforms/${slug}`,
+      priority: "0.7",
+      changefreq: "monthly",
+    })),
+    ...clientSlugs.map((slug) => ({
       path: `/projects/${slug}`,
       priority: "0.5",
       changefreq: "monthly",
@@ -94,6 +103,20 @@ function parseFrontmatter(raw: string): Record<string, string> {
     if (key) out[key] = value;
   }
   return out;
+}
+
+/**
+ * The projects in src/data/projects.ts, in order: each slug, and whether it's
+ * an internal platform (its `type`, which follows the slug in the entry).
+ */
+function extractProjects(filePath: string): { slug: string; platform: boolean }[] {
+  if (!fs.existsSync(filePath)) return [];
+  const src = fs.readFileSync(filePath, "utf8");
+  const matches = Array.from(src.matchAll(/slug:\s*["']([^"']+)["']/g));
+  return matches.map((match, i) => {
+    const entry = src.slice(match.index, matches[i + 1]?.index ?? src.length);
+    return { slug: match[1], platform: /type:\s*["']Internal platform["']/.test(entry) };
+  });
 }
 
 /** Pull every `slug: "..."` value out of a TS data file. */

@@ -12,6 +12,7 @@ import { isProd, SESSION_SECRET } from "./auth.js";
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
 import inquiryRoutes from "./routes/inquiries.js";
+import waitlistRoutes from "./routes/waitlist.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../../dist");
@@ -139,6 +140,7 @@ export function createApp() {
   // Pure JSON API. The admin UI is a route in the public site
   // (www.nesisoft.com/admin) and talks to these endpoints.
   app.use("/api/inquiries", inquiryRoutes);
+  app.use("/api/waitlist", waitlistRoutes);
   app.use("/api", publicRoutes);
   app.use("/api/admin", adminRoutes);
 

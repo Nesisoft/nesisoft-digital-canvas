@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
-import { internalProjects } from "@/data/projects";
+import { internalProjects, projectPath } from "@/data/projects";
 import { LogoMark } from "@/components/LogoMark";
 import { trackEvent } from "@/lib/analytics";
 
@@ -109,13 +109,18 @@ const Footer = () => {
                 {internalProjects.slice(0, 4).map((project) => (
                   <li key={project.slug}>
                     <Link
-                      to={`/projects/${project.slug}`}
+                      to={projectPath(project)}
                       className="transition-colors hover:text-white"
                     >
                       {project.name}
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link to="/platforms" className="transition-colors hover:text-white">
+                    All platforms
+                  </Link>
+                </li>
               </ul>
             </div>
 

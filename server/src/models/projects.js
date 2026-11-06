@@ -26,7 +26,19 @@ export const PROJECT_COLUMNS = {
   result: "result",
   order: "sort_order",
   published: "published",
+  // Product page (/platforms/<slug>), for internal platforms.
+  tagline: "tagline",
+  logo: "logo",
+  websiteUrl: "website_url",
+  appStoreUrl: "app_store_url",
+  playStoreUrl: "play_store_url",
+  audiences: "audiences",
+  steps: "steps",
+  faqs: "faqs",
 };
+
+/** jsonb columns: written as JSON text (pg would send a JS array as a Postgres array). */
+export const PROJECT_JSON_FIELDS = ["audiences", "steps", "faqs"];
 
 /** Shape the public site reads (Project in src/data/projects.ts). */
 export function toPublicProject(row) {
@@ -47,7 +59,24 @@ export function toPublicProject(row) {
     challenge: row.challenge,
     solution: row.solution,
     result: row.result,
+    tagline: row.tagline ?? "",
+    logo: row.logo ?? "",
+    websiteUrl: row.website_url ?? "",
+    appStoreUrl: row.app_store_url ?? "",
+    playStoreUrl: row.play_store_url ?? "",
+    audiences: row.audiences ?? [],
+    steps: row.steps ?? [],
+    faqs: row.faqs ?? [],
   };
+}
+
+/** A published internal platform by slug (product pages, early-access signups). */
+export async function findPublishedPlatform(slug) {
+  const { rows } = await query(
+    "select * from projects where slug = $1 and published and type = 'Internal platform'",
+    [slug]
+  );
+  return rows[0] ?? null;
 }
 
 /** Shape /admin reads (AdminProject in src/lib/adminApi.ts). */

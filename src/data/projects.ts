@@ -1,3 +1,22 @@
+/** Who a platform is for (e.g. customers and runners), on its product page. */
+export interface Audience {
+  /** Short name used in the early-access form ("I'm a runner"). */
+  role: string;
+  title: string;
+  description: string;
+  points: string[];
+}
+
+export interface Step {
+  title: string;
+  description: string;
+}
+
+export interface Faq {
+  question: string;
+  answer: string;
+}
+
 export interface Project {
   slug: string;
   name: string;
@@ -15,6 +34,16 @@ export interface Project {
   challenge: string;
   solution: string;
   result: string;
+  // Product page (/platforms/<slug>), for internal platforms. Client work
+  // leaves these out; the API sends them empty.
+  tagline?: string;
+  logo?: string;
+  websiteUrl?: string;
+  appStoreUrl?: string;
+  playStoreUrl?: string;
+  audiences?: Audience[];
+  steps?: Step[];
+  faqs?: Faq[];
 }
 
 export const projects: Project[] = [
@@ -23,6 +52,63 @@ export const projects: Project[] = [
     name: "Agoo",
     category: "On-demand platform",
     type: "Internal platform",
+    tagline: "Errands done by reliable runners.",
+    audiences: [
+      {
+        role: "Customer",
+        title: "For customers",
+        description: "Hand off the errands that eat into your day.",
+        points: [
+          "Post an errand and get matched with a runner",
+          "Follow progress with location-aware updates",
+          "Clear pricing and payment for every errand",
+          "Rate your runner when it's done",
+        ],
+      },
+      {
+        role: "Runner",
+        title: "For runners",
+        description: "Earn by running errands for people nearby.",
+        points: [
+          "Get started through a guided onboarding",
+          "Get matched with errands near you",
+          "Build trust through customer ratings",
+          "Clear, commission-based earnings",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Post an errand",
+        description: "Say what needs doing and where.",
+      },
+      {
+        title: "Get matched",
+        description: "A runner picks it up through Agoo's matching.",
+      },
+      {
+        title: "Follow along",
+        description: "Updates come in as the errand moves.",
+      },
+      {
+        title: "Pay and rate",
+        description: "Settle up and rate your runner.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How do I know I can trust a runner?",
+        answer: "Runners are onboarded before they can take errands, and every errand ends with a rating, so each runner's track record is visible.",
+      },
+      {
+        question: "How do runners earn?",
+        answer: "Runners earn on each errand they complete. Agoo works on a commission basis, so pricing stays clear for both sides.",
+      },
+      {
+        question: "Where is Agoo available?",
+        answer: "Agoo is rolling out location by location. Join the early-access list on this page to hear when it reaches you.",
+      },
+    ],
     description:
       "An errand-running marketplace connecting service seekers with reliable runners.",
     fullDescription:
@@ -45,7 +131,7 @@ export const projects: Project[] = [
     ],
     timeline: "6 months",
     teamSize: "5 specialists",
-    status: "In development",
+    status: "Beta testing",
     challenge:
       "The core challenge was creating a trust-driven marketplace that can coordinate errands without overwhelming customers or runners.",
     solution:
@@ -58,6 +144,63 @@ export const projects: Project[] = [
     name: "Sua",
     category: "Education",
     type: "Internal platform",
+    tagline: "Trusted tutors for your child, at home or online.",
+    audiences: [
+      {
+        role: "Parent",
+        title: "For parents",
+        description: "Find a qualified teacher you can trust.",
+        points: [
+          "Browse verified teacher profiles",
+          "Book home or virtual lessons",
+          "Message teachers directly",
+          "Follow your child's progress",
+        ],
+      },
+      {
+        role: "Teacher",
+        title: "For teachers",
+        description: "A professional way to find students and run your lessons.",
+        points: [
+          "Get verified and build your profile",
+          "Set your own availability",
+          "Teach in person or in the virtual classroom",
+          "Share progress with parents",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Say what your child needs",
+        description: "The subject, the level and how you'd like to learn.",
+      },
+      {
+        title: "Choose a teacher",
+        description: "Compare verified teacher profiles.",
+      },
+      {
+        title: "Schedule lessons",
+        description: "At home or in the virtual classroom.",
+      },
+      {
+        title: "Track progress",
+        description: "See how your child is getting on.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Are Sua's teachers verified?",
+        answer: "Yes. Teachers are verified before parents can book them.",
+      },
+      {
+        question: "Can lessons be online?",
+        answer: "Yes. Lessons can take place at home or in Sua's virtual classroom.",
+      },
+      {
+        question: "I'm a teacher. How do I join?",
+        answer: "Join the early-access list on this page as a teacher, and we'll take you through verification.",
+      },
+    ],
     description:
       "A tutoring platform that connects parents with trusted teachers for home and virtual learning.",
     fullDescription:
@@ -93,6 +236,59 @@ export const projects: Project[] = [
     name: "Adesuapa",
     category: "E-learning",
     type: "Internal platform",
+    tagline: "Online learning built for Africa, paid for with mobile money.",
+    audiences: [
+      {
+        role: "Learner",
+        title: "For learners",
+        description: "Learn online and pay the way you already pay.",
+        points: [
+          "Browse the course catalogue",
+          "Follow a learning path",
+          "Pay with mobile money",
+          "Track your progress",
+        ],
+      },
+      {
+        role: "Institution",
+        title: "For institutions",
+        description: "Bring your courses and learners online.",
+        points: [
+          "Set up an institutional account",
+          "Manage your course content",
+          "See progress reports across your learners",
+          "Partner with us on course delivery",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Pick a course",
+        description: "Browse the catalogue.",
+      },
+      {
+        title: "Pay with mobile money",
+        description: "Enrol in a few taps.",
+      },
+      {
+        title: "Follow your path",
+        description: "Work through the course step by step.",
+      },
+      {
+        title: "Track your progress",
+        description: "See how far you've come.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How do I pay for a course?",
+        answer: "With mobile money, at checkout.",
+      },
+      {
+        question: "Can my school or organisation use Adesuapa?",
+        answer: "Yes. Institutional accounts let schools and organisations run courses for their learners, with progress reporting. Get in touch to partner with us.",
+      },
+    ],
     description:
       "An African-centred learning platform with mobile money payments and institutional partnerships.",
     fullDescription:
@@ -115,7 +311,7 @@ export const projects: Project[] = [
     ],
     timeline: "7 months",
     teamSize: "5 specialists",
-    status: "In development",
+    status: "Beta testing",
     challenge:
       "The product needed to support both individual learners and institutions without making the core learning flow feel complex.",
     solution:
@@ -128,6 +324,59 @@ export const projects: Project[] = [
     name: "Jua",
     category: "E-commerce",
     type: "Internal platform",
+    tagline: "Buy in installments and trade business to business.",
+    audiences: [
+      {
+        role: "Buyer",
+        title: "For buyers",
+        description: "Get what you need without paying it all upfront.",
+        points: [
+          "Discover products from suppliers",
+          "Pay in installments",
+          "Send business-to-business enquiries",
+          "Track your orders",
+        ],
+      },
+      {
+        role: "Supplier",
+        title: "For suppliers",
+        description: "Reach more buyers and keep payments in order.",
+        points: [
+          "Open a supplier account",
+          "List your products",
+          "Answer B2B enquiries",
+          "Manage orders and reconciled payments",
+        ],
+      },
+    ],
+    steps: [
+      {
+        title: "Find a product",
+        description: "Browse listings from suppliers.",
+      },
+      {
+        title: "Choose how to pay",
+        description: "In full, or in installments.",
+      },
+      {
+        title: "Place your order",
+        description: "Or send the supplier an enquiry.",
+      },
+      {
+        title: "Track it",
+        description: "Follow your order and payments.",
+      },
+    ],
+    faqs: [
+      {
+        question: "How will installment payments work?",
+        answer: "You'll choose to pay in installments when you buy. Join the early-access list for the details as Jua gets closer to launch.",
+      },
+      {
+        question: "Can my business sell on Jua?",
+        answer: "Yes. Supplier accounts let businesses list products, answer B2B enquiries and manage orders. Join the early-access list as a supplier.",
+      },
+    ],
     description:
       "A marketplace concept enabling installment payments and B2B trade across Africa.",
     fullDescription:
@@ -334,6 +583,13 @@ export const projects: Project[] = [
       "A working marketplace that connects farmers and buyers directly and makes pricing more transparent.",
   },
 ];
+
+/** Where a project's page is: platforms have product pages, client work case studies. */
+export function projectPath(project: Pick<Project, "slug" | "type">): string {
+  return project.type === "Internal platform"
+    ? `/platforms/${project.slug}`
+    : `/projects/${project.slug}`;
+}
 
 export function getProject(slug: string | undefined) {
   return projects.find((project) => project.slug === slug);

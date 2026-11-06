@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, Clock, Layers3, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -10,6 +10,7 @@ import { Section, SectionHeading } from "@/components/ui/section";
 import { siteConfig } from "@/config/site";
 import { fetchProject } from "@/lib/api";
 import { useProjects } from "@/hooks/useProjects";
+import { projectPath } from "@/data/projects";
 
 const statusClass = {
   Completed: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
@@ -82,6 +83,9 @@ const ProjectDetails = () => {
       </>
     );
   }
+
+  // Platforms have product pages of their own.
+  if (project.type === "Internal platform") return <Navigate to={projectPath(project)} replace />;
 
   const relatedProjects = allProjects.filter((item) => item.slug !== project.slug);
   // The one-line summary plus who built it fits a search snippet (~160 chars)
@@ -277,7 +281,7 @@ const ProjectDetails = () => {
             {relatedProjects.slice(0, 3).map((item) => (
               <Link
                 key={item.slug}
-                to={`/projects/${item.slug}`}
+                to={projectPath(item)}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-violet-500/30 hover:bg-white/[0.055]"
               >
                 <p className="text-sm text-violet-300">{item.category}</p>

@@ -12,6 +12,7 @@ import { storageConfigured, uploadDocument } from "../storage.js";
 import { sendMail } from "../mailer.js";
 import { notificationEmail } from "../inquiryMail.js";
 import { createLoginLimiter } from "../loginLimiter.js";
+import { EMAIL_PATTERN as EMAIL } from "../emailAddress.js";
 
 /**
  * POST /api/inquiries: the website's contact form (homepage and /contact).
@@ -31,8 +32,7 @@ const upload = multer({
 // Per IP: 6 submissions per 15 minutes; 60 overall stops a flood from many.
 const limiter = createLoginLimiter({ maxPerClient: 6, maxTotal: 60 });
 
-// The same address check as the form (src/components/ContactForm.tsx).
-const EMAIL = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
+
 
 // Form field → column, its limit, and the message when a required one is blank.
 const FIELDS = {
