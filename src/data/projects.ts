@@ -34,6 +34,8 @@ export interface Project {
   challenge: string;
   solution: string;
   result: string;
+  /** Client work under a non-disclosure agreement: shown with an "Under NDA" badge. */
+  nda?: boolean;
   // Product page (/platforms/<slug>), for internal platforms. Client work
   // leaves these out; the API sends them empty.
   tagline?: string;

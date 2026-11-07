@@ -44,6 +44,7 @@ export function getSiteRoutes(root: string): SiteRoute[] {
       priority: "0.7",
       changefreq: "monthly",
     })),
+    { path: "/projects", priority: "0.8", changefreq: "monthly" },
     ...clientSlugs.map((slug) => ({
       path: `/projects/${slug}`,
       priority: "0.5",

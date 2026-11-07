@@ -24,7 +24,7 @@ const groups: Record<GroupKey, { label: string; eyebrow: string; description: st
     label: "Work",
     eyebrow: "Selected systems",
     description: "Platforms and client products in motion.",
-    all: { pathname: "/", hash: "#projects" },
+    all: "/projects",
     allLabel: "All projects",
   },
 };

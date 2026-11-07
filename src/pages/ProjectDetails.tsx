@@ -1,6 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle2, Clock, Layers3, Users } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Layers3, Lock, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Seo, breadcrumbsJsonLd } from "@/components/Seo";
@@ -11,6 +11,7 @@ import { siteConfig } from "@/config/site";
 import { fetchProject } from "@/lib/api";
 import { useProjects } from "@/hooks/useProjects";
 import { projectPath } from "@/data/projects";
+import { NdaBadge } from "@/components/ProjectCard";
 
 const statusClass = {
   Completed: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
@@ -40,8 +41,8 @@ const ProjectDetails = () => {
         <PageShell>
           <Navbar />
           <PageHeader
-            backTo="/#projects"
-            backLabel="Back to projects"
+            backTo="/projects"
+            backLabel="All projects"
             eyebrow="Project"
             title="Loading project…"
             description="Fetching the latest case study."
@@ -59,8 +60,8 @@ const ProjectDetails = () => {
         <PageShell>
           <Navbar />
           <PageHeader
-            backTo="/#projects"
-            backLabel="Back to projects"
+            backTo="/projects"
+            backLabel="All projects"
             eyebrow="Project"
             title="Project not found"
             description="That project does not exist or may have moved."
@@ -71,7 +72,7 @@ const ProjectDetails = () => {
               description="Browse the current project library from the homepage."
               action={
                 <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
-                  <Link to="/#projects">
+                  <Link to="/projects">
                     View projects
                   </Link>
                 </Button>
@@ -105,20 +106,21 @@ const ProjectDetails = () => {
         type="article"
         jsonLd={breadcrumbsJsonLd([
           { name: "Home", path: "/" },
-          { name: "Projects", path: "/#projects" },
+          { name: "Projects", path: "/projects" },
           { name: project.name, path: `/projects/${project.slug}` },
         ])}
       />
       <PageShell>
         <Navbar />
         <PageHeader
-          backTo="/#projects"
-          backLabel="Back to projects"
+          backTo="/projects"
+          backLabel="All projects"
           eyebrow={project.type}
           title={project.name}
           description={project.fullDescription}
         >
           <div className="flex flex-wrap gap-3">
+            {project.nda && <NdaBadge className="px-3 py-1.5 text-sm" />}
             <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-slate-300">
               {project.category}
             </span>
@@ -131,6 +133,19 @@ const ProjectDetails = () => {
         </PageHeader>
 
         <Section className="pt-0">
+          {project.nda && (
+            <div className="mb-6 flex items-start gap-3 border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
+              <Lock aria-hidden className="mt-0.5 h-4 w-4 flex-shrink-0 text-violet-300" />
+              <p>
+                <span className="font-medium text-white">Delivered under a non-disclosure agreement.</span>{" "}
+                To respect it, we've left out the client's name and anything that would identify
+                them. We're happy to walk you through the work on a call.{" "}
+                <Link to="/contact" className="font-medium text-violet-300 hover:text-violet-200">
+                  Get in touch
+                </Link>
+              </p>
+            </div>
+          )}
           <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
             <img
               src={project.image}

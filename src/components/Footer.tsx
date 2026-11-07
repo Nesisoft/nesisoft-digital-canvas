@@ -73,7 +73,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    to="/#projects"
+                    to="/projects"
                     className="transition-colors hover:text-white"
                   >
                     Projects

@@ -26,6 +26,8 @@ export const PROJECT_COLUMNS = {
   result: "result",
   order: "sort_order",
   published: "published",
+  // Client work delivered under a non-disclosure agreement.
+  nda: "nda",
   // Product page (/platforms/<slug>), for internal platforms.
   tagline: "tagline",
   logo: "logo",
@@ -59,6 +61,7 @@ export function toPublicProject(row) {
     challenge: row.challenge,
     solution: row.solution,
     result: row.result,
+    nda: row.nda ?? false,
     tagline: row.tagline ?? "",
     logo: row.logo ?? "",
     websiteUrl: row.website_url ?? "",

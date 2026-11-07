@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const Company = lazy(() => import("./pages/Company"));
 const Platforms = lazy(() => import("./pages/Platforms"));
+const ClientProjects = lazy(() => import("./pages/ClientProjects"));
 const Platform = lazy(() => import("./pages/Platform"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
@@ -55,6 +56,7 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
             <Route path="/team" element={<Navigate to={{ pathname: "/company", hash: "#team" }} replace />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:postId" element={<BlogDetails />} />
+            <Route path="/projects" element={<ClientProjects />} />
             <Route path="/projects/:projectId" element={<ProjectDetails />} />
             <Route path="/platforms" element={<Platforms />} />
             <Route path="/platforms/:slug" element={<Platform />} />

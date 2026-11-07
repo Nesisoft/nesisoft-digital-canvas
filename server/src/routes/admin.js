@@ -443,7 +443,7 @@ function buildProjectValues(body) {
       values[column] = toText(field, value).trim();
       if (values[column].length > 160) throw badRequest("The tagline is too long");
     } else if (field === "order") values[column] = toOrder(value);
-    else if (field === "published") values[column] = toBool(field, value);
+    else if (field === "published" || field === "nda") values[column] = toBool(field, value);
     else if (value !== "") values[column] = toText(field, value);
   }
   return values;
