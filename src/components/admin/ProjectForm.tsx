@@ -47,6 +47,7 @@ type FormState = {
   result: string;
   order: number;
   published: boolean;
+  nda: boolean;
   tagline: string;
   logo: string;
   websiteUrl: string;
@@ -90,7 +91,7 @@ export function ProjectForm({ project, saving, onSave, onDelete }: ProjectFormPr
     name: "", slug: "", category: "", type: "Client work", status: "In development",
     description: "", fullDescription: "", image: "", gallery: "", technologies: "",
     features: "", timeline: "", teamSize: "", challenge: "", solution: "", result: "",
-    order: 0, published: true,
+    order: 0, published: true, nda: false,
     tagline: "", logo: "", websiteUrl: "", appStoreUrl: "", playStoreUrl: "",
     audiences: [], steps: [], faqs: [],
   });
@@ -115,6 +116,7 @@ export function ProjectForm({ project, saving, onSave, onDelete }: ProjectFormPr
       result: project?.result ?? "",
       order: project?.order ?? 0,
       published: project?.published ?? true,
+      nda: project?.nda ?? false,
       tagline: project?.tagline ?? "",
       logo: project?.logo ?? "",
       websiteUrl: project?.websiteUrl ?? "",
@@ -164,6 +166,7 @@ export function ProjectForm({ project, saving, onSave, onDelete }: ProjectFormPr
       result: form.result,
       order: Number(form.order) || 0,
       published: form.published,
+      nda: isPlatform ? false : form.nda,
       tagline: form.tagline,
       logo: form.logo,
       websiteUrl: form.websiteUrl,
@@ -325,6 +328,15 @@ export function ProjectForm({ project, saving, onSave, onDelete }: ProjectFormPr
           </Field>
           <Field label="Result">
             <Textarea value={form.result} onChange={(e) => set("result", e.target.value)} className="min-h-[3.5rem]" />
+          </Field>
+          <Field
+            label="Non-disclosure agreement"
+            hint="Shows an Under NDA badge on the card and case study, with a note that the client's details are left out. Keep the client's name and identifying details out of the text and images too."
+          >
+            <label className="flex items-center gap-3">
+              <Switch checked={form.nda} onCheckedChange={(v) => set("nda", v)} aria-label="Under NDA" />
+              <span className="text-sm text-slate-300">{form.nda ? "Under NDA" : "Not under NDA"}</span>
+            </label>
           </Field>
         </>
       )}

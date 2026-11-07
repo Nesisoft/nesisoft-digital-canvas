@@ -126,8 +126,16 @@ scripts/
   **Product page** section appears with the tagline (the page's headline),
   logo, website and app-store links, who it's for, how it works and FAQs.
   Screenshots go in Gallery. Empty sections are left off the page. Client
-  work keeps its case study at `/projects/<slug>`;
-  `/projects/<platform>` redirects to the platform's page.
+  work keeps its case study at `/projects/<slug>`, all listed at
+  `/projects`; `/projects/<platform>` redirects to the platform's page.
+- **The homepage's Work section** shows up to 4 platforms and 3 client
+  projects (in display order), linking to `/platforms` and `/projects` for
+  the rest.
+- **NDA.** A client project can be marked *Under NDA* in `/admin`
+  (Projects → Non-disclosure agreement). It then shows an "Under NDA" badge
+  on its card and a note on its case study that the client's name and
+  identifying details are left out, and `/projects` explains that we keep to
+  NDAs. Keep the client's name out of the project's text and images too.
 - **Early access.** Until a platform's status is *Completed* (shown as Live),
   its page offers early access ("Join the beta" while in beta). Signups,
   with the role picked from its audiences, appear in `/admin` under
