@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation, type To } from "react-router-dom";
-import { ArrowRight, ChevronDown, Menu, Phone, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Phone, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
@@ -199,7 +199,25 @@ const Navbar = () => {
                       </span>
                     </Link>
                   </li>
-                ))
+                )).concat(
+                  <li key="ai-assisted-development">
+                    <Link
+                      onClick={() => onNavigate("/services/ai-assisted-development")}
+                      to="/services/ai-assisted-development"
+                      className={panelLink}
+                    >
+                      <Sparkles
+                        aria-hidden
+                        className="h-5 w-5 flex-shrink-0 text-gold-300"
+                        strokeWidth={1.5}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-white">AI-assisted development</span>
+                        <span className="block truncate text-sm text-slate-400">Ship sooner and spend less, with AI</span>
+                      </span>
+                    </Link>
+                  </li>
+                )
               : featuredProjects.map((project) => (
                   <li key={project.slug}>
                     <Link
@@ -230,6 +248,7 @@ const Navbar = () => {
   const mobileLinks: { label: string; to: To; description: string }[] = [
     { label: "Company", to: "/company", description: "Who we are, our team and how we work" },
     { label: "Services", to: "/services", description: "Web, mobile, custom systems, design" },
+    { label: "AI-assisted development", to: "/services/ai-assisted-development", description: "Ship sooner and spend less, with AI" },
     { label: "Industries", to: "/industries", description: "Education, healthcare, fintech and more" },
     { label: "Work", to: "/projects", description: "Client projects and case studies" },
     { label: "Platforms", to: "/platforms", description: "Agoo, Sua, Adesuapa and Jua" },

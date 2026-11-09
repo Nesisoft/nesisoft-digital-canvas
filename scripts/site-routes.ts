@@ -36,6 +36,8 @@ export function getSiteRoutes(root: string): SiteRoute[] {
     { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
     { path: "/privacy", priority: "0.3", changefreq: "yearly" },
     { path: "/services", priority: "0.8", changefreq: "monthly" },
+    // How we use AI (its own page, not one of the services in services.ts).
+    { path: "/services/ai-assisted-development", priority: "0.8", changefreq: "monthly" },
     ...serviceSlugs.map((slug) => ({
       path: `/services/${slug}`,
       priority: "0.6",

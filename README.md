@@ -127,6 +127,14 @@ scripts/
   live from the projects listed in its `projects` (by slug; unpublished ones
   are skipped). Add a sector by adding an entry; it's prerendered and added
   to the sitemap automatically.
+- **AI-assisted development** (`/services/ai-assisted-development`,
+  `src/pages/AiDevelopment.tsx`) explains how we use AI: one mobile app
+  priced three ways (traditional, AI-assisted, AI-native) from the live
+  prices, the three delivery models, where AI helps, what stays human, and
+  FAQs. It isn't one of the services in `src/data/services.ts` (it's how we
+  deliver all of them), so it's linked on its own: last in the Services menu,
+  the footer, and a banner on the homepage's services and on `/services`.
+  Its savings come from the build approaches in `/admin` → **Pricing**.
 - **The cost calculator** (`/app-cost-calculator`, "Pricing" in the menu)
   takes its prices from `/admin` → **Pricing**; see
   [Cost calculator](#cost-calculator) below.

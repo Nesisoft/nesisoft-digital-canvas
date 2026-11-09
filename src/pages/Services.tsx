@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { IndustryCards } from "@/components/IndustryLinks";
+import { AiBanner } from "@/components/AiBanner";
 import { services } from "@/data/services";
 import { industries } from "@/data/industries";
 
@@ -75,6 +76,7 @@ const Services = () => (
             );
           })}
         </div>
+        <AiBanner className="mt-6" />
       </Section>
 
       <Section className="border-y border-white/10 bg-white/[0.025]">

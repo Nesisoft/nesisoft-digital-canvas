@@ -4,6 +4,7 @@ import { Section, SectionHeading } from "@/components/ui/section";
 import { services } from "@/data/services";
 import { industries } from "@/data/industries";
 import { IndustryChips } from "@/components/IndustryLinks";
+import { AiBanner } from "@/components/AiBanner";
 
 const Services = () => {
   return (
@@ -81,6 +82,8 @@ const Services = () => {
           );
         })}
       </div>
+
+      <AiBanner className="mt-10" />
 
       <div className="mt-12 flex flex-col gap-5 border-t border-white/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
         <div>

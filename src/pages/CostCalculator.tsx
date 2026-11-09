@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BarChart3,
   Bell,
-  Bot,
   Boxes,
   CalendarClock,
   CalendarDays,
@@ -27,7 +26,6 @@ import {
   ShoppingCart,
   Smartphone,
   Sparkles,
-  Users,
   UserRound,
   Wallet,
   WifiOff,
@@ -41,6 +39,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { QuoteRequestForm } from "@/components/QuoteRequestForm";
+import { ApproachCards } from "@/components/ApproachCards";
 import { useEstimator } from "@/hooks/useEstimator";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -90,31 +89,6 @@ const FEATURE_ICONS: Record<string, LucideIcon> = {
 };
 
 const CURRENCY_NAMES: Record<Currency, string> = { GHS: "Ghana cedis", USD: "US dollars" };
-
-const APPROACH_ICONS: Record<string, LucideIcon> = {
-  traditional: Users,
-  "ai-assisted": Sparkles,
-  "ai-native": Bot,
-};
-
-// How each build approach runs, for the comparison under the calculator.
-const APPROACH_DETAILS: Record<string, { badge: string; delivery: string; bestFor: string }> = {
-  traditional: {
-    badge: "Iterative",
-    delivery: "The scope evolves sprint by sprint: plan, build, review, adjust.",
-    bestFor: "Projects whose scope will change as you learn from your users.",
-  },
-  "ai-assisted": {
-    badge: "Iterative + AI",
-    delivery: "The same sprints, with AI drafting code, tests and documentation for our engineers to review.",
-    bestFor: "Most projects, including existing systems that need to move faster.",
-  },
-  "ai-native": {
-    badge: "Spec-first",
-    delivery: "We agree a detailed specification first, then build to it in milestones.",
-    bestFor: "MVPs and new products with a clear, fixed scope.",
-  },
-};
 
 // What moves the price, for people reading before (or instead of) clicking.
 const DRIVERS: { icon: LucideIcon; title: string; description: string }[] = [
@@ -201,14 +175,17 @@ function startingAnswers(config: EstimatorConfig): Answers {
   };
 }
 
-/** Answers from a shared link (?type=mobile&size=medium&features=accounts,payments…). */
+/**
+ * Answers from a shared link (?type=mobile&size=medium&features=accounts,payments…),
+ * or from a link that only preselects some (?approach=ai-assisted).
+ */
 function answersFromLink(search: string, fallback: Answers): { answers: Answers; currency: Currency } | null {
   const params = new URLSearchParams(search);
-  const type = params.get("type");
-  if (!type) return null;
+  const known = ["type", "size", "design", "approach", "pace", "features", "currency"];
+  if (!known.some((key) => params.get(key))) return null;
   return {
     answers: {
-      type,
+      type: params.get("type") || "",
       size: params.get("size") || fallback.size,
       design: params.get("design") || fallback.design,
       approach: params.get("approach") || fallback.approach,
@@ -741,72 +718,36 @@ const CostCalculator = () => {
             title="Three ways to build it"
             description="From a classic human team to one where AI does much of the work. The more AI takes on, the lower the cost, with the trade-offs below."
           />
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {config.approaches.map((approach) => {
-              const details = APPROACH_DETAILS[approach.id];
-              const Icon = APPROACH_ICONS[approach.id] ?? Sparkles;
-              const chosen = answers.approach === approach.id;
-              return (
-                <div
-                  key={approach.id}
-                  className={cn(
-                    "flex flex-col border p-6 md:p-7",
-                    chosen ? "border-violet-400/60 bg-violet-500/[0.08]" : "border-white/10 bg-white/[0.03]"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <Icon aria-hidden className="h-7 w-7 text-violet-300" strokeWidth={1.5} />
-                    {details && (
-                      <span className="border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-slate-300">
-                        {details.badge}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">{approach.label}</h3>
-                  {/* Three lines' room side by side, so the budgets line up. */}
-                  <p className="mt-2 text-sm leading-6 text-slate-300 lg:min-h-[4.5rem]">{approach.description}</p>
-                  <p
-                    className={cn(
-                      "mt-6 font-display text-4xl font-bold tracking-tight",
-                      approach.factor < 1 ? "text-gold-300" : "text-white"
-                    )}
-                  >
-                    {approach.factor === 1 ? "Base" : savingLabel(approach).replace(/^About /, "")}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">Development budget</p>
-                  {details && (
-                    <dl className="mt-6 flex-1 space-y-4 border-t border-white/10 pt-5 text-sm">
-                      <div>
-                        <dt className="font-medium text-white">How it's delivered</dt>
-                        <dd className="mt-1 leading-6 text-slate-300">{details.delivery}</dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-white">Best for</dt>
-                        <dd className="mt-1 leading-6 text-slate-300">{details.bestFor}</dd>
-                      </div>
-                    </dl>
-                  )}
-                  <Button
-                    type="button"
-                    variant={chosen ? "default" : "outline"}
-                    onClick={() => {
-                      set("approach", approach.id);
-                      document.getElementById(answers.type ? "estimate" : "calculator")?.scrollIntoView({ block: "start" });
-                    }}
-                    className={cn(
-                      "mt-6 h-11 w-full",
-                      chosen
-                        ? "bg-violet-600 text-white hover:bg-violet-500"
-                        : "border-white/15 bg-transparent text-white hover:bg-white/[0.06]"
-                    )}
-                  >
-                    {chosen ? "In your estimate" : "Estimate with this model"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+          <ApproachCards
+            className="mt-12"
+            approaches={config.approaches}
+            selected={answers.approach}
+            action={(approach, chosen) => (
+              <Button
+                type="button"
+                variant={chosen ? "default" : "outline"}
+                onClick={() => {
+                  set("approach", approach.id);
+                  document.getElementById(answers.type ? "estimate" : "calculator")?.scrollIntoView({ block: "start" });
+                }}
+                className={cn(
+                  "h-11 w-full",
+                  chosen
+                    ? "bg-violet-600 text-white hover:bg-violet-500"
+                    : "border-white/15 bg-transparent text-white hover:bg-white/[0.06]"
+                )}
+              >
+                {chosen ? "In your estimate" : "Estimate with this model"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          />
+          <p className="mt-8 text-slate-300">
+            How do we use AI, and what stays in human hands?{" "}
+            <Link to="/services/ai-assisted-development" className="font-medium text-violet-300 hover:text-white">
+              See AI-assisted development →
+            </Link>
+          </p>
         </Section>
 
         {/* For readers (and search): what the numbers depend on */}

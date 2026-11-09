@@ -110,6 +110,11 @@ const Footer = () => {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link to="/services/ai-assisted-development" className="transition-colors hover:text-white">
+                    AI-assisted development
+                  </Link>
+                </li>
               </ul>
             </div>
 

@@ -23,6 +23,7 @@ const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
 const Contact = lazy(() => import("./pages/Contact"));
 const CostCalculator = lazy(() => import("./pages/CostCalculator"));
+const AiDevelopment = lazy(() => import("./pages/AiDevelopment"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -55,6 +56,7 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<ServicesPage />} />
+            <Route path="/services/ai-assisted-development" element={<AiDevelopment />} />
             <Route path="/services/:serviceId" element={<ServiceDetails />} />
             <Route path="/industries" element={<Industries />} />
             <Route path="/industries/:slug" element={<Industry />} />
