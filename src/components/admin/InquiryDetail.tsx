@@ -45,6 +45,9 @@ const selectClass =
 
 const DEFAULT_SUBJECT = "Re: Your enquiry to Nesisoft";
 
+/** The reference the sender was given ("3F2A1B9C"), as server/src/visitorEmail.js makes it. */
+const inquiryRef = (id: string) => id.replace(/-/g, "").slice(0, 8).toUpperCase();
+
 /** A quote request's answers and estimate, as the cost calculator sent them. */
 function EstimatePanel({ estimate }: { estimate: InquiryEstimate }) {
   const rows = (
@@ -105,7 +108,7 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [message, setMessage] = useState("");
 
-  // A reply to a quote request continues the thread its estimate copy started.
+  // A reply continues the thread that the email sent to them started.
   const copySubject = data?.inquiry.copy?.sentAt ? data.inquiry.copy.subject : null;
   useEffect(() => {
     if (copySubject) setSubject((current) => (current === DEFAULT_SUBJECT ? `Re: ${copySubject}` : current));
@@ -181,7 +184,9 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-white">{name}</h3>
-          <p className="mt-1 text-sm text-slate-400">Received {formatDateTime(inquiry.createdAt)}</p>
+          <p className="mt-1 text-sm text-slate-400">
+            Received {formatDateTime(inquiry.createdAt)} · Ref. {inquiryRef(inquiry._id)}
+          </p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <a href={`mailto:${inquiry.email}`} className="inline-flex items-center gap-1.5 text-violet-300 hover:text-violet-200">
               <Mail className="h-4 w-4" /> {inquiry.email}
@@ -240,17 +245,20 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
       {inquiry.estimate && <EstimatePanel estimate={inquiry.estimate} />}
 
       {inquiry.copy?.sentAt && (
-        <p className="flex items-center gap-2 text-sm text-slate-400">
-          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-300" />
-          A copy of this estimate was emailed to {inquiry.email} on {formatDateTime(inquiry.copy.sentAt)}. Your reply
-          joins the same email thread.
+        <p className="flex items-start gap-2 text-sm text-slate-400">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
+          <span>
+            {inquiry.estimate ? "A copy of this estimate" : "A confirmation"} was emailed to {inquiry.email} on{" "}
+            {formatDateTime(inquiry.copy.sentAt)}. Your reply joins the same email thread.
+          </span>
         </p>
       )}
       {inquiry.copy?.error && (
         <div className="flex gap-3 border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
           <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <div>
-            Their copy of the estimate couldn't be emailed, so they haven't heard from us yet.
+            {inquiry.estimate ? "Their copy of the estimate" : "Their confirmation email"} couldn't be sent, so they
+            haven't heard from us yet.
             <span className="mt-1 block text-xs text-amber-200/80">{inquiry.copy.error}</span>
           </div>
         </div>
