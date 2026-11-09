@@ -24,7 +24,7 @@ import { formatRange, formatWeeks } from "../../../shared/estimator.js";
  * A mail failure doesn't lose the inquiry: it's still in /admin, flagged.
  *
  * A quote request sends `estimate`: the calculator's answers as JSON
- * ({type, size, design, pace, features, currency}). The estimate is worked
+ * ({type, size, design, approach, pace, features, currency}). The estimate is worked
  * out again here from the current price list, and fills in the service,
  * budget and timeline; the message is optional.
  */

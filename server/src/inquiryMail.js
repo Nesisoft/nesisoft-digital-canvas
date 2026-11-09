@@ -31,6 +31,8 @@ function estimateDetails(estimate) {
     ["Size", estimate.size.label],
     ["Features", estimate.features.map((f) => f.label).join(", ") || "None added"],
     ["Design", estimate.design.label],
+    // Quote requests from before the approach question have none.
+    ["Approach", estimate.approach?.label],
     ["Pace", estimate.pace.label],
     ["Estimate", `${formatRange(estimate, estimate.currency)} (${formatRange(estimate, other)})`],
     ["Timeline", formatWeeks(estimate)],

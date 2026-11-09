@@ -48,12 +48,15 @@ const DEFAULT_SUBJECT = "Re: Your enquiry to Nesisoft";
 /** One inquiry: details, attachment, status, replies and the reply box. */
 /** A quote request's answers and estimate, as the cost calculator sent them. */
 function EstimatePanel({ estimate }: { estimate: InquiryEstimate }) {
-  const rows: [string, string][] = [
-    ["Project", estimate.type.label],
-    ["Size", estimate.size.label],
-    ["Design", estimate.design.label],
-    ["Pace", estimate.pace.label],
-  ];
+  const rows = (
+    [
+      ["Project", estimate.type.label],
+      ["Size", estimate.size.label],
+      ["Design", estimate.design.label],
+      ["Approach", estimate.approach?.label],
+      ["Pace", estimate.pace.label],
+    ] as [string, string | undefined][]
+  ).filter(([, value]) => value);
   return (
     <section aria-label="Cost estimate" className="border border-gold-300/25 bg-gold-300/[0.04] p-4">
       <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold-200">

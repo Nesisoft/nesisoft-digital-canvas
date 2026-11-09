@@ -36,16 +36,19 @@ export interface EstimatorConfig {
   sizes: EstimatorMultiplier[];
   features: EstimatorFeature[];
   designs: EstimatorMultiplier[];
+  /** Traditional, AI-assisted or AI-native delivery. */
+  approaches: EstimatorMultiplier[];
   paces: EstimatorMultiplier[];
 }
 
-export type MultiplierList = "sizes" | "designs" | "paces";
+export type MultiplierList = "sizes" | "designs" | "approaches" | "paces";
 
 /** A visitor's answers, by id (a shared link, a quote request). */
 export interface SelectionInput {
   type?: string;
   size?: string;
   design?: string;
+  approach?: string;
   pace?: string;
   features?: string[];
 }
@@ -54,6 +57,7 @@ export interface Selection {
   type: EstimatorType | null;
   size: EstimatorMultiplier;
   design: EstimatorMultiplier;
+  approach: EstimatorMultiplier;
   pace: EstimatorMultiplier;
   features: EstimatorFeature[];
 }
@@ -85,5 +89,10 @@ export function computeEstimate(
 export function formatNumber(amount: number): string;
 export function formatRange(estimate: Estimate, currency?: Currency): string;
 export function formatWeeks(estimate: Estimate): string;
-export function startingEstimate(config: EstimatorConfig, type: EstimatorType): Estimate;
+export function startingEstimate(
+  config: EstimatorConfig,
+  type: EstimatorType,
+  approach?: EstimatorMultiplier
+): Estimate;
 export function typicalEstimate(config: EstimatorConfig, type: EstimatorType): Estimate;
+export function savingLabel(option: EstimatorMultiplier): string;

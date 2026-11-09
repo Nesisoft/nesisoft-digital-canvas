@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BarChart3,
   Bell,
+  Bot,
   Boxes,
   CalendarClock,
   CalendarDays,
@@ -26,6 +27,7 @@ import {
   ShoppingCart,
   Smartphone,
   Sparkles,
+  Users,
   UserRound,
   Wallet,
   WifiOff,
@@ -52,6 +54,7 @@ import {
   formatRange,
   formatWeeks,
   resolveSelection,
+  savingLabel,
   startingEstimate,
   typicalEstimate,
   type Currency,
@@ -87,6 +90,31 @@ const FEATURE_ICONS: Record<string, LucideIcon> = {
 };
 
 const CURRENCY_NAMES: Record<Currency, string> = { GHS: "Ghana cedis", USD: "US dollars" };
+
+const APPROACH_ICONS: Record<string, LucideIcon> = {
+  traditional: Users,
+  "ai-assisted": Sparkles,
+  "ai-native": Bot,
+};
+
+// How each build approach runs, for the comparison under the calculator.
+const APPROACH_DETAILS: Record<string, { badge: string; delivery: string; bestFor: string }> = {
+  traditional: {
+    badge: "Iterative",
+    delivery: "The scope evolves sprint by sprint: plan, build, review, adjust.",
+    bestFor: "Projects whose scope will change as you learn from your users.",
+  },
+  "ai-assisted": {
+    badge: "Iterative + AI",
+    delivery: "The same sprints, with AI drafting code, tests and documentation for our engineers to review.",
+    bestFor: "Most projects, including existing systems that need to move faster.",
+  },
+  "ai-native": {
+    badge: "Spec-first",
+    delivery: "We agree a detailed specification first, then build to it in milestones.",
+    bestFor: "MVPs and new products with a clear, fixed scope.",
+  },
+};
 
 // What moves the price, for people reading before (or instead of) clicking.
 const DRIVERS: { icon: LucideIcon; title: string; description: string }[] = [
@@ -157,6 +185,7 @@ interface Answers {
   type: string;
   size: string;
   design: string;
+  approach: string;
   pace: string;
   features: string[];
 }
@@ -166,6 +195,7 @@ function startingAnswers(config: EstimatorConfig): Answers {
     type: "",
     size: defaultOption(config.sizes).id,
     design: defaultOption(config.designs).id,
+    approach: defaultOption(config.approaches).id,
     pace: defaultOption(config.paces).id,
     features: [],
   };
@@ -181,6 +211,7 @@ function answersFromLink(search: string, fallback: Answers): { answers: Answers;
       type,
       size: params.get("size") || fallback.size,
       design: params.get("design") || fallback.design,
+      approach: params.get("approach") || fallback.approach,
       pace: params.get("pace") || fallback.pace,
       features: (params.get("features") ?? "").split(",").filter(Boolean).slice(0, 50),
     },
@@ -195,6 +226,7 @@ function linkFor(answers: Answers, currency: Currency): string {
     `size=${encodeURIComponent(answers.size)}`,
     ...(answers.features.length ? [`features=${answers.features.map(encodeURIComponent).join(",")}`] : []),
     `design=${encodeURIComponent(answers.design)}`,
+    `approach=${encodeURIComponent(answers.approach)}`,
     `pace=${encodeURIComponent(answers.pace)}`,
     ...(currency === "USD" ? ["currency=USD"] : []),
   ];
@@ -215,6 +247,24 @@ function faqsFor(config: EstimatorConfig) {
   const timelines = config.types
     .map((type) => `${lowerFirst(type.label)}, ${formatWeeks(typicalEstimate(config, type))}`)
     .join("; ");
+  // Only the approaches that cost less than the traditional team.
+  const savings = config.approaches
+    .filter((approach) => approach.factor < 1)
+    .map((approach) => `${lowerFirst(approach.label)}, ${savingLabel(approach).toLowerCase()}`)
+    .join("; ");
+  const specFirst = config.approaches.find((approach) => approach.id === "ai-native" && approach.factor < 1);
+  const aiFaq = savings
+    ? [
+        {
+          question: "Does using AI make building an app cheaper?",
+          answer: `It can, if you choose it. We use AI across our work, and you decide how much of the build it takes on: ${savings}, compared with a traditional team. Our engineers stay responsible for everything that's built.${
+            specFirst
+              ? ` An ${specFirst.label.replace(/ team$/i, "")} build works from a specification agreed before work starts, so changes after that are quoted separately.`
+              : ""
+          }`,
+        },
+      ]
+    : [];
   return [
     {
       question: "How much does it cost to build an app or website in Ghana?",
@@ -224,6 +274,7 @@ function faqsFor(config: EstimatorConfig) {
       question: "How long does it take to build an app?",
       answer: `Typical timelines from kickoff to launch, for a medium-sized build: ${timelines}. Each feature you add takes time too, and a firm deadline can be met by adding people to the team.`,
     },
+    ...aiFaq,
     {
       question: "Why is the estimate a range and not a fixed price?",
       answer:
@@ -365,7 +416,7 @@ function CurrencySwitch({ name, value, onChange }: { name: string; value: Curren
 }
 
 /**
- * /app-cost-calculator: five questions, a live price range and timeline, and
+ * /app-cost-calculator: six questions, a live price range and timeline, and
  * a quote request that lands in /admin → Inquiries with the estimate. Prices
  * come from /admin → Pricing (shared/estimator.js has the starting list).
  * The answers live in the address bar, so a link reopens the same estimate.
@@ -456,6 +507,7 @@ const CostCalculator = () => {
           `Size: ${selection.size.label}`,
           `Features: ${selection.features.map((f) => f.label).join(", ") || "None added"}`,
           `Design: ${selection.design.label}`,
+          `Approach: ${selection.approach.label}`,
           `Pace: ${selection.pace.label}`,
           `Estimate: ${formatRange(estimate, currency)}, ${formatWeeks(estimate)}`,
           `Link: ${siteConfig.url}${link}`,
@@ -469,7 +521,7 @@ const CostCalculator = () => {
     <>
       <Seo
         title="App & Website Cost Calculator for Ghana"
-        description="How much does an app or website cost in Ghana? Answer five quick questions for an instant price range and timeline in cedis or dollars."
+        description="How much does an app or website cost in Ghana? Answer six quick questions for an instant price range and timeline in cedis or dollars."
         jsonLd={[
           breadcrumbsJsonLd([
             { name: "Home", path: "/" },
@@ -491,7 +543,7 @@ const CostCalculator = () => {
         <PageHeader
           eyebrow="Cost calculator"
           title="How much will your app cost?"
-          description="Answer five quick questions for an instant price range and timeline, in Ghana cedis or US dollars. It takes about a minute, and you can send the result to us for a detailed quote."
+          description="Answer six quick questions for an instant price range and timeline, in Ghana cedis or US dollars. It takes about a minute, and you can send the result to us for a detailed quote."
         />
 
         <Section id="calculator" className="scroll-mt-16 pt-0">
@@ -508,7 +560,7 @@ const CostCalculator = () => {
                       onChange={() => chooseType(type.id)}
                       title={type.label}
                       description={type.description}
-                      meta={`From ${money(low(startingEstimate(config, type), currency), currency)}`}
+                      meta={`From ${money(low(startingEstimate(config, type, selection.approach), currency), currency)}`}
                       icon={TYPE_ICONS[type.id] ?? Boxes}
                     />
                   ))}
@@ -540,7 +592,28 @@ const CostCalculator = () => {
                 <MultiplierChoices name={`${id}-design`} options={config.designs} value={answers.design} onChange={(v) => set("design", v)} />
               </Question>
 
-              <Question step={5} title="How soon do you need it?">
+              <Question
+                step={5}
+                title="How should we build it?"
+                hint="We use AI across our work. The more of the build it takes on, the less you pay."
+              >
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {config.approaches.map((approach) => (
+                    <Choice
+                      key={approach.id}
+                      kind="radio"
+                      name={`${id}-approach`}
+                      checked={answers.approach === approach.id}
+                      onChange={() => set("approach", approach.id)}
+                      title={approach.label}
+                      description={approach.description}
+                      meta={savingLabel(approach)}
+                    />
+                  ))}
+                </div>
+              </Question>
+
+              <Question step={6} title="How soon do you need it?">
                 <MultiplierChoices name={`${id}-pace`} options={config.paces} value={answers.pace} onChange={(v) => set("pace", v)} />
               </Question>
             </div>
@@ -554,7 +627,13 @@ const CostCalculator = () => {
                 <div aria-live="polite">
                   {estimate && selection.type ? (
                     <>
-                      <p className="mt-5 font-display text-4xl font-bold tracking-tight text-white">
+                      {/* Smaller for six-figure ranges, so they fit on one line. */}
+                      <p
+                        className={cn(
+                          "mt-5 font-display font-bold tracking-tight text-white",
+                          formatRange(estimate, currency).length > 15 ? "text-3xl" : "text-4xl"
+                        )}
+                      >
                         {formatRange(estimate, currency)}
                       </p>
                       <p className="mt-2 flex items-center gap-2 text-slate-300">
@@ -579,6 +658,7 @@ const CostCalculator = () => {
                             : "None added",
                         ],
                         ["Design", selection.design.label],
+                        ["Approach", selection.approach.label],
                         ["Pace", selection.pace.label],
                       ].map(([term, detail]) => (
                         <div key={term} className="grid grid-cols-[5.5rem_1fr] gap-3">
@@ -661,6 +741,82 @@ const CostCalculator = () => {
           </div>
         </Section>
 
+        {/* The three ways to build, side by side */}
+        <Section id="approaches">
+          <SectionHeading
+            align="left"
+            eyebrow="Delivery models"
+            title="Three ways to build it"
+            description="From a classic human team to one where AI does much of the work. The more AI takes on, the lower the cost, with the trade-offs below."
+          />
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {config.approaches.map((approach) => {
+              const details = APPROACH_DETAILS[approach.id];
+              const Icon = APPROACH_ICONS[approach.id] ?? Sparkles;
+              const chosen = answers.approach === approach.id;
+              return (
+                <div
+                  key={approach.id}
+                  className={cn(
+                    "flex flex-col border p-6 md:p-7",
+                    chosen ? "border-violet-400/60 bg-violet-500/[0.08]" : "border-white/10 bg-white/[0.03]"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <Icon aria-hidden className="h-7 w-7 text-violet-300" strokeWidth={1.5} />
+                    {details && (
+                      <span className="border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-slate-300">
+                        {details.badge}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">{approach.label}</h3>
+                  {/* Three lines' room side by side, so the budgets line up. */}
+                  <p className="mt-2 text-sm leading-6 text-slate-300 lg:min-h-[4.5rem]">{approach.description}</p>
+                  <p
+                    className={cn(
+                      "mt-6 font-display text-4xl font-bold tracking-tight",
+                      approach.factor < 1 ? "text-gold-300" : "text-white"
+                    )}
+                  >
+                    {approach.factor === 1 ? "Base" : savingLabel(approach).replace(/^About /, "")}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-400">Development budget</p>
+                  {details && (
+                    <dl className="mt-6 flex-1 space-y-4 border-t border-white/10 pt-5 text-sm">
+                      <div>
+                        <dt className="font-medium text-white">How it's delivered</dt>
+                        <dd className="mt-1 leading-6 text-slate-300">{details.delivery}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-white">Best for</dt>
+                        <dd className="mt-1 leading-6 text-slate-300">{details.bestFor}</dd>
+                      </div>
+                    </dl>
+                  )}
+                  <Button
+                    type="button"
+                    variant={chosen ? "default" : "outline"}
+                    onClick={() => {
+                      set("approach", approach.id);
+                      document.getElementById(answers.type ? "estimate" : "calculator")?.scrollIntoView({ block: "start" });
+                    }}
+                    className={cn(
+                      "mt-6 h-11 w-full",
+                      chosen
+                        ? "bg-violet-600 text-white hover:bg-violet-500"
+                        : "border-white/15 bg-transparent text-white hover:bg-white/[0.06]"
+                    )}
+                  >
+                    {chosen ? "In your estimate" : "Estimate with this model"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Section>
+
         {/* For readers (and search): what the numbers depend on */}
         <Section>
           <SectionHeading
@@ -686,7 +842,7 @@ const CostCalculator = () => {
               align="left"
               eyebrow="Typical prices"
               title="Where projects start"
-              description={`Starting prices are for a small build with the simplest design and no added features; timelines are for a medium-sized build. In ${CURRENCY_NAMES[currency]}.`}
+              description={`Starting prices are for a small build by a traditional team, with the simplest design and no added features; timelines are for a medium-sized build. AI-assisted and AI-native builds cost less. In ${CURRENCY_NAMES[currency]}.`}
             />
             <CurrencySwitch name={`${id}-table-currency`} value={currency} onChange={setCurrency} />
           </div>

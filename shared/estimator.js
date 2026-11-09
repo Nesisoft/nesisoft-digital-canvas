@@ -8,7 +8,7 @@
  * Prices are in Ghana cedis. An estimate is
  *
  *   (the project type's base price + each chosen feature's price)
- *     × size × design × pace          (their `factor`s)
+ *     × size × design × approach × pace          (their `factor`s)
  *
  * shown as a range (× spread.low to × spread.high) and rounded. The weeks
  * work the same way with each option's `weeksFactor`.
@@ -211,6 +211,32 @@ export const DEFAULT_ESTIMATOR = {
       weeksFactor: 1.15,
     },
   ],
+  // How it's built: a human team (the base price), or with AI doing more of
+  // the work, which costs less and is quicker. AI-native fixes the scope up
+  // front, which is where much of its saving comes from.
+  approaches: [
+    {
+      id: "traditional",
+      label: "Traditional team",
+      description: "A human-led team working in sprints. The scope can change as you go.",
+      factor: 1,
+      weeksFactor: 1,
+    },
+    {
+      id: "ai-assisted",
+      label: "AI-assisted team",
+      description: "The same sprints, with AI speeding up coding, testing and documentation, and our engineers in charge.",
+      factor: 0.8,
+      weeksFactor: 0.85,
+    },
+    {
+      id: "ai-native",
+      label: "AI-native team",
+      description: "A small team building with AI from a specification agreed up front. Changes after sign-off are quoted separately.",
+      factor: 0.65,
+      weeksFactor: 0.75,
+    },
+  ],
   paces: [
     {
       id: "flexible",
@@ -237,7 +263,7 @@ export const DEFAULT_ESTIMATOR = {
 };
 
 /** The option lists whose ids are fixed (an admin edits them but can't add or remove any). */
-export const FIXED_LISTS = ["sizes", "designs", "paces"];
+export const FIXED_LISTS = ["sizes", "designs", "approaches", "paces"];
 
 const byId = (list, id) => list.find((option) => option.id === id);
 
@@ -254,7 +280,8 @@ export function featureApplies(feature, type) {
 /**
  * A visitor's answers (ids, as in a shared link or a quote request) as the
  * options they name. An unknown type gives `type: null` (nothing to
- * estimate); an unknown size, design or pace falls back to the default; and
+ * estimate); an unknown size, design, approach or pace falls back to the
+ * default; and
  * features that don't exist, or aren't offered for the type, are dropped.
  */
 export function resolveSelection(config, input = {}) {
@@ -264,6 +291,7 @@ export function resolveSelection(config, input = {}) {
     type,
     size: byId(config.sizes, input.size) ?? defaultOption(config.sizes),
     design: byId(config.designs, input.design) ?? defaultOption(config.designs),
+    approach: byId(config.approaches, input.approach) ?? defaultOption(config.approaches),
     pace: byId(config.paces, input.pace) ?? defaultOption(config.paces),
     features: type
       ? config.features.filter((f) => wanted.includes(f.id) && featureApplies(f, type))
@@ -289,13 +317,13 @@ const sum = (items, key) => items.reduce((total, item) => total + item[key], 0);
  * multipliers were applied to.
  */
 export function computeEstimate(config, selection) {
-  const { type, size, design, pace, features } = selection;
+  const { type, size, design, approach, pace, features } = selection;
   if (!type) return null;
 
   const base = type.price + sum(features, "price");
   const baseWeeks = type.weeks + sum(features, "weeks");
-  const price = base * size.factor * design.factor * pace.factor;
-  const weeks = baseWeeks * size.weeksFactor * design.weeksFactor * pace.weeksFactor;
+  const price = base * size.factor * design.factor * approach.factor * pace.factor;
+  const weeks = baseWeeks * size.weeksFactor * design.weeksFactor * approach.weeksFactor * pace.weeksFactor;
 
   const low = roundPrice(price * config.spread.low);
   const high = roundPrice(price * config.spread.high);
@@ -334,26 +362,36 @@ export function formatWeeks(estimate) {
 
 /**
  * The lowest estimate for a project type (its smallest size, simplest
- * design, no added features, at the standard pace): the "from" price.
+ * design, no added features, at the standard pace) with a given approach,
+ * the traditional team unless another is named: the "from" price.
  */
-export function startingEstimate(config, type) {
+export function startingEstimate(config, type, approach = defaultOption(config.approaches)) {
   const cheapest = (list) => list.reduce((min, option) => (option.factor < min.factor ? option : min));
   return computeEstimate(config, {
     type,
     size: cheapest(config.sizes),
     design: cheapest(config.designs),
+    approach,
     pace: defaultOption(config.paces),
     features: [],
   });
 }
 
-/** A project type at the default size, design and pace, with no added features. */
+/** A project type at the default size, design, approach and pace, with no added features. */
 export function typicalEstimate(config, type) {
   return computeEstimate(config, {
     type,
     size: defaultOption(config.sizes),
     design: defaultOption(config.designs),
+    approach: defaultOption(config.approaches),
     pace: defaultOption(config.paces),
     features: [],
   });
+}
+
+/** How a multiplier compares with the base: "Base price", "About 20% less", "About 10% more". */
+export function savingLabel(option) {
+  const change = Math.round((1 - option.factor) * 100);
+  if (change === 0) return "Base price";
+  return change > 0 ? `About ${change}% less` : `About ${-change}% more`;
 }
