@@ -14,6 +14,9 @@ const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
 const Company = lazy(() => import("./pages/Company"));
 const Platforms = lazy(() => import("./pages/Platforms"));
 const ClientProjects = lazy(() => import("./pages/ClientProjects"));
+const ServicesPage = lazy(() => import("./pages/Services"));
+const Industries = lazy(() => import("./pages/Industries"));
+const Industry = lazy(() => import("./pages/Industry"));
 const Platform = lazy(() => import("./pages/Platform"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
@@ -50,7 +53,10 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/services" element={<ServicesPage />} />
             <Route path="/services/:serviceId" element={<ServiceDetails />} />
+            <Route path="/industries" element={<Industries />} />
+            <Route path="/industries/:slug" element={<Industry />} />
             <Route path="/company" element={<Company />} />
             {/* The team moved onto the Company page. */}
             <Route path="/team" element={<Navigate to={{ pathname: "/company", hash: "#team" }} replace />} />

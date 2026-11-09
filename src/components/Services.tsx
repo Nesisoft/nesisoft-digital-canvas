@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { services } from "@/data/services";
+import { industries } from "@/data/industries";
+import { IndustryChips } from "@/components/IndustryLinks";
 
 const Services = () => {
   return (
@@ -80,6 +82,18 @@ const Services = () => {
         })}
       </div>
 
+      <div className="mt-12 flex flex-col gap-5 border-t border-white/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-wider text-slate-400">Industries we build for</p>
+          <IndustryChips industries={industries} className="mt-4" />
+        </div>
+        <Link
+          to="/services"
+          className="inline-flex flex-shrink-0 items-center text-sm font-medium text-violet-300 hover:text-violet-200"
+        >
+          All services and how we work →
+        </Link>
+      </div>
       <div className="mt-12 flex flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center sm:flex-row sm:justify-between sm:text-left">
         <div>
           <h3 className="text-lg font-semibold text-white">
