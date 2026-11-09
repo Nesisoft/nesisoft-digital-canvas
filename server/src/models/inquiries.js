@@ -30,8 +30,9 @@ export function toAdminInquiry(row) {
           stored: Boolean(row.attachment_path),
         }
       : null,
-    // A quote request from the cost calculator: its answers and estimate,
-    // and the copy of it emailed to them (sent, or why not).
+    // A quote request from the cost calculator: its answers and estimate.
+    // And the email sent to whoever sent it (a copy of the estimate, or a
+    // confirmation of their message): sent, or why not.
     estimate: row.estimate ?? null,
     copy:
       row.copy_sent_at || row.copy_error
@@ -106,7 +107,12 @@ export async function recordNotification(id, error) {
   );
 }
 
-/** Records the copy of a quote request's estimate emailed to its sender: sent (with its Message-ID), or why not. */
+/**
+ * Records the email sent to an inquiry's sender (server/src/visitorEmail.js):
+ * sent, with its Message-ID and subject for threading replies, or why not.
+ * Despite the columns' name (migration 007), contact-form messages get one
+ * too.
+ */
 export async function recordCopy(id, { messageId, subject, error }) {
   await query(
     `update inquiries

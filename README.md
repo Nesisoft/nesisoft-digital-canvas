@@ -236,6 +236,15 @@ If the email fails, the inquiry is still in `/admin`, flagged. Submissions are
 limited to 6 per IP per 15 minutes (60 overall), and a hidden honeypot field
 drops bots.
 
+The sender gets a **confirmation email** at the same time
+(`server/src/visitorEmail.js`, the same design as the cost calculator's
+estimate copy): their message arrived, a reference number, what happens next,
+links to the cost calculator and our work, and how to reach us; replies go to
+the company inbox. Like the estimate copy, it never repeats what they typed
+(their message, company or file name), only a first name that looks like a
+name, so the form can't be used to send our email with someone else's words
+in it. `/admin` shows whether it went out, and the inquiry's reference.
+
 In `/admin`, **Inquiries** (admins and super admins) lists them newest first,
 with a count of new ones on the tab. Each one moves through **New → Read →
 Open → Responded → Closed**: opening it marks it read, replying marks it
@@ -288,7 +297,7 @@ estimate, and the email to the company inbox lists the answers and the range
 in cedis and dollars.
 
 The visitor is emailed **a copy of their estimate** at the same time
-(`server/src/estimateEmail.js`): a designed HTML email with a plain-text
+(`server/src/visitorEmail.js`): a designed HTML email with a plain-text
 version, showing the range and timeline, their answers, a button that reopens
 the calculator with those answers, what happens next, and how to reach us.
 Replies go to the company inbox. Because it goes to an address typed into a

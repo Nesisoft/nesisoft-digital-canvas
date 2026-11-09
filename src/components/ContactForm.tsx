@@ -394,14 +394,16 @@ export function ContactForm() {
           res.status >= 500
         );
       }
-      const result = (await res.json().catch(() => ({}))) as { fileReceived?: boolean };
+      const result = (await res.json().catch(() => ({}))) as { fileReceived?: boolean; copySent?: boolean };
       if (attachment && result.fileReceived === false) {
         toast.warning("Message sent, but your file didn't come through.", {
           description: `Please email it to ${siteConfig.contact.emailGeneral}.`,
           duration: 15000,
         });
       } else {
-        toast.success(SENT_MESSAGE);
+        toast.success(SENT_MESSAGE, {
+          description: result.copySent ? `We've emailed a confirmation to ${values.email}.` : undefined,
+        });
       }
       reset();
       setAttachment(null);
