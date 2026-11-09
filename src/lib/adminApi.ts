@@ -5,6 +5,7 @@
  */
 
 import { API_BASE, type SiteContent, type Project } from "./api";
+import type { Currency, Estimate, EstimatorConfig } from "@shared/estimator.js";
 
 export interface AdminProject extends Project {
   _id: string;
@@ -177,6 +178,11 @@ export const updateTeam = (id: string, body: Partial<AdminTeamMember>) =>
 export const deleteTeam = (id: string) =>
   request<{ ok: true }>(`/api/admin/team/${id}`, { method: "DELETE" });
 
+// --- the cost calculator's price list (admins and super admins) ---
+export const getEstimator = () => request<EstimatorConfig>("/api/admin/estimator");
+export const updateEstimator = (body: EstimatorConfig) =>
+  request<EstimatorConfig>("/api/admin/estimator", { method: "PUT", body: JSON.stringify(body) });
+
 // --- inquiries (the website's contact form; admins and super admins) ---
 export type InquiryStatus = "new" | "read" | "open" | "responded" | "closed";
 
@@ -187,6 +193,20 @@ export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
   responded: "Responded",
   closed: "Closed",
 };
+
+type Named = { id: string; label: string };
+
+/** A quote request's answers and the estimate the server worked out (server/src/models/estimator.js). */
+export interface InquiryEstimate extends Estimate {
+  type: Named;
+  size: Named;
+  design: Named;
+  pace: Named;
+  features: Named[];
+  /** The currency the visitor was looking at. */
+  currency: Currency;
+  usdRate: number;
+}
 
 export interface AdminInquiry {
   _id: string;
@@ -203,6 +223,8 @@ export interface AdminInquiry {
   page: string;
   /** stored: false when only the notification email carried it. */
   attachment: { name: string; type: string; size: number; stored: boolean } | null;
+  /** Set for quote requests from the cost calculator. */
+  estimate: InquiryEstimate | null;
   status: InquiryStatus;
   notifiedAt: string | null;
   notifyError: string | null;

@@ -13,12 +13,20 @@ import { sendMail } from "../mailer.js";
 import { notificationEmail } from "../inquiryMail.js";
 import { createLoginLimiter } from "../loginLimiter.js";
 import { EMAIL_PATTERN as EMAIL } from "../emailAddress.js";
+import { estimateRecord, getEstimator } from "../models/estimator.js";
+import { formatRange, formatWeeks } from "../../../shared/estimator.js";
 
 /**
- * POST /api/inquiries: the website's contact form (homepage and /contact).
+ * POST /api/inquiries: the website's contact form (homepage and /contact)
+ * and quote requests from the cost calculator (/app-cost-calculator).
  * Saves the inquiry for /admin, stores an attached PDF or .docx privately,
  * and emails the company inbox (INQUIRY_NOTIFY_EMAIL) with the attachment.
  * A mail failure doesn't lose the inquiry: it's still in /admin, flagged.
+ *
+ * A quote request sends `estimate`: the calculator's answers as JSON
+ * ({type, size, design, pace, features, currency}). The estimate is worked
+ * out again here from the current price list, and fills in the service,
+ * budget and timeline; the message is optional.
  */
 
 const router = asyncRouter();
@@ -55,7 +63,38 @@ function badRequest(message, status = 400) {
   return err;
 }
 
-function readFields(body) {
+const ESTIMATE_MESSAGE = "Asked for a detailed quote from the cost calculator.";
+
+/** The calculator's answers (a JSON field), as the estimate to keep; null for the contact form. */
+async function readEstimate(body) {
+  const raw = body.estimate;
+  if (raw == null || raw === "") return null;
+  let input;
+  try {
+    input = typeof raw === "string" ? JSON.parse(raw) : null;
+  } catch {
+    input = null;
+  }
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw badRequest("Your estimate didn't come through. Please refresh the page and try again.");
+  }
+  const record = estimateRecord(await getEstimator(), input);
+  if (!record) throw badRequest("Choose what you're building to get an estimate.");
+  return record;
+}
+
+/** The fields a quote request doesn't ask for, from its estimate. */
+function estimateFields(estimate, message) {
+  return {
+    service: estimate.type.label,
+    budget: `${formatRange(estimate, estimate.currency)} (estimate)`,
+    timeline: `${formatWeeks(estimate)} (${estimate.pace.label})`,
+    message: typeof message === "string" && message.trim() ? message : ESTIMATE_MESSAGE,
+  };
+}
+
+function readFields(input, estimate) {
+  const body = estimate ? { ...input, ...estimateFields(estimate, input.message) } : input;
   const values = {};
   for (const [field, rule] of Object.entries(FIELDS)) {
     const raw = body[field];
@@ -69,7 +108,10 @@ function readFields(body) {
   if (!/^[\d\s()+-]*$/.test(values.phone)) {
     throw badRequest("Phone: use digits, spaces, +, - and brackets only");
   }
-  if (values.message.length < 10) throw badRequest("Please tell us a bit more (min 10 characters)");
+  // A quote request's notes are optional; its estimate says what it's about.
+  if (!estimate && values.message.length < 10) {
+    throw badRequest("Please tell us a bit more (min 10 characters)");
+  }
   // Only ever a path on this site.
   if (!/^\/[^/]/.test(values.page) && values.page !== "/") values.page = "";
   return values;
@@ -109,7 +151,9 @@ router.post("/", rateLimit, receiveFile, async (req, res) => {
     return res.status(503).json({ error: "We couldn't send that right now. Please email us instead." });
   }
 
-  const values = readFields(body);
+  const estimate = await readEstimate(body);
+  const values = readFields(body, estimate);
+  if (estimate) values.estimate = JSON.stringify(estimate);
 
   let attachment = null;
   if (req.file) {

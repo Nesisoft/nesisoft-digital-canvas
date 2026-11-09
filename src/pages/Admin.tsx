@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, KeyRound, LogOut, Paperclip, Plus, Trash2 } from "lucide-react";
+import { Calculator, Download, KeyRound, LogOut, Paperclip, Plus, Trash2 } from "lucide-react";
 import { Seo } from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { PostForm } from "@/components/admin/PostForm";
 import { TeamForm } from "@/components/admin/TeamForm";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import { ContentForm } from "@/components/admin/ContentForm";
+import { EstimatorForm } from "@/components/admin/EstimatorForm";
 import { PasswordForm } from "@/components/admin/PasswordForm";
 import { UserForm } from "@/components/admin/UserForm";
 import { InquiryDetail, StatusBadge } from "@/components/admin/InquiryDetail";
@@ -48,6 +49,7 @@ import {
   type AdminProject,
 } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
+import { formatRange } from "@shared/estimator.js";
 
 type View =
   | "inquiries"
@@ -56,6 +58,7 @@ type View =
   | "projects"
   | "team"
   | "content"
+  | "pricing"
   | "users"
   | "account";
 
@@ -66,6 +69,7 @@ const VIEW_LABELS: Record<View, string> = {
   projects: "Projects",
   team: "Team",
   content: "Site content",
+  pricing: "Pricing",
   users: "Users",
   account: "Account",
 };
@@ -73,8 +77,8 @@ const VIEW_LABELS: Record<View, string> = {
 /** The tabs each role sees (the API enforces the same rules). */
 const VIEWS_BY_ROLE: Record<AdminRole, View[]> = {
   editor: ["posts"],
-  admin: ["inquiries", "waitlists", "posts", "projects", "team", "content"],
-  superadmin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "users"],
+  admin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "pricing"],
+  superadmin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "pricing", "users"],
 };
 
 /**
@@ -314,6 +318,10 @@ function Dashboard({ user }: { user: AdminUser }) {
       ) : current === "content" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <ContentForm />
+        </div>
+      ) : current === "pricing" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          <EstimatorForm />
         </div>
       ) : current === "waitlists" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
@@ -728,13 +736,14 @@ function InquiriesPanel(props: PanelProps) {
                 >
                   {i.firstName} {i.lastName}
                 </span>
+                {i.estimate && <Calculator aria-label="Quote request from the cost calculator" className="h-3.5 w-3.5 flex-shrink-0 text-gold-300" />}
                 {i.attachment && <Paperclip aria-label="Has an attachment" className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />}
                 <span className="ml-auto flex-shrink-0 text-xs text-slate-500">{shortDate(i.createdAt)}</span>
               </span>
               <span className="mt-1 flex items-center gap-2">
                 <StatusBadge status={i.status} />
                 <span className="truncate text-xs text-slate-500">
-                  {[i.company, i.service].filter(Boolean).join(" · ") || i.email}
+                  {[i.company, i.service, i.estimate ? formatRange(i.estimate, "GHS") : ""].filter(Boolean).join(" · ") || i.email}
                 </span>
               </span>
             </button>

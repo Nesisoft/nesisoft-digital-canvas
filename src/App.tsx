@@ -22,6 +22,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
 const Contact = lazy(() => import("./pages/Contact"));
+const CostCalculator = lazy(() => import("./pages/CostCalculator"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -67,6 +68,7 @@ const App = ({ router: Router = BrowserRouter, queryClient = browserQueryClient 
             <Route path="/platforms" element={<Platforms />} />
             <Route path="/platforms/:slug" element={<Platform />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/app-cost-calculator" element={<CostCalculator />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin" element={<Admin />} />
             {BlogStudio && (

@@ -1,4 +1,5 @@
-import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Calculator, CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ContactForm } from "@/components/ContactForm";
@@ -130,6 +131,25 @@ const Contact = () => {
                   </div>
                 </div>
               </Card>
+
+              <Link
+                to="/app-cost-calculator"
+                className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-violet-500/30 hover:bg-white/[0.05] md:p-8"
+              >
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gold-300/10 text-gold-300">
+                  <Calculator className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-lg font-semibold text-white">Not sure about budget?</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-300">
+                    Answer five quick questions for an instant price range and timeline.
+                  </span>
+                  <span className="mt-3 inline-flex items-center text-sm font-medium text-violet-300 group-hover:text-white">
+                    Try the cost calculator
+                    <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </span>
+              </Link>
 
               <Card className="overflow-hidden rounded-2xl border-white/10 bg-white/[0.03]">
                 <MapEmbed />

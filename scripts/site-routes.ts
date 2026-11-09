@@ -31,6 +31,8 @@ export function getSiteRoutes(root: string): SiteRoute[] {
     // The Company page (the team on it loads from the API; /team redirects here).
     { path: "/company", priority: "0.8", changefreq: "monthly" },
     { path: "/contact", priority: "0.8", changefreq: "monthly" },
+    // The cost calculator (its prices come from /admin → Pricing).
+    { path: "/app-cost-calculator", priority: "0.8", changefreq: "monthly" },
     { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
     { path: "/privacy", priority: "0.3", changefreq: "yearly" },
     { path: "/services", priority: "0.8", changefreq: "monthly" },

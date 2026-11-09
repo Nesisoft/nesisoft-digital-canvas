@@ -141,6 +141,7 @@ const Navbar = () => {
     work: path.startsWith("/projects") || path.startsWith("/platforms"),
     writing: path.startsWith("/blog"),
     company: path === "/company",
+    pricing: path === "/app-cost-calculator",
   };
 
   const panelLink =
@@ -232,6 +233,7 @@ const Navbar = () => {
     { label: "Industries", to: "/industries", description: "Education, healthcare, fintech and more" },
     { label: "Work", to: "/projects", description: "Client projects and case studies" },
     { label: "Platforms", to: "/platforms", description: "Agoo, Sua, Adesuapa and Jua" },
+    { label: "Pricing", to: "/app-cost-calculator", description: "Estimate what your app or website costs" },
     { label: "Writing", to: "/blog", description: "Engineering notes and insights" },
     { label: "Contact", to: "/contact", description: "Send a project brief" },
   ];
@@ -328,6 +330,17 @@ const Navbar = () => {
                 >
                   Writing
                   <Indicator on={isActive.writing} />
+                </Link>
+              </li>
+              <li onMouseEnter={() => setOpenGroup(null)}>
+                <Link
+                  onClick={() => onNavigate("/app-cost-calculator")}
+                  to="/app-cost-calculator"
+                  aria-current={isActive.pricing ? "page" : undefined}
+                  className={cn(linkBase, isActive.pricing ? "text-white" : "text-slate-300 hover:text-white")}
+                >
+                  Pricing
+                  <Indicator on={isActive.pricing} />
                 </Link>
               </li>
             </ul>

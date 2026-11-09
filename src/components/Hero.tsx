@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight, Calculator, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { HeroChat } from "@/components/HeroChat";
@@ -100,6 +100,17 @@ const Hero = () => {
               </a>
             </Button>
           </div>
+
+          <p className="mt-6 text-center text-sm text-slate-400 lg:text-left">
+            <Calculator aria-hidden className="mr-1.5 inline h-4 w-4 align-[-3px] text-gold-300" />
+            Wondering what it costs?{" "}
+            <Link
+              to="/app-cost-calculator"
+              className="font-medium text-violet-300 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              Get an instant estimate →
+            </Link>
+          </p>
         </div>
 
         {/* Animated conversation: lead → product ready for review */}

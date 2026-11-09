@@ -1,4 +1,5 @@
 import { INQUIRY_NOTIFY_EMAIL, SITE_URL, escapeHtml, textToHtml } from "./mailer.js";
+import { formatRange, formatWeeks } from "../../shared/estimator.js";
 
 /** The two emails about an inquiry: the alert to the company and a reply to its sender. */
 
@@ -22,25 +23,53 @@ const FONT = "font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:
  * The alert to the company inbox about a new inquiry, with the attachment.
  * Replying to it from the mailbox goes straight to the sender (Reply-To).
  */
+/** A quote request's answers and estimate, as [label, value] rows. */
+function estimateDetails(estimate) {
+  const other = estimate.currency === "USD" ? "GHS" : "USD";
+  return [
+    ["Project", estimate.type.label],
+    ["Size", estimate.size.label],
+    ["Features", estimate.features.map((f) => f.label).join(", ") || "None added"],
+    ["Design", estimate.design.label],
+    ["Pace", estimate.pace.label],
+    ["Estimate", `${formatRange(estimate, estimate.currency)} (${formatRange(estimate, other)})`],
+    ["Timeline", formatWeeks(estimate)],
+  ];
+}
+
 export function notificationEmail(inquiry, attachment) {
   const name = fullName(inquiry);
+  const { estimate } = inquiry;
   const topic = !inquiry.service || inquiry.service === "Not sure yet" ? "General" : inquiry.service;
-  const subject = `New ${topic} enquiry from ${name}${inquiry.company ? ` (${inquiry.company})` : ""}`;
+  const company = inquiry.company ? ` (${inquiry.company})` : "";
+  const subject = estimate
+    ? // In cedis, the currency of the price list, whatever the visitor viewed.
+      `New quote request from ${name}${company}: ${estimate.type.label}, ${formatRange(estimate, "GHS")}`
+    : `New ${topic} enquiry from ${name}${company}`;
   const adminLink = `${SITE_URL}/admin?inquiry=${inquiry.id}`;
   const details = [
     ["Name", name],
     ["Email", inquiry.email],
     ["Phone / WhatsApp", inquiry.phone],
     ["Company", inquiry.company],
-    ["Service", inquiry.service],
-    ["Budget", inquiry.budget],
-    ["Timeline", inquiry.timeline],
+    ...(estimate
+      ? estimateDetails(estimate)
+      : [
+          ["Service", inquiry.service],
+          ["Budget", inquiry.budget],
+          ["Timeline", inquiry.timeline],
+        ]),
     ["Heard about us via", inquiry.source],
     ["Sent from", inquiry.page ? `${SITE_URL}${inquiry.page}` : ""],
     ["Attachment", attachment ? `${attachment.name} (${formatBytes(attachment.size)})` : ""],
   ].filter(([, value]) => value);
+  const intro = estimate
+    ? "New quote request from the cost calculator:"
+    : "New enquiry from the website:";
 
   const text = [
+    intro,
+    "",
     ...details.map(([label, value]) => `${label}: ${value}`),
     "",
     inquiry.message,
@@ -56,7 +85,7 @@ export function notificationEmail(inquiry, attachment) {
     )
     .join("");
   const html = `<div style="${FONT}">
-<p style="margin:0 0 16px">New enquiry from the website:</p>
+<p style="margin:0 0 16px">${escapeHtml(intro)}</p>
 <table style="border-collapse:collapse;margin:0 0 20px">${rows}</table>
 <div style="border-left:3px solid #7c3aed;padding:4px 0 4px 14px;margin:0 0 24px">${textToHtml(inquiry.message)}</div>
 <p style="margin:0 0 8px"><a href="${escapeHtml(adminLink)}" style="background:#7c3aed;color:#ffffff;padding:10px 16px;text-decoration:none;display:inline-block">Open in the admin</a></p>

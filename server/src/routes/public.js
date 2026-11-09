@@ -6,6 +6,7 @@ import {
 } from "../models/projects.js";
 import { listPublishedMembers, toPublicMember } from "../models/team.js";
 import { getContent } from "../models/content.js";
+import { getEstimator } from "../models/estimator.js";
 import { asyncRouter } from "./asyncRouter.js";
 
 const router = asyncRouter();
@@ -37,6 +38,11 @@ router.get("/projects/:slug", async (req, res) => {
 // --- Site content (editable marketing copy) ---
 router.get("/content", async (_req, res) => {
   res.json(await getContent());
+});
+
+// --- The cost calculator's price list ---
+router.get("/estimator", async (_req, res) => {
+  res.json(await getEstimator());
 });
 
 // --- Team ---

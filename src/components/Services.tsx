@@ -103,13 +103,21 @@ const Services = () => {
             Tell us what you're building and we'll map out an approach.
           </p>
         </div>
-        <Link
-          to="/contact"
-          className="inline-flex flex-shrink-0 items-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
-        >
-          Get in touch
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
+        <div className="flex flex-shrink-0 flex-wrap justify-center gap-3">
+          <Link
+            to="/app-cost-calculator"
+            className="inline-flex items-center rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.06]"
+          >
+            Estimate the cost
+          </Link>
+          <Link
+            to="/contact"
+            className="inline-flex items-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+          >
+            Get in touch
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </Section>
   );
