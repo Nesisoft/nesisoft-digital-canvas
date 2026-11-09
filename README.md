@@ -248,25 +248,32 @@ kept with the inquiry. Inquiries can be deleted (their file too).
 
 ### Cost calculator
 
-`/app-cost-calculator` asks five questions (what you're building, its size,
-features, design and pace) and shows a price range and timeline as the
-visitor answers, in Ghana cedis or US dollars. The answers live in the
+`/app-cost-calculator` asks six questions (what you're building, its size,
+features, design, how it's built and pace) and shows a price range and
+timeline as the visitor answers, in Ghana cedis or US dollars. The answers live in the
 address bar, so "Copy a link to this estimate" (or a refresh) reopens the
 same estimate. Below it are typical starting prices, running costs and FAQs,
 worked out from the same prices, so the page and its search data always
 agree with them.
 
 An estimate is the project type's base price plus each chosen feature,
-multiplied by the size, design and pace, and shown from a percentage below
-to a percentage above (85% to 130% to start with), rounded. Weeks work the
-same way with their own multipliers.
+multiplied by the size, design, build approach and pace, and shown from a
+percentage below to a percentage above (85% to 130% to start with), rounded.
+Weeks work the same way with their own multipliers.
+
+The **build approach** is how much of the work AI does: a traditional team
+(the base price), an AI-assisted team (about 20% less to start with) or an
+AI-native team that builds from a specification agreed up front (about 35%
+less, with later changes quoted separately). The page compares the three
+under "Three ways to build it", and the visitor's choice goes with their
+quote request.
 
 **Prices** are edited in `/admin` → **Pricing** (admins and super admins):
 the exchange rate, the range, each project type's base price and weeks,
-features (with the project types each is offered for), and the size, design
-and pace multipliers. Project types and features can be added and removed;
-the sizes, designs and paces are a fixed set whose names, wording and
-multipliers can change. Saving takes effect at once. Until prices are saved
+features (with the project types each is offered for), and the size, design,
+build approach and pace multipliers. Project types and features can be added
+and removed; the sizes, designs, approaches and paces are a fixed set whose
+names, wording and multipliers can change. Saving takes effect at once. Until prices are saved
 the starting prices in `shared/estimator.js` apply; they're a starting
 point, so set your own. The prerendered page (what search engines and link
 previews read first) is built with those starting prices, and switches to the

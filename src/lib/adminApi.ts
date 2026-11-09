@@ -201,6 +201,8 @@ export interface InquiryEstimate extends Estimate {
   type: Named;
   size: Named;
   design: Named;
+  /** Missing on quote requests sent before the approach question. */
+  approach?: Named;
   pace: Named;
   features: Named[];
   /** The currency the visitor was looking at. */

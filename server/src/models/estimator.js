@@ -84,11 +84,16 @@ function ids(items, name) {
   });
 }
 
-const LIST_NAMES = { sizes: "Sizes", designs: "Design options", paces: "Pace options" };
+const LIST_NAMES = {
+  sizes: "Sizes",
+  designs: "Design options",
+  approaches: "Build approaches",
+  paces: "Pace options",
+};
 
 /**
  * A price list as submitted from /admin, checked field by field. Unknown
- * keys are dropped, sizes, designs and paces keep their fixed ids, and a
+ * keys are dropped, sizes, designs, approaches and paces keep their fixed ids, and a
  * feature's project types are limited to types that exist.
  */
 export function cleanEstimator(input) {
@@ -150,7 +155,16 @@ export function cleanEstimator(input) {
     });
   }
 
-  return { usdRate, spread, types, sizes: fixed.sizes, features, designs: fixed.designs, paces: fixed.paces };
+  return {
+    usdRate,
+    spread,
+    types,
+    sizes: fixed.sizes,
+    features,
+    designs: fixed.designs,
+    approaches: fixed.approaches,
+    paces: fixed.paces,
+  };
 }
 
 const label = ({ id, label: text }) => ({ id, label: text });
@@ -166,6 +180,7 @@ export function estimateRecord(config, input) {
     type: typeof input.type === "string" ? input.type : undefined,
     size: typeof input.size === "string" ? input.size : undefined,
     design: typeof input.design === "string" ? input.design : undefined,
+    approach: typeof input.approach === "string" ? input.approach : undefined,
     pace: typeof input.pace === "string" ? input.pace : undefined,
     features: Array.isArray(input.features) ? input.features.filter((f) => typeof f === "string") : [],
   };
@@ -176,6 +191,7 @@ export function estimateRecord(config, input) {
     type: label(selection.type),
     size: label(selection.size),
     design: label(selection.design),
+    approach: label(selection.approach),
     pace: label(selection.pace),
     features: selection.features.map(label),
     // The currency they were looking at.

@@ -66,7 +66,7 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
 /**
  * /admin → Pricing: the cost calculator's price list (/app-cost-calculator).
  * Saved whole; the API checks every field (server/src/models/estimator.js).
- * Sizes, designs and paces are a fixed set whose names, wording and
+ * Sizes, designs, approaches and paces are a fixed set whose names, wording and
  * multipliers can change; project types and features can be added and removed.
  */
 export function EstimatorForm() {
@@ -154,7 +154,7 @@ export function EstimatorForm() {
     form.types.length > 0 &&
     [form.usdRate, form.spread.low, form.spread.high].every((n) => n > 0) &&
     form.types.every((t) => t.price >= 0 && t.weeks >= 0) &&
-    [...form.sizes, ...form.designs, ...form.paces].every((o) => o.factor > 0 && o.weeksFactor > 0);
+    [...form.sizes, ...form.designs, ...form.approaches, ...form.paces].every((o) => o.factor > 0 && o.weeksFactor > 0);
 
   const multiplierSection = (list: MultiplierList, title: string, hint: string) => (
     <section className="space-y-4 border-t border-white/10 pt-8">
@@ -219,7 +219,7 @@ export function EstimatorForm() {
               cost calculator
             </a>{" "}
             charges, in Ghana cedis. An estimate is the project type's base price plus each chosen feature, multiplied
-            by the size, design and pace, and shown as a range. Weeks work the same way.
+            by the size, design, build approach and pace, and shown as a range. Weeks work the same way.
           </p>
         </div>
         <Button
@@ -300,7 +300,7 @@ export function EstimatorForm() {
       <section className="space-y-4 border-t border-white/10 pt-8">
         <SectionTitle
           title="Project types"
-          hint="Question 1. The base price and weeks cover a medium-sized build with custom design and no added features."
+          hint="Question 1. The base price and weeks cover a medium-sized build by a traditional team, with custom design and no added features."
         />
         <div className="hidden grid-cols-[12rem_1fr_7rem_5rem_2.25rem] gap-3 md:grid">
           <span className={cell}>Name</span>
@@ -437,9 +437,14 @@ export function EstimatorForm() {
       )}
       {multiplierSection("designs", "Design", "Question 4. Multiplies the price and the weeks.")}
       {multiplierSection(
+        "approaches",
+        "Build approach",
+        "Question 5. How much of the work AI does. The traditional team is the base (1); 0.8 shows visitors \"About 20% less\". These are promises on a public page, so set what you reliably deliver."
+      )}
+      {multiplierSection(
         "paces",
         "Pace",
-        "Question 5. A faster pace usually costs more (price above 1) and takes fewer weeks (weeks below 1)."
+        "Question 6. A faster pace usually costs more (price above 1) and takes fewer weeks (weeks below 1)."
       )}
 
       <div className="sticky bottom-0 -mx-6 flex items-center justify-end gap-3 border-t border-white/10 bg-[#0f0f12]/95 px-6 py-4 backdrop-blur">

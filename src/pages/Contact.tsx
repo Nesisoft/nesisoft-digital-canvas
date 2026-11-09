@@ -142,7 +142,7 @@ const Contact = () => {
                 <span>
                   <span className="block text-lg font-semibold text-white">Not sure about budget?</span>
                   <span className="mt-1 block text-sm leading-6 text-slate-300">
-                    Answer five quick questions for an instant price range and timeline.
+                    Answer six quick questions for an instant price range and timeline.
                   </span>
                   <span className="mt-3 inline-flex items-center text-sm font-medium text-violet-300 group-hover:text-white">
                     Try the cost calculator
