@@ -2,8 +2,11 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { initAnalytics } from './lib/analytics'
+import { recordFirstVisit } from './lib/attribution'
 
 initAnalytics();
+// How this visitor found us, sent along with any inquiry (src/lib/attribution.ts).
+recordFirstVisit();
 
 const container = document.getElementById("root")!;
 // Prerendered pages (scripts/prerender-plugin.ts) carry the path they were

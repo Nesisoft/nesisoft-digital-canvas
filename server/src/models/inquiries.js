@@ -1,4 +1,5 @@
 import { query, withClient } from "../db.js";
+import { describeChannel } from "../attribution.js";
 
 /**
  * Contact-form submissions (table inquiries, migration 003) and the replies
@@ -42,6 +43,17 @@ export function toAdminInquiry(row) {
             subject: row.copy_subject,
           }
         : null,
+    // How they found the site (null when nothing was noted).
+    foundVia: row.channel
+      ? {
+          channel: row.channel,
+          source: row.channel_source,
+          label: describeChannel(row.channel, row.channel_source),
+          landingPage: row.landing_page,
+          referrer: row.referrer,
+          campaign: [row.utm_source, row.utm_medium, row.utm_campaign].filter(Boolean).join(" / "),
+        }
+      : null,
     status: row.status,
     notifiedAt: row.notified_at ? row.notified_at.toISOString() : null,
     notifyError: row.notify_error,

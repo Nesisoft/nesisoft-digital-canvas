@@ -10,6 +10,7 @@ import { TeamForm } from "@/components/admin/TeamForm";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import { ContentForm } from "@/components/admin/ContentForm";
 import { EstimatorForm } from "@/components/admin/EstimatorForm";
+import { InsightsPanel } from "@/components/admin/InsightsPanel";
 import { PasswordForm } from "@/components/admin/PasswordForm";
 import { UserForm } from "@/components/admin/UserForm";
 import { InquiryDetail, StatusBadge } from "@/components/admin/InquiryDetail";
@@ -53,6 +54,7 @@ import { formatRange } from "@shared/estimator.js";
 
 type View =
   | "inquiries"
+  | "insights"
   | "waitlists"
   | "posts"
   | "projects"
@@ -64,6 +66,7 @@ type View =
 
 const VIEW_LABELS: Record<View, string> = {
   inquiries: "Inquiries",
+  insights: "Insights",
   waitlists: "Waitlists",
   posts: "Blog posts",
   projects: "Projects",
@@ -77,8 +80,8 @@ const VIEW_LABELS: Record<View, string> = {
 /** The tabs each role sees (the API enforces the same rules). */
 const VIEWS_BY_ROLE: Record<AdminRole, View[]> = {
   editor: ["posts"],
-  admin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "pricing"],
-  superadmin: ["inquiries", "waitlists", "posts", "projects", "team", "content", "pricing", "users"],
+  admin: ["inquiries", "insights", "waitlists", "posts", "projects", "team", "content", "pricing"],
+  superadmin: ["inquiries", "insights", "waitlists", "posts", "projects", "team", "content", "pricing", "users"],
 };
 
 /**
@@ -318,6 +321,16 @@ function Dashboard({ user }: { user: AdminUser }) {
       ) : current === "content" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <ContentForm />
+        </div>
+      ) : current === "insights" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+          <InsightsPanel
+            onOpenInquiry={(id) => {
+              setView("inquiries");
+              setSelectedId(id);
+              setCreating(false);
+            }}
+          />
         </div>
       ) : current === "pricing" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-6">

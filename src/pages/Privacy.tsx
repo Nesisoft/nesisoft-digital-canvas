@@ -7,7 +7,7 @@ import { Section } from "@/components/ui/section";
 import { siteConfig } from "@/config/site";
 
 // Bump whenever the policy text changes.
-const LAST_UPDATED = "6 November 2026";
+const LAST_UPDATED = "9 November 2026";
 
 const { contact } = siteConfig;
 const siteHost = siteConfig.url.replace(/^https?:\/\//, "");
@@ -18,7 +18,9 @@ const siteHost = siteConfig.url.replace(/^https?:\/\//, "");
  * emailed to our inbox (or a mailto: fallback), newsletter signups via Web3Forms,
  * WhatsApp click-to-chat, an optional call-scheduling link (described
  * conditionally, so the text holds whether or not one is configured),
- * optional cookie-free Plausible analytics, and
+ * cookie-free Vercel Web Analytics (and optional Plausible), the note of how
+ * a visitor found the site that goes with their enquiry, the confirmation and
+ * estimate emails, the cost calculator's quote requests, and
  * third-party embeds (Google Maps, fonts, Unsplash images). Contact details
  * come from siteConfig so they stay in sync with the rest of the site.
  */
@@ -80,7 +82,26 @@ const Privacy = () => {
                 your project. Attached briefs are stored privately and only our
                 team can open them. If the form can't send directly, it can
                 open your own email app with your details filled in instead;
-                nothing is sent until you press send there.
+                nothing is sent until you press send there. We email you a
+                confirmation that your message arrived.
+              </li>
+              <li>
+                <strong>Quote requests.</strong> When you ask for a quote from
+                our <Link to="/app-cost-calculator">cost calculator</Link>, we
+                receive your name, email address, anything optional you add
+                (phone, company, notes) and your answers, and keep them with
+                the estimate. We email you a copy of your estimate.
+              </li>
+              <li>
+                <strong>How you found us.</strong> On your first visit, your
+                browser keeps a small note (in its own storage, not a cookie)
+                of the website that sent you here, such as a search engine or
+                social network (its name only, not the full address), the
+                first page you saw, and any campaign tags in the link you
+                followed. It stays on your device for 30 days and is only sent
+                to us if you send an enquiry or quote request, so we can see
+                which channels bring people to us. You can clear it at any
+                time by clearing this site's data in your browser.
               </li>
               <li>
                 <strong>Newsletter signups.</strong> If you subscribe on our{" "}
@@ -154,10 +175,13 @@ const Privacy = () => {
                 and are covered by its own terms and privacy policy.
               </li>
               <li>
-                <strong>Plausible Analytics</strong>, when enabled, counts
-                visits and a few actions, such as form submissions and the
-                type of service asked about. It does not use cookies and only
-                gives us aggregate numbers, not who you are.
+                <strong>Vercel Web Analytics</strong> counts page views, which
+                pages are visited, the sites that send visitors here, and
+                visitors' countries and device types. It does not use cookies
+                and only gives us aggregate numbers, not who you are.{" "}
+                <strong>Plausible Analytics</strong>, if we turn it on, works
+                the same way and also counts a few actions, such as form
+                submissions and the type of service asked about.
               </li>
             </ul>
             <p>
@@ -168,7 +192,10 @@ const Privacy = () => {
             <h2>Cookies</h2>
             <p>
               The public website does not set any cookies of its own, and we
-              don't use advertising or tracking cookies. The only cookie we
+              don't use advertising or tracking cookies. The note of how you
+              found us (described above) is kept in your browser's storage,
+              not in a cookie, and never leaves your device unless you send
+              us an enquiry. The only cookie we
               set is a session cookie that keeps our staff signed in to the
               admin area; visitors never receive it. The embedded Google Map
               may set Google's own cookies, which you can block in your

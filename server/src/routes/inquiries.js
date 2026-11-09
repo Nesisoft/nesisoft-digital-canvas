@@ -16,6 +16,7 @@ import { createLoginLimiter } from "../loginLimiter.js";
 import { EMAIL_PATTERN as EMAIL } from "../emailAddress.js";
 import { estimateRecord, getEstimator } from "../models/estimator.js";
 import { formatRange, formatWeeks } from "../../../shared/estimator.js";
+import { readAttribution } from "../attribution.js";
 
 /**
  * POST /api/inquiries: the website's contact form (homepage and /contact)
@@ -38,7 +39,7 @@ const router = asyncRouter();
 const upload = multer({
   storage: multer.memoryStorage(),
   // busboy trips its limit on reaching it, so +1 lets exactly 4 MB through.
-  limits: { fileSize: MAX_DOCUMENT_BYTES + 1, files: 1, fields: 20, fieldSize: 20_000, parts: 25 },
+  limits: { fileSize: MAX_DOCUMENT_BYTES + 1, files: 1, fields: 30, fieldSize: 20_000, parts: 35 },
 });
 
 // Per IP: 6 submissions per 15 minutes; 60 overall stops a flood from many.
@@ -156,7 +157,7 @@ router.post("/", rateLimit, receiveFile, async (req, res) => {
   }
 
   const estimate = await readEstimate(body);
-  const values = readFields(body, estimate);
+  const values = { ...readFields(body, estimate), ...readAttribution(body) };
   if (estimate) values.estimate = JSON.stringify(estimate);
 
   let attachment = null;
