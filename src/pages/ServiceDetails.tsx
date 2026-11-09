@@ -213,12 +213,17 @@ const ServiceDetails = () => {
                   scope, risks, timeline, and best first release.
                 </p>
               </div>
-              <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
-                <Link to="/contact">
-                  Send project brief
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <div className="flex shrink-0 flex-wrap gap-3">
+                <Button asChild variant="outline" className="h-11 rounded-lg border-white/15 bg-transparent px-5 text-white hover:bg-white/[0.06] hover:text-white">
+                  <Link to="/app-cost-calculator">Estimate the cost</Link>
+                </Button>
+                <Button asChild className="h-11 rounded-lg bg-violet-600 px-5 text-white hover:bg-violet-500">
+                  <Link to="/contact">
+                    Send project brief
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </Section>

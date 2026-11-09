@@ -6,6 +6,7 @@
  */
 
 import type { Project } from "@/data/projects";
+import type { EstimatorConfig } from "@shared/estimator.js";
 
 export const API_BASE = "";
 
@@ -146,4 +147,9 @@ export function fetchProjects(): Promise<Project[]> {
 
 export function fetchProject(slug: string): Promise<Project> {
   return getJSON<Project>(`/api/projects/${slug}`);
+}
+
+/** The cost calculator's price list (src/pages/CostCalculator.tsx). */
+export function fetchEstimator(): Promise<EstimatorConfig> {
+  return getJSON<EstimatorConfig>("/api/estimator");
 }

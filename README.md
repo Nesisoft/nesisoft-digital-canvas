@@ -93,12 +93,16 @@ api/
 server/src/
   app.js          Express app used by Vercel and local start
   routes/         Public and admin API routes
-  models/         Data access per table (posts, projects, team, content, users)
+  models/         Data access per table (posts, projects, team, content, users,
+                  inquiries, waitlist, estimator)
   db.js           PostgreSQL pool and query helpers
   migrate.js      Applies server/db/migrations/*.sql
   storage.js      Supabase Storage uploads
 server/db/
   migrations/     SQL migrations, applied in name order
+shared/
+  estimator.js    The cost calculator's starting prices and arithmetic, used by
+                  both the site and the API (imported as @shared/estimator.js)
 scripts/
   seo-plugin.ts   Build-time sitemap.xml + rss.xml generation
   site-routes.ts  The public route list shared by the sitemap and prerender
@@ -123,6 +127,9 @@ scripts/
   live from the projects listed in its `projects` (by slug; unpublished ones
   are skipped). Add a sector by adding an entry; it's prerendered and added
   to the sitemap automatically.
+- **The cost calculator** (`/app-cost-calculator`, "Pricing" in the menu)
+  takes its prices from `/admin` → **Pricing**; see
+  [Cost calculator](#cost-calculator) below.
 - **The Company page** (`/company`) and the homepage's About block are
   edited in `/admin` under **Site content**: the intro, up to three photos,
   stats, vision, mission, reasons to work with us, and corporate social
@@ -238,6 +245,40 @@ From an inquiry you can download the brief and **reply**. The reply is emailed
 from the company address to the sender, signed with your name and quoting
 their message, and their answer comes back to the company inbox. Replies are
 kept with the inquiry. Inquiries can be deleted (their file too).
+
+### Cost calculator
+
+`/app-cost-calculator` asks five questions (what you're building, its size,
+features, design and pace) and shows a price range and timeline as the
+visitor answers, in Ghana cedis or US dollars. The answers live in the
+address bar, so "Copy a link to this estimate" (or a refresh) reopens the
+same estimate. Below it are typical starting prices, running costs and FAQs,
+worked out from the same prices, so the page and its search data always
+agree with them.
+
+An estimate is the project type's base price plus each chosen feature,
+multiplied by the size, design and pace, and shown from a percentage below
+to a percentage above (85% to 130% to start with), rounded. Weeks work the
+same way with their own multipliers.
+
+**Prices** are edited in `/admin` → **Pricing** (admins and super admins):
+the exchange rate, the range, each project type's base price and weeks,
+features (with the project types each is offered for), and the size, design
+and pace multipliers. Project types and features can be added and removed;
+the sizes, designs and paces are a fixed set whose names, wording and
+multipliers can change. Saving takes effect at once. Until prices are saved
+the starting prices in `shared/estimator.js` apply; they're a starting
+point, so set your own. The prerendered page (what search engines and link
+previews read first) is built with those starting prices, and switches to the
+saved ones as it loads.
+
+**"Get a detailed quote"** sends the visitor's details with their answers to
+`POST /api/inquiries`. The server works the estimate out again from the saved
+prices (never trusting the browser's figures), fills in the inquiry's service,
+budget and timeline from it, and keeps the answers with it. It arrives in
+**Inquiries** marked with a calculator icon and its range, opens with the full
+estimate, and the email to the company inbox lists the answers and the range
+in cedis and dollars.
 
 ## Database (Supabase)
 

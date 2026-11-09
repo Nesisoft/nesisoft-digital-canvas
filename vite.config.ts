@@ -41,6 +41,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        // Plain JS shared with the API (server/), e.g. the cost calculator's prices.
+        "@shared": path.resolve(__dirname, "./shared"),
       },
     },
   };

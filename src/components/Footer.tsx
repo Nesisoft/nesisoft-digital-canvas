@@ -77,6 +77,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/app-cost-calculator" className="transition-colors hover:text-white">
+                    Cost calculator
+                  </Link>
+                </li>
+                <li>
                   <Link
                     to="/projects"
                     className="transition-colors hover:text-white"

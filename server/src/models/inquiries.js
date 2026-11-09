@@ -30,6 +30,8 @@ export function toAdminInquiry(row) {
           stored: Boolean(row.attachment_path),
         }
       : null,
+    // A quote request from the cost calculator: its answers and estimate.
+    estimate: row.estimate ?? null,
     status: row.status,
     notifiedAt: row.notified_at ? row.notified_at.toISOString() : null,
     notifyError: row.notify_error,

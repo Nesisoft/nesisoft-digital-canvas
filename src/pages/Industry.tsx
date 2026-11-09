@@ -228,11 +228,16 @@ const Industry = () => {
                 Share a few details, or attach a brief, and we'll reply within one business day.
               </p>
             </div>
-            <Button asChild className="h-11 shrink-0 bg-violet-600 px-5 text-white hover:bg-violet-500">
-              <Link to="/contact">
-                Start a project <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="flex shrink-0 flex-wrap gap-3">
+              <Button asChild variant="outline" className="h-11 border-white/15 bg-transparent px-5 text-white hover:bg-white/[0.06]">
+                <Link to="/app-cost-calculator">Estimate the cost</Link>
+              </Button>
+              <Button asChild className="h-11 bg-violet-600 px-5 text-white hover:bg-violet-500">
+                <Link to="/contact">
+                  Start a project <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
           <h2 className="mt-14 text-sm font-medium uppercase tracking-wider text-slate-400">Other industries</h2>
           <IndustryChips industries={others} className="mt-4" />

@@ -25,6 +25,7 @@ import {
   updateProject,
 } from "../models/projects.js";
 import { getContent, saveContent } from "../models/content.js";
+import { getEstimator, saveEstimator } from "../models/estimator.js";
 import {
   ROLES,
   createUser,
@@ -214,7 +215,7 @@ router.use(requirePasswordChosen);
 // images) but don't delete them; admins manage all content; super admins
 // also manage accounts.
 const CONTENT_ROLES = ["superadmin", "admin"];
-router.use(["/content", "/team", "/projects"], allow(...CONTENT_ROLES));
+router.use(["/content", "/team", "/projects", "/estimator"], allow(...CONTENT_ROLES));
 router.use("/posts", (req, res, next) =>
   req.method === "DELETE" ? allow(...CONTENT_ROLES)(req, res, next) : next()
 );
@@ -255,6 +256,15 @@ router.put("/content", async (req, res) => {
     throw badRequest("hero and about must be objects");
   }
   res.json(await saveContent({ hero, about }));
+});
+
+// --- The cost calculator's price list (Pricing tab) ---
+router.get("/estimator", async (_req, res) => {
+  res.json(await getEstimator());
+});
+
+router.put("/estimator", async (req, res) => {
+  res.json(await saveEstimator(req.body, req.admin.id));
 });
 
 // --- Blog CRUD ---

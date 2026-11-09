@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Download, FileText, Mail, Phone, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, Calculator, Download, FileText, Mail, Phone, Send, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import {
   inquiryAttachmentUrl,
   replyToInquiry,
   setInquiryStatus,
+  type InquiryEstimate,
   type InquiryStatus,
 } from "@/lib/adminApi";
+import { formatRange, formatWeeks } from "@shared/estimator.js";
 
 const STATUS_STYLES: Record<InquiryStatus, string> = {
   new: "bg-violet-500/20 text-violet-200",
@@ -44,6 +46,53 @@ const selectClass =
 const DEFAULT_SUBJECT = "Re: Your enquiry to Nesisoft";
 
 /** One inquiry: details, attachment, status, replies and the reply box. */
+/** A quote request's answers and estimate, as the cost calculator sent them. */
+function EstimatePanel({ estimate }: { estimate: InquiryEstimate }) {
+  const rows: [string, string][] = [
+    ["Project", estimate.type.label],
+    ["Size", estimate.size.label],
+    ["Design", estimate.design.label],
+    ["Pace", estimate.pace.label],
+  ];
+  return (
+    <section aria-label="Cost estimate" className="border border-gold-300/25 bg-gold-300/[0.04] p-4">
+      <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold-200">
+        <Calculator className="h-4 w-4" /> From the cost calculator
+      </h4>
+      <p className="mt-3 text-2xl font-bold text-white">{formatRange(estimate, "GHS")}</p>
+      <p className="mt-1 text-sm text-slate-300">
+        {formatRange(estimate, "USD")} · {formatWeeks(estimate)}
+        {estimate.currency === "USD" && <span className="text-slate-400"> · they viewed it in US dollars</span>}
+      </p>
+      <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-xs text-slate-500">{label}</dt>
+            <dd className="mt-0.5 text-slate-200">{value}</dd>
+          </div>
+        ))}
+        <div className="sm:col-span-2">
+          <dt className="text-xs text-slate-500">Features</dt>
+          <dd className="mt-1.5 flex flex-wrap gap-1.5">
+            {estimate.features.length === 0 ? (
+              <span className="text-slate-400">None added</span>
+            ) : (
+              estimate.features.map((f) => (
+                <span key={f.id} className="border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs text-slate-200">
+                  {f.label}
+                </span>
+              ))
+            )}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-4 text-xs text-slate-500">
+        Worked out from the Pricing tab's prices when it was sent (US$1 = GH₵{estimate.usdRate}).
+      </p>
+    </section>
+  );
+}
+
 export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => void }) {
   const qc = useQueryClient();
   const { data, isLoading, isError } = useQuery({
@@ -103,9 +152,14 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
   const details: [string, string][] = (
     [
       ["Company", inquiry.company],
-      ["Service", inquiry.service],
-      ["Budget", inquiry.budget],
-      ["Timeline", inquiry.timeline],
+      // A quote request shows these in its estimate instead.
+      ...(inquiry.estimate
+        ? []
+        : [
+            ["Service", inquiry.service],
+            ["Budget", inquiry.budget],
+            ["Timeline", inquiry.timeline],
+          ]),
       ["Heard about us via", inquiry.source],
       ["Sent from", inquiry.page],
     ] as [string, string][]
@@ -173,6 +227,8 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
           ))}
         </dl>
       )}
+
+      {inquiry.estimate && <EstimatePanel estimate={inquiry.estimate} />}
 
       <div>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Message</h4>
