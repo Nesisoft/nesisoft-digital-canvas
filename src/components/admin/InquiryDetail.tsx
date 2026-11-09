@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Calculator, Download, FileText, Mail, Phone, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, Calculator, CheckCircle2, Download, FileText, Mail, Phone, Send, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ const selectClass =
 
 const DEFAULT_SUBJECT = "Re: Your enquiry to Nesisoft";
 
-/** One inquiry: details, attachment, status, replies and the reply box. */
 /** A quote request's answers and estimate, as the cost calculator sent them. */
 function EstimatePanel({ estimate }: { estimate: InquiryEstimate }) {
   const rows = (
@@ -96,6 +95,7 @@ function EstimatePanel({ estimate }: { estimate: InquiryEstimate }) {
   );
 }
 
+/** One inquiry: details, attachment, status, replies and the reply box. */
 export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => void }) {
   const qc = useQueryClient();
   const { data, isLoading, isError } = useQuery({
@@ -104,6 +104,12 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
   });
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [message, setMessage] = useState("");
+
+  // A reply to a quote request continues the thread its estimate copy started.
+  const copySubject = data?.inquiry.copy?.sentAt ? data.inquiry.copy.subject : null;
+  useEffect(() => {
+    if (copySubject) setSubject((current) => (current === DEFAULT_SUBJECT ? `Re: ${copySubject}` : current));
+  }, [copySubject]);
 
   // Opening it may have marked it read: refresh the list's badges.
   const loadedStatus = data?.inquiry.status;
@@ -232,6 +238,23 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
       )}
 
       {inquiry.estimate && <EstimatePanel estimate={inquiry.estimate} />}
+
+      {inquiry.copy?.sentAt && (
+        <p className="flex items-center gap-2 text-sm text-slate-400">
+          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-300" />
+          A copy of this estimate was emailed to {inquiry.email} on {formatDateTime(inquiry.copy.sentAt)}. Your reply
+          joins the same email thread.
+        </p>
+      )}
+      {inquiry.copy?.error && (
+        <div className="flex gap-3 border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <div>
+            Their copy of the estimate couldn't be emailed, so they haven't heard from us yet.
+            <span className="mt-1 block text-xs text-amber-200/80">{inquiry.copy.error}</span>
+          </div>
+        </div>
+      )}
 
       <div>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Message</h4>

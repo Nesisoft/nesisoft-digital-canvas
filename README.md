@@ -287,6 +287,17 @@ budget and timeline from it, and keeps the answers with it. It arrives in
 estimate, and the email to the company inbox lists the answers and the range
 in cedis and dollars.
 
+The visitor is emailed **a copy of their estimate** at the same time
+(`server/src/estimateEmail.js`): a designed HTML email with a plain-text
+version, showing the range and timeline, their answers, a button that reopens
+the calculator with those answers, what happens next, and how to reach us.
+Replies go to the company inbox. Because it goes to an address typed into a
+public form, it only repeats what came from the price list and a first name
+that looks like a name, never their notes or anything else they typed, and
+it's marked as an automatic email so out-of-office replies stay away. In
+`/admin` the inquiry says whether the copy went out (or why not), and a reply
+sent from there continues the same email thread.
+
 ## Database (Supabase)
 
 The API stores blog posts, projects, team members, the editable homepage copy

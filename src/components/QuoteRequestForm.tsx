@@ -65,6 +65,8 @@ export function QuoteRequestForm({
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  // Whether the server emailed them a copy of the estimate.
+  const [copySent, setCopySent] = useState(false);
 
   const set = (field: keyof Values) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -111,7 +113,9 @@ export function QuoteRequestForm({
       // null when the server couldn't be reached at all.
       const res = await fetch(`${API_BASE}/api/inquiries`, { method: "POST", body }).catch(() => null);
       if (res?.ok) {
+        const result = (await res.json().catch(() => ({}))) as { copySent?: boolean };
         trackEvent("Quote Request", { type: answers.type ?? "", currency });
+        setCopySent(result.copySent === true);
         setSentTo(clean.email);
         return;
       }
@@ -142,10 +146,17 @@ export function QuoteRequestForm({
             We'll look over your answers ({range}) and reply to {sentTo || "you"} within one business day with a
             detailed quote, or a few questions if we need more detail.
           </p>
+          {copySent && (
+            <p className="mt-2 text-slate-300">
+              We've emailed you a copy of your estimate. If it isn't in your inbox, check your spam or promotions
+              folder.
+            </p>
+          )}
           <button
             type="button"
             onClick={() => {
               setSentTo(null);
+              setCopySent(false);
               setValues(EMPTY);
             }}
             className="mt-4 text-sm font-medium text-violet-300 underline underline-offset-4 hover:text-white"

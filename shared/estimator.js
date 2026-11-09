@@ -342,6 +342,29 @@ export function computeEstimate(config, selection) {
   };
 }
 
+export const CALCULATOR_PATH = "/app-cost-calculator";
+
+/**
+ * The calculator's address with these answers filled in
+ * (/app-cost-calculator?type=mobile&size=medium&features=accounts,payments…):
+ * what "Copy a link" copies and the estimate email links to. Ids are
+ * [a-z0-9-], so the commas between features can stay as they are.
+ */
+export function estimatePath(answers, currency = "GHS") {
+  const id = (value) => encodeURIComponent(value ?? "");
+  const features = answers.features ?? [];
+  const parts = [
+    `type=${id(answers.type)}`,
+    `size=${id(answers.size)}`,
+    ...(features.length ? [`features=${features.map(id).join(",")}`] : []),
+    `design=${id(answers.design)}`,
+    `approach=${id(answers.approach)}`,
+    `pace=${id(answers.pace)}`,
+    ...(currency === "USD" ? ["currency=USD"] : []),
+  ];
+  return `${CALCULATOR_PATH}?${parts.join("&")}`;
+}
+
 export const CURRENCY_SYMBOLS = { GHS: "GH₵", USD: "US$" };
 
 /** 52000 → "52,000": the same on the server, in the prerender and in every browser. */

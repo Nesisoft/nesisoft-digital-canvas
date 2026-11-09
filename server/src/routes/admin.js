@@ -715,7 +715,8 @@ router.post("/inquiries/:id/replies", async (req, res) => {
       subject,
       body: message,
       signedBy: req.admin.name,
-      previousMessageIds: earlier.map((reply) => reply.message_id).filter(Boolean),
+      // The estimate copy they were sent (if any) starts the thread.
+      previousMessageIds: [inquiry.copy_message_id, ...earlier.map((reply) => reply.message_id)].filter(Boolean),
     })
   );
   const reply = await addReply({

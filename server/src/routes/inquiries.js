@@ -1,7 +1,7 @@
 import multer from "multer";
 import { asyncRouter } from "./asyncRouter.js";
 import { databaseConfigured } from "../db.js";
-import { createInquiry, recordNotification } from "../models/inquiries.js";
+import { createInquiry, recordCopy, recordNotification } from "../models/inquiries.js";
 import {
   DOCUMENT_TYPES,
   MAX_DOCUMENT_BYTES,
@@ -11,6 +11,7 @@ import {
 import { storageConfigured, uploadDocument } from "../storage.js";
 import { sendMail } from "../mailer.js";
 import { notificationEmail } from "../inquiryMail.js";
+import { estimateCopyEmail } from "../estimateEmail.js";
 import { createLoginLimiter } from "../loginLimiter.js";
 import { EMAIL_PATTERN as EMAIL } from "../emailAddress.js";
 import { estimateRecord, getEstimator } from "../models/estimator.js";
@@ -26,7 +27,8 @@ import { formatRange, formatWeeks } from "../../../shared/estimator.js";
  * A quote request sends `estimate`: the calculator's answers as JSON
  * ({type, size, design, approach, pace, features, currency}). The estimate is worked
  * out again here from the current price list, and fills in the service,
- * budget and timeline; the message is optional.
+ * budget and timeline; the message is optional. Its sender is also emailed
+ * a copy of the estimate (server/src/estimateEmail.js).
  */
 
 const router = asyncRouter();
@@ -180,21 +182,35 @@ router.post("/", rateLimit, receiveFile, async (req, res) => {
 
   const inquiry = await createInquiry(values);
 
-  let notifyError = null;
-  try {
-    await sendMail(notificationEmail(inquiry, attachment));
-  } catch (err) {
-    notifyError = err.message;
-    console.error("[inquiries] emailing the inbox failed:", err.message);
-  }
+  // The inbox alert and, for a quote request, the sender's copy go out together.
+  const copy = estimate ? estimateCopyEmail(inquiry) : null;
+  const [notified, copied] = await Promise.allSettled([
+    sendMail(notificationEmail(inquiry, attachment)),
+    copy ? sendMail(copy) : Promise.resolve(null),
+  ]);
+
+  const notifyError = notified.status === "rejected" ? notified.reason.message : null;
+  if (notifyError) console.error("[inquiries] emailing the inbox failed:", notifyError);
   await recordNotification(inquiry.id, notifyError).catch((err) =>
     console.error("[inquiries] recording the notification failed:", err.message)
   );
 
+  let copySent;
+  if (copy) {
+    const copyError = copied.status === "rejected" ? copied.reason.message : null;
+    if (copyError) console.error("[inquiries] emailing the estimate to its sender failed:", copyError);
+    copySent = !copyError;
+    await recordCopy(inquiry.id, {
+      messageId: copied.value?.messageId,
+      subject: copy.subject,
+      error: copyError,
+    }).catch((err) => console.error("[inquiries] recording the estimate copy failed:", err.message));
+  }
+
   // The message is in; tell them if their file neither got stored nor
   // went out by email, so they can send it another way.
   const fileReceived = !attachment || Boolean(values.attachment_path) || !notifyError;
-  res.status(201).json({ ok: true, fileReceived });
+  res.status(201).json({ ok: true, fileReceived, ...(copy ? { copySent } : {}) });
 });
 
 export default router;
