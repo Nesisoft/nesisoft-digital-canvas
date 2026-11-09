@@ -26,6 +26,7 @@ import {
 } from "../models/projects.js";
 import { getContent, saveContent } from "../models/content.js";
 import { getEstimator, saveEstimator } from "../models/estimator.js";
+import { RANGES as INSIGHT_RANGES, getInsights } from "../models/insights.js";
 import {
   ROLES,
   createUser,
@@ -224,6 +225,8 @@ router.use("/users", allow("superadmin"));
 router.use("/inquiries", allow(...CONTENT_ROLES));
 // Early-access signups (names and emails): admins and super admins only.
 router.use("/waitlist", allow(...CONTENT_ROLES));
+// Insights summarise inquiries: the same people as Inquiries.
+router.use("/insights", allow(...CONTENT_ROLES));
 
 // Ids are UUIDs; anything else can't exist, so answer 404 without a query.
 router.param("id", (req, res, next, id) => {
@@ -256,6 +259,14 @@ router.put("/content", async (req, res) => {
     throw badRequest("hero and about must be objects");
   }
   res.json(await saveContent({ hero, about }));
+});
+
+// --- Insights (what the inquiries say, over 30, 90 or 365 days) ---
+router.get("/insights", async (req, res) => {
+  const days = Number(req.query.days ?? 90);
+  if (!INSIGHT_RANGES.includes(days)) throw badRequest(`days must be one of ${INSIGHT_RANGES.join(", ")}`);
+  res.set("Cache-Control", "private, no-store");
+  res.json(await getInsights(days));
 });
 
 // --- The cost calculator's price list (Pricing tab) ---

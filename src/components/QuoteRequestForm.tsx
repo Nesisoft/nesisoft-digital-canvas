@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { API_BASE } from "@/lib/api";
+import { attributionFields } from "@/lib/attribution";
 import { trackEvent } from "@/lib/analytics";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -107,6 +108,8 @@ export function QuoteRequestForm({
     (Object.keys(clean) as (keyof Values)[]).forEach((key) => body.set(key, clean[key]));
     body.set("page", window.location.pathname);
     body.set("estimate", JSON.stringify({ ...answers, currency }));
+    // How they found the site, if noted on their first visit.
+    for (const [key, value] of Object.entries(attributionFields())) body.set(key, value);
 
     setSending(true);
     try {

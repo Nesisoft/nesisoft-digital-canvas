@@ -178,6 +178,48 @@ export const updateTeam = (id: string, body: Partial<AdminTeamMember>) =>
 export const deleteTeam = (id: string) =>
   request<{ ok: true }>(`/api/admin/team/${id}`, { method: "DELETE" });
 
+// --- insights (admins and super admins; server/src/models/insights.js) ---
+export type InsightRange = 30 | 90 | 365;
+export interface RankedRow {
+  label: string;
+  count: number;
+}
+export interface Insights {
+  days: InsightRange;
+  since: string;
+  bucket: "week" | "month";
+  totals: {
+    leads: number;
+    quotes: number;
+    messages: number;
+    prevLeads: number;
+    prevQuotes: number;
+    prevMessages: number;
+  };
+  series: { start: string; quotes: number; messages: number }[];
+  channels: { channel: string; label: string; count: number }[];
+  sources: { channel: string; label: string; group: string; count: number }[];
+  landingPages: RankedRow[];
+  heardVia: RankedRow[];
+  quotes: {
+    types: RankedRow[];
+    approaches: RankedRow[];
+    features: RankedRow[];
+    /** Sum of each quote request's estimate midpoint, in cedis. */
+    totalValue: number;
+    medianValue: number | null;
+  };
+  services: RankedRow[];
+  statuses: Partial<Record<InquiryStatus, number>>;
+  replies: { replied: number; withinDay: number; medianHours: number | null };
+  awaiting: {
+    count: number;
+    oldest: { id: string; name: string; createdAt: string; status: InquiryStatus; topic: string }[];
+  };
+  waitlist: RankedRow[];
+}
+export const getInsights = (days: InsightRange) => request<Insights>(`/api/admin/insights?days=${days}`);
+
 // --- the cost calculator's price list (admins and super admins) ---
 export const getEstimator = () => request<EstimatorConfig>("/api/admin/estimator");
 export const updateEstimator = (body: EstimatorConfig) =>
@@ -227,6 +269,17 @@ export interface AdminInquiry {
   attachment: { name: string; type: string; size: number; stored: boolean } | null;
   /** Set for quote requests from the cost calculator. */
   estimate: InquiryEstimate | null;
+  /** How they found the site (server/src/attribution.js); null if nothing was noted. */
+  foundVia: {
+    channel: string;
+    source: string;
+    /** e.g. "Search engines (Google)" */
+    label: string;
+    landingPage: string;
+    referrer: string;
+    /** utm source / medium / campaign */
+    campaign: string;
+  } | null;
   /** The copy of the estimate emailed to them: sent (sentAt), or why not (error). */
   copy: { sentAt: string | null; error: string | null; subject: string | null } | null;
   status: InquiryStatus;

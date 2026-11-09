@@ -58,7 +58,7 @@ site and the API read it). All client-exposed variables must be prefixed with
 | Variable | Purpose |
 | --- | --- |
 | `VITE_WEB3FORMS_ACCESS_KEY` | Blog newsletter-signup delivery via [Web3Forms](https://web3forms.com), to the inbox tied to the key. Without it, the newsletter signup is hidden. (The contact form posts to the site's own API: see [Contact form and inquiries](#contact-form-and-inquiries).) |
-| `VITE_PLAUSIBLE_DOMAIN` | Privacy-friendly [Plausible](https://plausible.io) analytics. Leave blank to disable analytics. |
+| `VITE_PLAUSIBLE_DOMAIN` | Optional [Plausible](https://plausible.io) analytics, on top of Vercel Web Analytics (see [Analytics and Insights](#analytics-and-insights)). Leave blank to skip Plausible. |
 | `VITE_GROQ_API_KEY` | **Dev only.** Powers the AI Blog Studio at `/studio`. Must **not** be set for production builds — `VITE_` vars are embedded in the client bundle. |
 | `DATABASE_URL` | PostgreSQL connection string for the API (Supabase: see [Database](#database-supabase)). Without it, data routes answer `503` at once and the public site uses its built-in content. |
 | `DATABASE_CA_CERT` | Recommended in production. Supabase's CA certificate (PEM, from **Database Settings → SSL**) so the database's TLS certificate is verified; without it the connection is encrypted but unverified, and production logs a warning. Hosted databases always use TLS unless the URL has `sslmode=disable` (or `DATABASE_SSL=false`), e.g. for a plain Postgres on a private network. |
@@ -314,6 +314,40 @@ that looks like a name, never their notes or anything else they typed, and
 it's marked as an automatic email so out-of-office replies stay away. In
 `/admin` the inquiry says whether the copy went out (or why not), and a reply
 sent from there continues the same email thread.
+
+### Analytics and Insights
+
+Three cookie-free layers, from visits to leads:
+
+1. **Vercel Web Analytics** counts page views, top pages, referrers,
+   countries and devices. Turn it on in Vercel → the project → **Analytics**
+   → Enable; the site loads `/_vercel/insights/script.js` on the deployed
+   site only (never on localhost). Key actions (`trackEvent` in
+   `src/lib/analytics.ts`: quote requests, contact messages, estimates,
+   signups) are sent as custom events, which Vercel records on the Pro plan.
+   Plausible receives them too if `VITE_PLAUSIBLE_DOMAIN` is set.
+2. **Where each lead came from.** On a visitor's first page view the browser
+   notes (in `localStorage`, for 30 days, `src/lib/attribution.ts`) the
+   referring site's host name, the landing page and any `utm_source` /
+   `utm_medium` / `utm_campaign` tags (and a Google Ads `gclid`). It's sent
+   only with a quote request or contact message; the server sorts it into a
+   channel (`server/src/attribution.js`: campaigns and ads, search engines, AI
+   assistants, social media, other websites, direct or shared link) and keeps
+   it with the inquiry (migration 008). The inquiry in `/admin` and the email
+   to the inbox show "Found the site via" and the first page they saw. Tag
+   links you share (`?utm_source=facebook&utm_medium=post&utm_campaign=launch`)
+   to tell your campaigns apart.
+3. **`/admin` → Insights** (admins and super admins; `GET
+   /api/admin/insights?days=30|90|365`, `server/src/models/insights.js`)
+   summarises the inquiries for the last 30 days, 90 days or 12 months against
+   the period before: leads, quote requests and contact messages; the value of
+   quote requests (their estimates' midpoints); the median time to the first
+   reply sent from `/admin` and how many were answered within 24 hours; how
+   many are waiting for a first reply (with links to open them); leads per
+   week (or month); where they came from and which page they landed on; what
+   people ask for (project types, build approaches, features, services); where
+   inquiries stand; and early-access signups. It all comes from the site's own
+   database.
 
 ## Database (Supabase)
 

@@ -10,6 +10,7 @@ import { siteConfig } from "@/config/site";
 import { services } from "@/data/services";
 import { trackEvent } from "@/lib/analytics";
 import { API_BASE } from "@/lib/api";
+import { attributionFields } from "@/lib/attribution";
 
 const NOT_SURE = "Not sure yet";
 
@@ -377,6 +378,8 @@ export function ContactForm() {
     body.set("source", values.source);
     body.set("message", values.message);
     body.set("page", window.location.pathname);
+    // How they found the site, if noted on their first visit.
+    for (const [key, value] of Object.entries(attributionFields())) body.set(key, value);
     if (attachment) body.set("attachment", attachment);
 
     try {

@@ -1,5 +1,6 @@
 import { INQUIRY_NOTIFY_EMAIL, SITE_URL, escapeHtml, textToHtml } from "./mailer.js";
 import { formatRange, formatWeeks } from "../../shared/estimator.js";
+import { describeChannel } from "./attribution.js";
 
 /** The two emails about an inquiry: the alert to the company and a reply to its sender. */
 
@@ -62,6 +63,9 @@ export function notificationEmail(inquiry, attachment) {
           ["Timeline", inquiry.timeline],
         ]),
     ["Heard about us via", inquiry.source],
+    ["Found the site via", describeChannel(inquiry.channel, inquiry.channel_source)],
+    ["First page they saw", inquiry.landing_page ? `${SITE_URL}${inquiry.landing_page}` : ""],
+    ["Campaign", [inquiry.utm_source, inquiry.utm_medium, inquiry.utm_campaign].filter(Boolean).join(" / ")],
     ["Sent from", inquiry.page ? `${SITE_URL}${inquiry.page}` : ""],
     ["Attachment", attachment ? `${attachment.name} (${formatBytes(attachment.size)})` : ""],
   ].filter(([, value]) => value);

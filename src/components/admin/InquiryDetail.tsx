@@ -173,6 +173,9 @@ export function InquiryDetail({ id, onDeleted }: { id: string; onDeleted: () => 
             ["Timeline", inquiry.timeline],
           ]),
       ["Heard about us via", inquiry.source],
+      ["Found the site via", inquiry.foundVia?.label ?? ""],
+      ["First page they saw", inquiry.foundVia?.landingPage ?? ""],
+      ["Campaign", inquiry.foundVia?.campaign ?? ""],
       ["Sent from", inquiry.page],
     ] as [string, string][]
   ).filter(([, value]) => value);
