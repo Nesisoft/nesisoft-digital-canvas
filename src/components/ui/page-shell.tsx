@@ -8,10 +8,13 @@ interface PageShellProps {
 }
 
 export function PageShell({ children, className }: PageShellProps) {
+  // overflow-x-clip, not overflow-hidden: it still stops sideways scrolling,
+  // but doesn't turn the page into its own scroll box, which would stop
+  // anything inside from being sticky (the cost calculator's estimate).
   return (
     <div
       className={cn(
-        "relative min-h-screen overflow-hidden bg-[#09090b] text-slate-100",
+        "relative min-h-screen overflow-x-clip bg-[#09090b] text-slate-100",
         className
       )}
     >

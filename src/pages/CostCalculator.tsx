@@ -618,8 +618,14 @@ const CostCalculator = () => {
               </Question>
             </div>
 
+            {/* Stays in view beside the questions while scrolling (desktop);
+                never taller than the window, so its buttons stay reachable. */}
             <aside className="lg:sticky lg:top-24 lg:self-start">
-              <div ref={resultRef} id="estimate" className="scroll-mt-24 border border-white/10 bg-[#111114] p-6">
+              <div
+                ref={resultRef}
+                id="estimate"
+                className="scroll-mt-24 border border-white/10 bg-[#111114] p-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+              >
                 <div className="flex items-center justify-between gap-4">
                   <h2 className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-gold-300">Your estimate</h2>
                   <CurrencySwitch name={`${id}-currency`} value={currency} onChange={setCurrency} />
