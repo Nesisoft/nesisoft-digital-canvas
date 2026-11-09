@@ -30,8 +30,17 @@ export function toAdminInquiry(row) {
           stored: Boolean(row.attachment_path),
         }
       : null,
-    // A quote request from the cost calculator: its answers and estimate.
+    // A quote request from the cost calculator: its answers and estimate,
+    // and the copy of it emailed to them (sent, or why not).
     estimate: row.estimate ?? null,
+    copy:
+      row.copy_sent_at || row.copy_error
+        ? {
+            sentAt: row.copy_sent_at ? row.copy_sent_at.toISOString() : null,
+            error: row.copy_error,
+            subject: row.copy_subject,
+          }
+        : null,
     status: row.status,
     notifiedAt: row.notified_at ? row.notified_at.toISOString() : null,
     notifyError: row.notify_error,
@@ -94,6 +103,19 @@ export async function recordNotification(id, error) {
             notify_error = $2
       where id = $1`,
     [id, error ?? null]
+  );
+}
+
+/** Records the copy of a quote request's estimate emailed to its sender: sent (with its Message-ID), or why not. */
+export async function recordCopy(id, { messageId, subject, error }) {
+  await query(
+    `update inquiries
+        set copy_sent_at = case when $2::text is null then now() end,
+            copy_error = $2,
+            copy_message_id = $3,
+            copy_subject = $4
+      where id = $1`,
+    [id, error ?? null, error ? null : (messageId ?? null), error ? null : subject]
   );
 }
 

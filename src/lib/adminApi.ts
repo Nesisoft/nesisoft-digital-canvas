@@ -227,6 +227,8 @@ export interface AdminInquiry {
   attachment: { name: string; type: string; size: number; stored: boolean } | null;
   /** Set for quote requests from the cost calculator. */
   estimate: InquiryEstimate | null;
+  /** The copy of the estimate emailed to them: sent (sentAt), or why not (error). */
+  copy: { sentAt: string | null; error: string | null; subject: string | null } | null;
   status: InquiryStatus;
   notifiedAt: string | null;
   notifyError: string | null;

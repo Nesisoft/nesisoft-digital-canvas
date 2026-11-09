@@ -77,6 +77,11 @@ export type Currency = "GHS" | "USD";
 export const DEFAULT_ESTIMATOR: EstimatorConfig;
 export const FIXED_LISTS: MultiplierList[];
 export const CURRENCY_SYMBOLS: Record<Currency, string>;
+export const CALCULATOR_PATH: string;
+export function estimatePath(
+  answers: { type: string; size: string; design: string; approach: string; pace: string; features?: string[] },
+  currency?: Currency
+): string;
 
 export function defaultOption(list: EstimatorMultiplier[]): EstimatorMultiplier;
 export function featureApplies(feature: EstimatorFeature, type: EstimatorType): boolean;

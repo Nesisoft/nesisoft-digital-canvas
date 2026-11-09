@@ -46,9 +46,11 @@ import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import {
+  CALCULATOR_PATH,
   CURRENCY_SYMBOLS,
   computeEstimate,
   defaultOption,
+  estimatePath,
   featureApplies,
   formatNumber,
   formatRange,
@@ -62,8 +64,6 @@ import {
   type EstimatorConfig,
   type EstimatorMultiplier,
 } from "@shared/estimator.js";
-
-const CALCULATOR_PATH = "/app-cost-calculator";
 
 const TYPE_ICONS: Record<string, LucideIcon> = {
   website: Globe,
@@ -217,20 +217,6 @@ function answersFromLink(search: string, fallback: Answers): { answers: Answers;
     },
     currency: params.get("currency") === "USD" ? "USD" : "GHS",
   };
-}
-
-/** The link that reopens these answers. Ids are [a-z0-9-], so commas can stay as they are. */
-function linkFor(answers: Answers, currency: Currency): string {
-  const parts = [
-    `type=${encodeURIComponent(answers.type)}`,
-    `size=${encodeURIComponent(answers.size)}`,
-    ...(answers.features.length ? [`features=${answers.features.map(encodeURIComponent).join(",")}`] : []),
-    `design=${encodeURIComponent(answers.design)}`,
-    `approach=${encodeURIComponent(answers.approach)}`,
-    `pace=${encodeURIComponent(answers.pace)}`,
-    ...(currency === "USD" ? ["currency=USD"] : []),
-  ];
-  return `${CALCULATOR_PATH}?${parts.join("&")}`;
 }
 
 const money = (amount: number, currency: Currency) => `${CURRENCY_SYMBOLS[currency]}${formatNumber(amount)}`;
@@ -449,7 +435,7 @@ const CostCalculator = () => {
   }, []);
 
   // Keep the address bar in step, so a refresh or a copied link keeps the answers.
-  const link = selection.type ? linkFor(priced, currency) : CALCULATOR_PATH;
+  const link = selection.type ? estimatePath(priced, currency) : CALCULATOR_PATH;
   useEffect(() => {
     if (!linkRead) return;
     const current = `${window.location.pathname}${window.location.search}`;
