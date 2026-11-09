@@ -12,20 +12,25 @@ import { LogoMark } from "@/components/LogoMark";
 type GroupKey = "services" | "work";
 
 
-const groups: Record<GroupKey, { label: string; eyebrow: string; description: string; all: To; allLabel: string }> = {
+const groups: Record<
+  GroupKey,
+  { label: string; eyebrow: string; description: string; all: To; allLabel: string; extra: { to: string; label: string } }
+> = {
   services: {
     label: "Services",
     eyebrow: "Build capability",
     description: "Choose the product outcome you need.",
-    all: { pathname: "/", hash: "#services" },
+    all: "/services",
     allLabel: "All services",
+    extra: { to: "/industries", label: "By industry" },
   },
   work: {
     label: "Work",
     eyebrow: "Selected systems",
     description: "Platforms and client products in motion.",
     all: "/projects",
-    allLabel: "All projects",
+    allLabel: "Client projects",
+    extra: { to: "/platforms", label: "Our platforms" },
   },
 };
 
@@ -132,8 +137,8 @@ const Navbar = () => {
     ? "Discuss this service"
     : "Start a project";
   const isActive = {
-    services: path.startsWith("/services"),
-    work: path.startsWith("/projects"),
+    services: path.startsWith("/services") || path.startsWith("/industries"),
+    work: path.startsWith("/projects") || path.startsWith("/platforms"),
     writing: path.startsWith("/blog"),
     company: path === "/company",
   };
@@ -156,14 +161,24 @@ const Navbar = () => {
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-300">{group.description}</p>
             </div>
-            <Link
-              onClick={() => onNavigate(group.all)}
-              to={group.all}
-              className="mt-6 inline-flex items-center text-sm font-medium text-violet-300 transition-colors hover:text-white"
-            >
-              {group.allLabel}
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Link>
+            <div className="mt-6 flex flex-col gap-2">
+              <Link
+                onClick={() => onNavigate(group.all)}
+                to={group.all}
+                className="inline-flex items-center text-sm font-medium text-violet-300 transition-colors hover:text-white"
+              >
+                {group.allLabel}
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+              <Link
+                onClick={() => onNavigate(group.extra.to)}
+                to={group.extra.to}
+                className="inline-flex items-center text-sm font-medium text-violet-300 transition-colors hover:text-white"
+              >
+                {group.extra.label}
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+            </div>
           </div>
           <ul className="grid gap-1">
             {key === "services"
@@ -213,8 +228,10 @@ const Navbar = () => {
 
   const mobileLinks: { label: string; to: To; description: string }[] = [
     { label: "Company", to: "/company", description: "Who we are, our team and how we work" },
-    { label: "Services", to: { pathname: "/", hash: "#services" }, description: "Web, mobile, custom systems, design" },
-    { label: "Work", to: { pathname: "/", hash: "#projects" }, description: "Our platforms and client builds" },
+    { label: "Services", to: "/services", description: "Web, mobile, custom systems, design" },
+    { label: "Industries", to: "/industries", description: "Education, healthcare, fintech and more" },
+    { label: "Work", to: "/projects", description: "Client projects and case studies" },
+    { label: "Platforms", to: "/platforms", description: "Agoo, Sua, Adesuapa and Jua" },
     { label: "Writing", to: "/blog", description: "Engineering notes and insights" },
     { label: "Contact", to: "/contact", description: "Send a project brief" },
   ];

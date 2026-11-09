@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { getService, services } from "@/data/services";
+import { industries } from "@/data/industries";
+import { IndustryChips } from "@/components/IndustryLinks";
 
 const ServiceDetails = () => {
   const { serviceId } = useParams();
@@ -32,7 +34,7 @@ const ServiceDetails = () => {
               description="Return to the homepage to browse the current services."
               action={
                 <Button asChild className="rounded-lg bg-violet-600 text-white hover:bg-violet-500">
-                  <Link to="/#services">
+                  <Link to="/services">
                     View services
                   </Link>
                 </Button>
@@ -47,6 +49,7 @@ const ServiceDetails = () => {
 
   const ServiceIcon = service.icon;
   const relatedServices = services.filter((item) => item.slug !== service.slug);
+  const serviceIndustries = industries.filter((industry) => industry.services.includes(service.slug));
 
   return (
     <>
@@ -62,7 +65,7 @@ const ServiceDetails = () => {
           }),
           breadcrumbsJsonLd([
             { name: "Home", path: "/" },
-            { name: "Services", path: "/#services" },
+            { name: "Services", path: "/services" },
             { name: service.title, path: `/services/${service.slug}` },
           ]),
         ]}
@@ -70,8 +73,8 @@ const ServiceDetails = () => {
       <PageShell>
         <Navbar />
         <PageHeader
-          backTo="/#services"
-          backLabel="Back to services"
+          backTo="/services"
+          backLabel="All services"
           eyebrow="Service"
           title={service.title}
           description={service.fullDescription}
@@ -219,6 +222,17 @@ const ServiceDetails = () => {
             </div>
           </div>
         </Section>
+
+        {serviceIndustries.length > 0 && (
+          <Section className="pt-0">
+            <SectionHeading
+              align="left"
+              eyebrow="Industries"
+              title={`${service.shortTitle} for your sector`}
+            />
+            <IndustryChips industries={serviceIndustries} className="mt-8" />
+          </Section>
+        )}
 
         <Section className="pt-0">
           <SectionHeading

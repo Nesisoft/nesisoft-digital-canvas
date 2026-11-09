@@ -113,6 +113,16 @@ scripts/
   "Book a call" (footer and `/contact`) open it in a new tab; left empty,
   the footer link dials the main phone number.
 - **Services** and **projects** are data-driven from `src/data/`.
+  `/services` lists every service with how we work and the industries we
+  serve; each service has its page at `/services/<slug>`.
+- **Industry pages** (`/industries`, `/industries/<slug>`) come from
+  `src/data/industries.ts`: education, healthcare, fintech, e-commerce,
+  logistics and agriculture. Each has a search title and description, the
+  sector's problems, what we build, typical features, FAQs (also given to
+  search engines as FAQ data), the related services, and related work pulled
+  live from the projects listed in its `projects` (by slug; unpublished ones
+  are skipped). Add a sector by adding an entry; it's prerendered and added
+  to the sitemap automatically.
 - **The Company page** (`/company`) and the homepage's About block are
   edited in `/admin` under **Site content**: the intro, up to three photos,
   stats, vision, mission, reasons to work with us, and corporate social

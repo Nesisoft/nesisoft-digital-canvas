@@ -21,6 +21,7 @@ export interface SiteRoute {
 export function getSiteRoutes(root: string): SiteRoute[] {
   const blogPosts = readBlogPosts(path.join(root, "src", "content", "blog"));
   const serviceSlugs = extractSlugs(path.join(root, "src", "data", "services.ts"));
+  const industrySlugs = extractSlugs(path.join(root, "src", "data", "industries.ts"));
   const projects = extractProjects(path.join(root, "src", "data", "projects.ts"));
   const platformSlugs = projects.filter((p) => p.platform).map((p) => p.slug);
   const clientSlugs = projects.filter((p) => !p.platform).map((p) => p.slug);
@@ -32,9 +33,16 @@ export function getSiteRoutes(root: string): SiteRoute[] {
     { path: "/contact", priority: "0.8", changefreq: "monthly" },
     { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: blogPosts[0]?.date },
     { path: "/privacy", priority: "0.3", changefreq: "yearly" },
+    { path: "/services", priority: "0.8", changefreq: "monthly" },
     ...serviceSlugs.map((slug) => ({
       path: `/services/${slug}`,
       priority: "0.6",
+      changefreq: "monthly",
+    })),
+    { path: "/industries", priority: "0.7", changefreq: "monthly" },
+    ...industrySlugs.map((slug) => ({
+      path: `/industries/${slug}`,
+      priority: "0.7",
       changefreq: "monthly",
     })),
     // Platforms have product pages; /projects/<platform> redirects to them.
