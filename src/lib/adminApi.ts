@@ -6,6 +6,7 @@
 
 import { API_BASE, type SiteContent, type Project } from "./api";
 import type { Currency, Estimate, EstimatorConfig } from "@shared/estimator.js";
+import type { ApplicationStatus, TrainingshipsConfig } from "@shared/trainingships.js";
 
 export interface AdminProject extends Project {
   _id: string;
@@ -177,6 +178,54 @@ export const updateTeam = (id: string, body: Partial<AdminTeamMember>) =>
   request<AdminTeamMember>(`/api/admin/team/${id}`, { method: "PUT", body: JSON.stringify(body) });
 export const deleteTeam = (id: string) =>
   request<{ ok: true }>(`/api/admin/team/${id}`, { method: "DELETE" });
+
+// --- Trainingships: applications and the page (admins and super admins) ---
+export type { ApplicationStatus, TrainingshipsConfig };
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  new: "New",
+  reviewing: "Reviewing",
+  shortlisted: "Shortlisted",
+  accepted: "Accepted",
+  declined: "Declined",
+};
+
+export interface AdminApplication {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  trackId: string;
+  track: string;
+  currentStatus: string;
+  school: string;
+  links: string[];
+  motivation: string;
+  availability: string;
+  intake: string;
+  page: string;
+  /** stored: false when only the notification email carried it. */
+  cv: { name: string; type: string; size: number; stored: boolean } | null;
+  status: ApplicationStatus;
+  notes: string;
+  foundVia: { label: string; landingPage: string; campaign: string } | null;
+  notifyError: string | null;
+  copy: { sentAt: string | null; error: string | null } | null;
+  createdAt: string;
+}
+
+export const listApplications = () => request<{ items: AdminApplication[] }>("/api/admin/applications");
+/** Opening a new one moves it to "reviewing". */
+export const getApplication = (id: string) => request<AdminApplication>(`/api/admin/applications/${id}`);
+export const updateApplication = (id: string, body: { status?: ApplicationStatus; notes?: string }) =>
+  request<AdminApplication>(`/api/admin/applications/${id}`, { method: "PUT", body: JSON.stringify(body) });
+export const deleteApplication = (id: string) =>
+  request<{ ok: true }>(`/api/admin/applications/${id}`, { method: "DELETE" });
+export const applicationCvUrl = (id: string) => `${API_BASE}/api/admin/applications/${id}/cv`;
+export const getTrainingshipsPage = () => request<TrainingshipsConfig>("/api/admin/trainingships");
+export const updateTrainingshipsPage = (body: TrainingshipsConfig) =>
+  request<TrainingshipsConfig>("/api/admin/trainingships", { method: "PUT", body: JSON.stringify(body) });
 
 // --- insights (admins and super admins; server/src/models/insights.js) ---
 export type InsightRange = 30 | 90 | 365;

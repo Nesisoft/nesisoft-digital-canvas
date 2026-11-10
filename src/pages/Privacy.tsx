@@ -93,6 +93,18 @@ const Privacy = () => {
                 the estimate. We email you a copy of your estimate.
               </li>
               <li>
+                <strong>Trainingship applications.</strong> When you apply
+                on our <Link to="/trainingships">Trainingships page</Link>, we
+                receive your name, email address, the track you chose, what
+                you're doing now, why you want to join, and anything optional
+                you add: your phone or WhatsApp number, school or
+                organisation, links to your work, your availability and a CV
+                (a PDF or Word document). Our team uses them only to consider
+                your application and contact you about it. CVs are stored
+                privately and only our team can open them. We email you a
+                confirmation that your application arrived.
+              </li>
+              <li>
                 <strong>How you found us.</strong> On your first visit, your
                 browser keeps a small note (in its own storage, not a cookie)
                 of the website that sent you here, such as a search engine or
@@ -207,6 +219,9 @@ const Privacy = () => {
               We keep enquiries (including any attached brief and our replies)
               and newsletter signups only as long as we need them to respond to
               you and for legitimate business records, then we delete them.
+              Trainingship applications, including CVs, are kept while we
+              consider them and for up to a year afterwards, so we can get
+              back to promising applicants about a later intake.
               You can ask us to delete yours sooner. If you unsubscribe from the newsletter, we stop
               sending it to you.
             </p>

@@ -7,6 +7,7 @@
 
 import type { Project } from "@/data/projects";
 import type { EstimatorConfig } from "@shared/estimator.js";
+import type { TrainingshipsConfig } from "@shared/trainingships.js";
 
 export const API_BASE = "";
 
@@ -152,4 +153,9 @@ export function fetchProject(slug: string): Promise<Project> {
 /** The cost calculator's price list (src/pages/CostCalculator.tsx). */
 export function fetchEstimator(): Promise<EstimatorConfig> {
   return getJSON<EstimatorConfig>("/api/estimator");
+}
+
+/** The Trainingships page's content (src/pages/Trainingships.tsx). */
+export function fetchTrainingships(): Promise<TrainingshipsConfig> {
+  return getJSON<TrainingshipsConfig>("/api/trainingships");
 }

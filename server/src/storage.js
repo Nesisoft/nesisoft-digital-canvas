@@ -114,9 +114,10 @@ const documentUrl = (objectPath) =>
   `${SUPABASE_URL}/storage/v1/object/${DOCUMENTS_BUCKET}/${objectPath}`;
 
 /** Stores one attached document (already checked by its bytes); returns its object path. */
-export async function uploadDocument(buffer, contentType, extension) {
+/** Stores a private document under `folder/` (inquiries, applications); returns its path. */
+export async function uploadDocument(buffer, contentType, extension, folder = "inquiries") {
   if (!storageConfigured) throw documentsUnavailable();
-  const objectPath = `inquiries/${crypto.randomUUID()}.${extension}`;
+  const objectPath = `${folder}/${crypto.randomUUID()}.${extension}`;
   const res = await storageFetch(documentUrl(objectPath), {
     method: "POST",
     headers: headers({ "Content-Type": contentType, "x-upsert": "false" }),

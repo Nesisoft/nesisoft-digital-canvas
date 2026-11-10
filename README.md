@@ -315,6 +315,35 @@ it's marked as an automatic email so out-of-office replies stay away. In
 `/admin` the inquiry says whether the copy went out (or why not), and a reply
 sent from there continues the same email thread.
 
+### Trainingships
+
+`/trainingships` presents the Trainingship programme and takes applications
+(linked from the Company page's CSR section and the footer).
+
+- **The page's content** is edited in `/admin` → **Trainingships** → Page
+  (admins and super admins) and stored in `settings` (key `trainingships`;
+  defaults in `shared/trainingships.js`): whether applications are open, the
+  intake, deadline, duration, where and time commitment (each hidden while
+  empty), the introduction, tracks, "what you'll do", who can apply, FAQs
+  (also given to search engines) and the message shown while closed. While
+  closed, the form and the "Apply for this track" buttons disappear and the
+  API refuses applications (409).
+- **Applications** (`POST /api/trainingships/applications`, rate limited, with
+  a honeypot) ask for name, email, track, what they're doing now and why they
+  want to join (at least 50 characters), and optionally a phone number,
+  school, up to three links, availability and a CV (PDF or Word, up to 4 MB,
+  checked by its bytes, stored privately under `applications/`). Each is kept
+  in `trainingship_applications` (migration 009) with the intake and how the
+  applicant found the site; the company inbox is emailed with the CV attached
+  (Reply-To the applicant) and the applicant gets a confirmation in the same
+  design as the other visitor emails, repeating only the track and intake.
+- **Reviewing** happens in `/admin` → **Trainingships** → Applications (with a
+  count of new ones on the tab, and `/admin?application=<id>` from the inbox
+  email): filter by status and track, open one (which moves it from New to
+  Reviewing), see their details, links and where they came from, download the
+  CV, set the status (Reviewing, Shortlisted, Accepted, Declined), keep
+  private team notes, email them, or delete the application and its CV.
+
 ### Analytics and Insights
 
 Three cookie-free layers, from visits to leads:

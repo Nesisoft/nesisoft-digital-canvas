@@ -8,7 +8,9 @@ import { CALCULATOR_PATH, estimatePath, formatRange, formatWeeks } from "../../s
  *  - estimateCopyEmail: after a quote request from the cost calculator, a
  *    copy of their estimate;
  *  - contactCopyEmail: after a message from the contact form, a
- *    confirmation that it arrived.
+ *    confirmation that it arrived;
+ *  - applicationCopyEmail: after a Trainingship application, a
+ *    confirmation and what happens next.
  *
  * Both share one design: HTML in a table layout with inline styles (which
  * every mail app renders), 600px wide and phone-friendly, with a plain-text
@@ -424,3 +426,87 @@ export function contactCopyEmail(inquiry, { attachmentReceived = false } = {}) {
     }),
   };
 }
+
+/* ---------------- A confirmation of a Trainingship application ---------------- */
+
+const APPLICATION_STEPS = [
+  ["We read your application", "A member of our team reads every application, along with any CV and links you sent."],
+  ["Shortlisted applicants hear from us", "If you're shortlisted, we'll invite you to talk with our team about your goals and your track."],
+  ["Trainingships begin", "Successful applicants join the next intake and start work with our team."],
+];
+const APPLICATION_FOOTER =
+  "You're getting this because someone applied for a Trainingship at nesisoft.com with this email address. If that wasn't you, please ignore it.";
+
+/** The subject line, also used if the team replies from the mailbox. */
+export function applicationCopySubject(application) {
+  return `Your Trainingship application to Nesisoft (ref. ${inquiryRef(application.id)})`;
+}
+
+/**
+ * After a Trainingship application. The track and intake come from our own
+ * page content (the API only accepts tracks that exist), and `cvReceived`
+ * says whether their CV was stored, so we only mention it when we have it.
+ */
+export function applicationCopyEmail(application, { cvReceived = false } = {}) {
+  const name = greetingName(application.first_name);
+  const subject = applicationCopySubject(application);
+  const ref = inquiryRef(application.id);
+  const work = `${SITE_URL}/projects`;
+  const page = `${SITE_URL}/trainingships`;
+  const intro = `Thanks for applying for a Nesisoft Trainingship${
+    application.intake ? ` (${application.intake})` : ""
+  }. We've received your application${cvReceived ? " and your CV" : ""}.`;
+  const track = `Track: ${application.track}`;
+
+  const letter = [
+    paragraph(e(intro), 18),
+    `<div style="margin:0 0 28px;padding:14px 16px;background:${C.soft};border-left:3px solid ${C.gold};font-size:15px;line-height:22px;color:${C.ink}">${e(track)}</div>`,
+    stepsTable(APPLICATION_STEPS),
+    `<div style="height:10px;line-height:10px;font-size:0">&nbsp;</div>`,
+    sectionLabel("While you wait", 10),
+    paragraph(e("Have a look at what our team builds, or read the programme details again."), 18),
+    button(work, "See our work").replace("margin:0 0 36px", "margin:0 0 14px"),
+    paragraph(
+      `<a href="${e(page)}" style="color:${C.violet};font-weight:600;text-decoration:none">Trainingship details &rarr;</a>`,
+      32
+    ),
+    contactLine("Need to add something? Reply to this email, which reaches our team, or call us on"),
+  ].join("\n            ");
+
+  const text = [
+    `Hi ${name || "there"},`,
+    "",
+    intro,
+    track,
+    "",
+    `Reference: ${ref}`,
+    "",
+    "WHAT HAPPENS NEXT",
+    ...APPLICATION_STEPS.map(([title, detail], i) => `${i + 1}. ${title}. ${detail}`),
+    "",
+    `See our work: ${work}`,
+    `Trainingship details: ${page}`,
+    "",
+    `Need to add something? Reply to this email, which reaches our team, or call us on ${COMPANY.phone.display}.`,
+    "",
+    ...textEnding(APPLICATION_FOOTER),
+  ].join("\n");
+
+  return {
+    ...envelope(application, name, subject),
+    text,
+    html: layout({
+      title: subject,
+      preheader: "Thanks for applying. Here's what happens next.",
+      ref,
+      eyebrow: "Application received",
+      headline: "Thanks for applying",
+      headlineSize: 30,
+      subline: e(application.track),
+      name,
+      letter,
+      footerNote: APPLICATION_FOOTER,
+    }),
+  };
+}
+
