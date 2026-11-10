@@ -21,8 +21,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Satoshi', 'system-ui', 'sans-serif'],
-				display: ['Satoshi', 'system-ui', 'sans-serif'],
+				sans: ['Satoshi', '"Satoshi Fallback"', 'system-ui', 'sans-serif'],
+				display: ['Satoshi', '"Satoshi Fallback"', 'system-ui', 'sans-serif'],
 				mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
 			},
 			colors: {

@@ -462,6 +462,30 @@ are always served as-is.
 built site, prerendered pages included) for self-hosting or a local check of a
 production build.
 
+### Fonts and speed
+
+Nothing holds up the first paint except the site's own stylesheet:
+
+- **Satoshi** (all text) loads from Fontshare without blocking: `index.html`
+  preloads Fontshare's stylesheet (one variable font file for every weight)
+  and applies it once it arrives. Until then text uses "Satoshi Fallback"
+  (`src/index.css`): Arial resized to Satoshi's measurements, so nothing
+  shifts when Satoshi swaps in. Its licence (ITF Free Font License) allows
+  self-hosting on our own servers but not publishing the file in a public
+  repository, which this is, so it isn't committed here.
+- **IBM Plex Mono** (eyebrows and labels) is self-hosted from
+  `src/assets/fonts/ibm-plex-mono/` under the SIL Open Font License (its
+  `OFL.txt` sits beside the files): weights 400 and 500, Latin and Latin
+  Extended, each loaded only when a page uses it. Vite fingerprints them into
+  `/assets/`, which is cached for a year.
+- The homepage's contact section (and the form library it needs) loads
+  separately from the rest of the page; it's still prerendered.
+
+Measured with Lighthouse (mobile, median of three runs, on the same server),
+this took the homepage from 91 to 96, the cost calculator from 91 to 100 and
+the AI-assisted development page from 92 to 97, with first paint 0.6–1.6 s
+sooner and no layout shift.
+
 ### Prerendering
 
 `npm run build` also renders every public page (home, blog and posts,

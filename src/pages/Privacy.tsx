@@ -21,7 +21,7 @@ const siteHost = siteConfig.url.replace(/^https?:\/\//, "");
  * cookie-free Vercel Web Analytics (and optional Plausible), the note of how
  * a visitor found the site that goes with their enquiry, the confirmation and
  * estimate emails, the cost calculator's quote requests, and
- * third-party embeds (Google Maps, fonts, Unsplash images). Contact details
+ * third-party embeds (Google Maps, the Fontshare font, Unsplash images). Contact details
  * come from siteConfig so they stay in sync with the rest of the site.
  */
 const Privacy = () => {
@@ -155,9 +155,9 @@ const Privacy = () => {
                 and may set its own cookies.
               </li>
               <li>
-                <strong>Google Fonts and Fontshare</strong> supply the fonts
-                used on this site, so your browser requests them from their
-                servers.
+                <strong>Fontshare</strong> supplies the main typeface used on
+                this site, so your browser requests it from Fontshare's
+                servers. Our other fonts are served from this website.
               </li>
               <li>
                 <strong>Unsplash</strong> hosts some of the photos you see
