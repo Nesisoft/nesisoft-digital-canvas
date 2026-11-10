@@ -11,6 +11,7 @@ import { ProjectForm } from "@/components/admin/ProjectForm";
 import { ContentForm } from "@/components/admin/ContentForm";
 import { EstimatorForm } from "@/components/admin/EstimatorForm";
 import { InsightsPanel } from "@/components/admin/InsightsPanel";
+import { TrainingshipsPanel } from "@/components/admin/TrainingshipsPanel";
 import { PasswordForm } from "@/components/admin/PasswordForm";
 import { UserForm } from "@/components/admin/UserForm";
 import { InquiryDetail, StatusBadge } from "@/components/admin/InquiryDetail";
@@ -27,6 +28,7 @@ import {
   SESSION_CHANGED_EVENT,
   INQUIRY_STATUS_LABELS,
   listInquiries,
+  listApplications,
   listWaitlist,
   deleteWaitlistSignup,
   waitlistExportUrl,
@@ -55,6 +57,7 @@ import { formatRange } from "@shared/estimator.js";
 type View =
   | "inquiries"
   | "insights"
+  | "trainingships"
   | "waitlists"
   | "posts"
   | "projects"
@@ -67,6 +70,7 @@ type View =
 const VIEW_LABELS: Record<View, string> = {
   inquiries: "Inquiries",
   insights: "Insights",
+  trainingships: "Trainingships",
   waitlists: "Waitlists",
   posts: "Blog posts",
   projects: "Projects",
@@ -80,20 +84,20 @@ const VIEW_LABELS: Record<View, string> = {
 /** The tabs each role sees (the API enforces the same rules). */
 const VIEWS_BY_ROLE: Record<AdminRole, View[]> = {
   editor: ["posts"],
-  admin: ["inquiries", "insights", "waitlists", "posts", "projects", "team", "content", "pricing"],
-  superadmin: ["inquiries", "insights", "waitlists", "posts", "projects", "team", "content", "pricing", "users"],
+  admin: ["inquiries", "insights", "trainingships", "waitlists", "posts", "projects", "team", "content", "pricing"],
+  superadmin: ["inquiries", "insights", "trainingships", "waitlists", "posts", "projects", "team", "content", "pricing", "users"],
 };
 
 /**
- * The inquiry an emailed "Open in the admin" link points at
- * (/admin?inquiry=<id>), read once and then dropped from the address bar.
+ * What an emailed "Open in the admin" link points at (/admin?inquiry=<id> or
+ * /admin?application=<id>), read once and then dropped from the address bar.
  */
-function takeLinkedInquiry(): string | null {
+function takeLinked(param: "inquiry" | "application"): string | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("inquiry");
+  const id = params.get(param);
   if (id) {
-    params.delete("inquiry");
+    params.delete(param);
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   }
@@ -224,8 +228,11 @@ function Dashboard({ user }: { user: AdminUser }) {
   const qc = useQueryClient();
   const views = VIEWS_BY_ROLE[user.role] ?? ["posts"];
   const canSeeInquiries = views.includes("inquiries");
-  const [linkedInquiry] = useState(() => (canSeeInquiries ? takeLinkedInquiry() : null));
-  const [view, setView] = useState<View>(linkedInquiry ? "inquiries" : views[0]);
+  const [linkedInquiry] = useState(() => (canSeeInquiries ? takeLinked("inquiry") : null));
+  const [linkedApplication] = useState(() => (views.includes("trainingships") ? takeLinked("application") : null));
+  const [view, setView] = useState<View>(
+    linkedInquiry ? "inquiries" : linkedApplication ? "trainingships" : views[0]
+  );
   const [selectedId, setSelectedId] = useState<string | null>(linkedInquiry);
 
   // New inquiries show as a count on the tab; checked every minute.
@@ -236,6 +243,14 @@ function Dashboard({ user }: { user: AdminUser }) {
     refetchInterval: 60_000,
   });
   const newInquiries = inquiries.data?.items.filter((i) => i.status === "new").length ?? 0;
+  // New Trainingship applications, likewise.
+  const applications = useQuery({
+    queryKey: ["admin", "applications"],
+    queryFn: listApplications,
+    enabled: views.includes("trainingships"),
+    refetchInterval: 60_000,
+  });
+  const newApplications = applications.data?.items.filter((a) => a.status === "new").length ?? 0;
   const [creating, setCreating] = useState(false);
 
   const reset = () => {
@@ -283,11 +298,20 @@ function Dashboard({ user }: { user: AdminUser }) {
                   {newInquiries}
                 </span>
               )}
+              {v === "trainingships" && newApplications > 0 && (
+                <span
+                  className="ml-1.5 bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                  aria-label={`${newApplications} new`}
+                >
+                  {newApplications}
+                </span>
+              )}
             </button>
           ))}
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-3">
-          <span className="hidden text-xs text-slate-500 lg:inline">
+          {/* Room for every tab: the name shows on wide screens (and under Account). */}
+          <span className="hidden text-xs text-slate-500 2xl:inline">
             {user.name || user.email} · {ROLE_LABELS[user.role]}
           </span>
           <Button
@@ -299,8 +323,8 @@ function Dashboard({ user }: { user: AdminUser }) {
               current === "account" && "bg-white/[0.06] text-white"
             )}
           >
-            <KeyRound className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Account</span>
+            <KeyRound className="h-4 w-4 2xl:mr-2" />
+            <span className="hidden 2xl:inline">Account</span>
           </Button>
           <Button
             variant="outline"
@@ -308,8 +332,8 @@ function Dashboard({ user }: { user: AdminUser }) {
             onClick={() => logoutMutation.mutate()}
             className="h-9 rounded-lg border-white/15 bg-transparent text-slate-300 hover:bg-white/[0.06] hover:text-white"
           >
-            <LogOut className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Sign out</span>
+            <LogOut className="h-4 w-4 2xl:mr-2" />
+            <span className="hidden 2xl:inline">Sign out</span>
           </Button>
         </div>
       </header>
@@ -321,6 +345,10 @@ function Dashboard({ user }: { user: AdminUser }) {
       ) : current === "content" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <ContentForm />
+        </div>
+      ) : current === "trainingships" ? (
+        <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6">
+          <TrainingshipsPanel linkedId={linkedApplication} />
         </div>
       ) : current === "insights" ? (
         <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">

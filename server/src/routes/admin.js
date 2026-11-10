@@ -28,6 +28,17 @@ import { getContent, saveContent } from "../models/content.js";
 import { getEstimator, saveEstimator } from "../models/estimator.js";
 import { RANGES as INSIGHT_RANGES, getInsights } from "../models/insights.js";
 import {
+  APPLICATION_STATUSES,
+  deleteApplication,
+  findApplication,
+  getTrainingships,
+  listApplications,
+  markReviewing,
+  saveTrainingships,
+  toAdminApplication,
+  updateApplication,
+} from "../models/trainingships.js";
+import {
   ROLES,
   createUser,
   deleteUser,
@@ -227,6 +238,8 @@ router.use("/inquiries", allow(...CONTENT_ROLES));
 router.use("/waitlist", allow(...CONTENT_ROLES));
 // Insights summarise inquiries: the same people as Inquiries.
 router.use("/insights", allow(...CONTENT_ROLES));
+// Trainingship applications (CVs, contact details) and the page's content.
+router.use(["/applications", "/trainingships"], allow(...CONTENT_ROLES));
 
 // Ids are UUIDs; anything else can't exist, so answer 404 without a query.
 router.param("id", (req, res, next, id) => {
@@ -267,6 +280,75 @@ router.get("/insights", async (req, res) => {
   if (!INSIGHT_RANGES.includes(days)) throw badRequest(`days must be one of ${INSIGHT_RANGES.join(", ")}`);
   res.set("Cache-Control", "private, no-store");
   res.json(await getInsights(days));
+});
+
+// --- Trainingships: the page's content and its applications ---
+router.get("/trainingships", async (_req, res) => {
+  res.json(await getTrainingships());
+});
+
+router.put("/trainingships", async (req, res) => {
+  res.json(await saveTrainingships(req.body, req.admin.id));
+});
+
+const notFoundApplication = (res) => res.status(404).json({ error: "Application not found" });
+
+router.get("/applications", async (_req, res) => {
+  res.json({ items: (await listApplications()).map(toAdminApplication) });
+});
+
+// Opening a new one moves it to "reviewing".
+router.get("/applications/:id", async (req, res) => {
+  let application = await findApplication(req.params.id);
+  if (!application) return notFoundApplication(res);
+  if (application.status === "new") {
+    await markReviewing(application.id);
+    application = { ...application, status: "reviewing" };
+  }
+  res.json(toAdminApplication(application));
+});
+
+router.put("/applications/:id", async (req, res) => {
+  const { status, notes } = req.body || {};
+  if (status !== undefined && !APPLICATION_STATUSES.includes(status)) {
+    throw badRequest(`status must be one of ${APPLICATION_STATUSES.join(", ")}`);
+  }
+  if (notes !== undefined && (typeof notes !== "string" || notes.length > 5000)) {
+    throw badRequest("Notes must be text, up to 5,000 characters");
+  }
+  const updated = await updateApplication(req.params.id, { status, notes });
+  if (!updated) return notFoundApplication(res);
+  res.json(toAdminApplication(updated));
+});
+
+router.get("/applications/:id/cv", async (req, res) => {
+  const application = await findApplication(req.params.id);
+  if (!application) return notFoundApplication(res);
+  const file = application.cv_path ? await downloadDocument(application.cv_path) : null;
+  if (!file) {
+    return res.status(404).json({
+      error: application.notify_error
+        ? "This CV couldn't be stored or emailed. Ask the applicant to send it again."
+        : "This CV wasn't stored. It was attached to the email sent to the company inbox.",
+    });
+  }
+  res.set({
+    "Content-Type": application.cv_type,
+    "Content-Disposition": attachmentDisposition(application.cv_name),
+    "Cache-Control": "private, no-store",
+  });
+  res.send(file);
+});
+
+router.delete("/applications/:id", async (req, res) => {
+  const deleted = await deleteApplication(req.params.id);
+  if (!deleted) return notFoundApplication(res);
+  if (deleted.cvPath) {
+    await deleteDocument(deleted.cvPath).catch((err) =>
+      console.error("[applications] deleting the stored CV failed:", err.message)
+    );
+  }
+  res.json({ ok: true });
 });
 
 // --- The cost calculator's price list (Pricing tab) ---

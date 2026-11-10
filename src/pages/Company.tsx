@@ -111,10 +111,22 @@ const Company = () => {
                       <h3 className="font-display text-xl font-bold text-white">{program.title}</h3>
                     </div>
                     <Paragraphs text={program.description} className="mt-4 leading-relaxed text-slate-300" />
+                    {/trainingship/i.test(program.title) && (
+                      <Link
+                        to="/trainingships"
+                        className="mt-5 inline-flex items-center text-sm font-medium text-violet-300 transition-colors hover:text-white"
+                      >
+                        Tracks, details and how to apply <ArrowRight aria-hidden className="ml-1.5 h-4 w-4" />
+                      </Link>
+                    )}
                   </div>
                 ))}
               <p className="text-sm text-slate-400">
-                Interested, or want to partner with us on it?{" "}
+                Want to train with us?{" "}
+                <Link to="/trainingships" className="font-medium text-violet-300 hover:text-violet-200">
+                  Apply for a Trainingship
+                </Link>
+                . A school or organisation that wants to partner with us?{" "}
                 <Link to="/contact" className="font-medium text-violet-300 hover:text-violet-200">
                   Get in touch
                 </Link>

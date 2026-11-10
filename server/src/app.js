@@ -13,6 +13,7 @@ import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
 import inquiryRoutes from "./routes/inquiries.js";
 import waitlistRoutes from "./routes/waitlist.js";
+import trainingshipRoutes from "./routes/trainingships.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../../dist");
@@ -141,6 +142,7 @@ export function createApp() {
   // (www.nesisoft.com/admin) and talks to these endpoints.
   app.use("/api/inquiries", inquiryRoutes);
   app.use("/api/waitlist", waitlistRoutes);
+  app.use("/api/trainingships", trainingshipRoutes);
   app.use("/api", publicRoutes);
   app.use("/api/admin", adminRoutes);
 
