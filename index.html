@@ -13,9 +13,15 @@
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="alternate" type="application/rss+xml" title="Nesisoft Blog" href="/rss.xml" />
 
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <!-- Fonts, none of them blocking the first paint (see src/index.css).
+             Satoshi: Fontshare's stylesheet (one variable font file for all
+             weights) applied once it has loaded. -->
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+        <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+        <noscript><link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap" /></noscript>
+        <!-- The mono face used in the first screen's labels. -->
+        <link rel="preload" as="font" type="font/woff2" href="/src/assets/fonts/ibm-plex-mono/ibm-plex-mono-500-latin.woff2" crossorigin />
 
         <!-- seo -->
         <!-- The tags the <Seo> component manages, with the homepage's values.
