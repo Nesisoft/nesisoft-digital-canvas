@@ -848,7 +848,10 @@ const CostCalculator = () => {
               <h2 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">Prefer to talk it through?</h2>
               <p className="mt-2 text-slate-300">
                 Call us on{" "}
-                <a href={siteConfig.contact.phonePrimary.href} className="text-violet-300 hover:text-white">
+                <a
+                  href={siteConfig.contact.phonePrimary.href}
+                  className="text-violet-300 underline underline-offset-4 hover:text-white"
+                >
                   {siteConfig.contact.phonePrimary.display}
                 </a>{" "}
                 or send a brief, and we'll scope it with you.

@@ -41,7 +41,7 @@ const ClientProjects = () => {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <ProjectCard key={project.slug} project={project} />
+              <ProjectCard key={project.slug} project={project} heading="h2" />
             ))}
           </div>
           <div className="mt-12 flex flex-col items-start gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
