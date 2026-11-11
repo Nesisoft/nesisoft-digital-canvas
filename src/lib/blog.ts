@@ -1,8 +1,9 @@
 /**
- * File-based blog CMS. Each post is a Markdown file in `src/content/blog/`
- * with a small frontmatter block. New post = new `.md` file (drop one in and
- * it appears) — no code changes, no database. The AI Blog Studio (dev-only)
- * produces files in exactly this shape.
+ * File-based blog posts. Each post is a Markdown file in `src/content/blog/`
+ * with a small frontmatter block. They render instantly and stand in when the
+ * API can't answer; the live list comes from the database, which the next
+ * production deploy copies each new file into, once (server/src/seed.js).
+ * The AI Blog Studio (dev-only) produces files in exactly this shape.
  *
  * Frontmatter keys: title, excerpt, image, category, author, date (ISO).
  * The slug is the filename; readTime is computed from word count.

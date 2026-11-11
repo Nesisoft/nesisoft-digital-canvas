@@ -2,7 +2,7 @@ import { platformVercelEnv } from "./env.js";
 
 import { closePool, databaseConfigured, isConnectionError } from "./db.js";
 import { runMigrations } from "./migrate.js";
-import { importBundledContentOnce } from "./seed.js";
+import { importBundledContentOnce, importNewBundledPosts } from "./seed.js";
 import { ensureBucket } from "./storage.js";
 
 /**
@@ -13,7 +13,9 @@ import { ensureBucket } from "./storage.js";
  *   2. on a brand-new, empty database, imports the content bundled with the
  *      site, once, so a new site doesn't start out with an empty blog and
  *      project list;
- *   3. makes sure the image bucket exists (a problem there is only a warning).
+ *   3. copies each Markdown post added to src/content/blog since into the
+ *      database, once, so it shows in the blog list and in /admin;
+ *   4. makes sure the image bucket exists (a problem there is only a warning).
  *
  * It runs after the site has built, and a database failure fails the build,
  * so the new code doesn't go live against a database it doesn't match:
@@ -58,6 +60,7 @@ async function deployDatabase() {
 
   await runMigrations();
   log(`initial content: ${await importBundledContentOnce()}`);
+  log(`new blog posts: ${await importNewBundledPosts()}`);
 
   try {
     console.log(`[storage] ${await ensureBucket()}`);

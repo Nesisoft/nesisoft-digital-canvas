@@ -49,33 +49,41 @@ function parseFrontmatter(raw) {
   return { data, body: raw.slice(match[0].length) };
 }
 
+const blogFiles = () => fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".md"));
+const slugOf = (file) => file.replace(/\.md$/, "");
+
+/** Adds one Markdown post unless its slug is taken; true if it was added. */
+async function insertPost(q, file) {
+  const raw = fs.readFileSync(path.join(BLOG_DIR, file), "utf8");
+  const { data, body } = parseFrontmatter(raw);
+  const slug = slugOf(file);
+  const { rowCount } = await q(
+    `insert into blog_posts (slug, title, excerpt, content, image, category, author, date)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
+     on conflict (slug) do nothing`,
+    [
+      slug,
+      data.title || slug,
+      data.excerpt || "",
+      body.trim(),
+      data.image || "",
+      data.category || "Uncategorized",
+      data.author || "Nesisoft Team",
+      data.date ? new Date(data.date) : new Date(),
+    ]
+  );
+  return rowCount > 0;
+}
+
 async function seedBlog(q) {
   if (!fs.existsSync(BLOG_DIR)) {
     console.log("[seed] no blog dir found, skipping posts");
     return;
   }
-  const files = fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".md"));
+  const files = blogFiles();
   let created = 0;
   for (const file of files) {
-    const raw = fs.readFileSync(path.join(BLOG_DIR, file), "utf8");
-    const { data, body } = parseFrontmatter(raw);
-    const slug = file.replace(/\.md$/, "");
-    const { rowCount } = await q(
-      `insert into blog_posts (slug, title, excerpt, content, image, category, author, date)
-       values ($1, $2, $3, $4, $5, $6, $7, $8)
-       on conflict (slug) do nothing`,
-      [
-        slug,
-        data.title || slug,
-        data.excerpt || "",
-        body.trim(),
-        data.image || "",
-        data.category || "Uncategorized",
-        data.author || "Nesisoft Team",
-        data.date ? new Date(data.date) : new Date(),
-      ]
-    );
-    created += rowCount;
+    if (await insertPost(q, file)) created += 1;
   }
   console.log(`[seed] blog: imported ${created} new post(s) (${files.length} files seen)`);
 }
@@ -195,6 +203,57 @@ async function importIfNew(q) {
   }
   await importBundledContent(q);
   return "imported the bundled posts, projects and homepage copy";
+}
+
+// The posts bundled before new posts were imported one by one (below). The
+// initial import, or the admin, has already dealt with them, so they're never
+// imported again: one deleted in /admin stays deleted.
+const POSTS_BEFORE_TRACKING = [
+  "ai-integration-in-african-business",
+  "building-scalable-web-applications",
+  "future-of-mobile-app-development-in-africa",
+  "progressive-web-apps-for-african-markets",
+  "react-native-vs-native-development",
+  "rise-of-ecommerce-in-africa",
+];
+
+// Recorded in schema_migrations, like INITIAL_CONTENT, once a post is imported.
+const postMarker = (slug) => `seed:post:${slug}`;
+
+/**
+ * The deploy-time import of new posts (see deploy.js). The live blog is read
+ * from the database, so each Markdown post added to src/content/blog is copied
+ * in once, by the first production deploy that has it; from then on it's
+ * edited (or unpublished, or deleted) in /admin like any other post, and the
+ * file is never read again. A post whose slug is already taken in the
+ * database is left as it is. Same transaction and lock as the initial import.
+ * Returns what it did, for the log.
+ */
+export function importNewBundledPosts() {
+  if (!fs.existsSync(BLOG_DIR)) return Promise.resolve("no blog folder");
+  return withClient(async (client) => {
+    const q = (text, params) => client.query(text, params);
+    await q("begin");
+    try {
+      await q("select pg_advisory_xact_lock($1)", [MIGRATION_LOCK_ID]);
+      const { rows } = await q("select name from schema_migrations where name like 'seed:post:%'");
+      const imported = new Set(rows.map((row) => row.name));
+      const added = [];
+      for (const file of blogFiles()) {
+        const slug = slugOf(file);
+        if (POSTS_BEFORE_TRACKING.includes(slug) || imported.has(postMarker(slug))) continue;
+        if (await insertPost(q, file)) added.push(slug);
+        await q("insert into schema_migrations (name) values ($1) on conflict (name) do nothing", [
+          postMarker(slug),
+        ]);
+      }
+      await q("commit");
+      return added.length ? `imported ${added.length}: ${added.join(", ")}` : "none to import";
+    } catch (err) {
+      await q("rollback").catch(() => {});
+      throw err;
+    }
+  });
 }
 
 async function run() {

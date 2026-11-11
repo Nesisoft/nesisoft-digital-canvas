@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowRight, Calendar, Clock, User } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -11,6 +11,25 @@ import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 import { formatPostDate, getPostBySlug } from "@/lib/blog";
 import { fetchPost, resolveImage } from "@/lib/api";
+
+/**
+ * Links to the site's own pages open in the app, without a full page load,
+ * and tables scroll sideways on narrow screens instead of being cut off.
+ */
+const markdownComponents: Components = {
+  a: ({ node: _node, href, ...props }) =>
+    href && /^\/(?!\/)/.test(href) ? <Link to={href} {...props} /> : <a href={href} {...props} />,
+  table: ({ node: _node, ...props }) => (
+    <div
+      role="region"
+      aria-label="Table"
+      tabIndex={0}
+      className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+    >
+      <table {...props} />
+    </div>
+  ),
+};
 
 const BlogDetails = () => {
   const { postId } = useParams();
@@ -138,7 +157,7 @@ const BlogDetails = () => {
 
         <Section className="pt-0" containerClassName="max-w-3xl">
           <article className="prose prose-lg prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:text-white prose-p:leading-8 prose-p:text-slate-300 prose-a:text-violet-300 prose-strong:text-white prose-li:text-slate-300 prose-li:marker:text-violet-300">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {blogPost.content}
             </ReactMarkdown>
           </article>
