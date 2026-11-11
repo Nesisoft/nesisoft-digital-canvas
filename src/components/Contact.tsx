@@ -40,13 +40,13 @@ const Contact = () => {
                   <h4 className="mb-1 text-sm font-medium text-white">Email</h4>
                   <a
                     href={`mailto:${siteConfig.contact.emailGeneral}`}
-                    className="block text-sm text-slate-300 transition-colors hover:text-violet-400"
+                    className="flex min-h-7 items-center text-sm text-slate-300 transition-colors hover:text-violet-400"
                   >
                     {siteConfig.contact.emailGeneral}
                   </a>
                   <a
                     href={`mailto:${siteConfig.contact.emailSales}`}
-                    className="block text-sm text-slate-300 transition-colors hover:text-violet-400"
+                    className="flex min-h-7 items-center text-sm text-slate-300 transition-colors hover:text-violet-400"
                   >
                     {siteConfig.contact.emailSales}
                   </a>
@@ -61,13 +61,13 @@ const Contact = () => {
                   <h4 className="mb-1 text-sm font-medium text-white">Phone</h4>
                   <a
                     href={siteConfig.contact.phonePrimary.href}
-                    className="block text-sm text-slate-300 transition-colors hover:text-violet-400"
+                    className="flex min-h-7 items-center text-sm text-slate-300 transition-colors hover:text-violet-400"
                   >
                     {siteConfig.contact.phonePrimary.display}
                   </a>
                   <a
                     href={siteConfig.contact.phoneSecondary.href}
-                    className="block text-sm text-slate-300 transition-colors hover:text-violet-400"
+                    className="flex min-h-7 items-center text-sm text-slate-300 transition-colors hover:text-violet-400"
                   >
                     {siteConfig.contact.phoneSecondary.display}
                   </a>

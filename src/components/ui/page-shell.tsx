@@ -1,10 +1,34 @@
+import { Children, isValidElement, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { ArrowLeft, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageShellProps {
   children: React.ReactNode;
   className?: string;
+}
+
+/**
+ * Wraps what sits between the page's <Navbar /> and <Footer /> in <main>, so
+ * every page has its main landmark (screen readers jump to it) while the
+ * header and footer stay outside it as their own landmarks.
+ */
+function withMain(children: ReactNode) {
+  const items = Children.toArray(children);
+  const nav = items.findIndex((c) => isValidElement(c) && c.type === Navbar);
+  const foot = items.findIndex((c) => isValidElement(c) && c.type === Footer);
+  const start = nav + 1;
+  const end = foot === -1 ? items.length : foot;
+  if (end <= start) return children;
+  return (
+    <>
+      {items.slice(0, start)}
+      <main>{items.slice(start, end)}</main>
+      {items.slice(end)}
+    </>
+  );
 }
 
 export function PageShell({ children, className }: PageShellProps) {
@@ -24,7 +48,7 @@ export function PageShell({ children, className }: PageShellProps) {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[44rem] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(124,58,237,0.16),transparent_70%)]"
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10">{withMain(children)}</div>
     </div>
   );
 }
