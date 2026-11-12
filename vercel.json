@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build && npm run db:deploy",
   "functions": {
-    "api/index.js": { "maxDuration": 30 }
+    "api/index.js": { "maxDuration": 30, "includeFiles": "dist/{200,404}.html" }
   },
   "cleanUrls": true,
   "trailingSlash": false,
@@ -18,7 +18,7 @@
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/admin", "destination": "/200" },
     { "source": "/admin/:path*", "destination": "/200" },
-    { "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/200" }
+    { "source": "/:section(blog|projects|platforms)/:slug", "destination": "/api" }
   ],
   "headers": [
     {

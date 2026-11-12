@@ -77,6 +77,8 @@ export interface BlogEntry {
   slug: string;
   title: string;
   excerpt: string;
+  image: string;
+  category: string;
   author: string;
   date: string;
 }
@@ -93,6 +95,8 @@ export function readBlogPosts(dir: string): BlogEntry[] {
         slug: name.replace(/\.md$/, ""),
         title: meta.title ?? name,
         excerpt: meta.excerpt ?? "",
+        image: meta.image ?? "",
+        category: meta.category ?? "Uncategorized",
         author: meta.author ?? "Nesisoft Team",
         date: meta.date ?? "1970-01-01",
       };

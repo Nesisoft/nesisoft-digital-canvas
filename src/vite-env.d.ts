@@ -12,3 +12,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** The bundled posts' frontmatter, newest first (scripts/blog-index-plugin.ts). */
+declare module "virtual:blog-index" {
+  const posts: import("@/lib/api").BlogIndexEntry[];
+  export default posts;
+}

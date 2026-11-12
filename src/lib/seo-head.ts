@@ -5,6 +5,7 @@ export interface SeoHead {
   title: string;
   /** [attribute, key, content]; an empty content means the tag is left out. */
   meta: Array<["name" | "property", string, string | undefined]>;
+  /** Empty for a page that isn't to be indexed: it names no canonical URL. */
   canonical: string;
   jsonLd: Array<Record<string, unknown>>;
 }
@@ -28,7 +29,7 @@ export function seoHeadToHtml(head: SeoHead): string {
     ...head.meta
       .filter(([, , content]) => content)
       .map(([attr, key, content]) => `<meta ${attr}="${key}" content="${escapeHtml(content)}" />`),
-    `<link rel="canonical" href="${escapeHtml(head.canonical)}" />`,
+    ...(head.canonical ? [`<link rel="canonical" href="${escapeHtml(head.canonical)}" />`] : []),
     // "<" escaped so nothing in the data can close the script early.
     ...head.jsonLd.map(
       (block) =>

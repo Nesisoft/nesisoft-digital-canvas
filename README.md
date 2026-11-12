@@ -491,10 +491,15 @@ path segment outside Next.js, so `/api/admin/login` would 404). It also
 serves each prerendered page at its canonical, extensionless URL
 (`cleanUrls`: `/blog` is `blog.html`, and `/blog.html` and `/blog/` redirect to
 `/blog`), adds security headers to every response, caches hashed assets for a
-year, and sends routes that weren't prerendered (`/admin`, unknown URLs) to
-the client-only shell `200.html` (written `/200` because of `cleanUrls`).
-Vercel serves real files before applying those rewrites, so prerendered pages
-are always served as-is.
+year, and sends `/admin` to the client-only shell `200.html` (written `/200`
+because of `cleanUrls`). Vercel serves real files before applying those
+rewrites, so prerendered pages are always served as-is. A blog post, project
+or platform without a prerendered page (added in `/admin` since the build)
+goes to the Express function, which checks the database (`server/src/pages.js`):
+a published one gets the shell with its own title, description and canonical
+URL, anything else the NotFound page with a real 404. Every other unknown
+address gets `404.html` with a 404 status, so search engines never take a
+mistyped or made-up URL for a page.
 
 `npm start` runs the same Express app as a single Node server (API plus the
 built site, prerendered pages included) for self-hosting or a local check of a
@@ -535,8 +540,10 @@ and JSON-LD. The browser then hydrates that markup. The route list lives in
 `scripts/site-routes.ts` and also feeds the sitemap.
 
 Each page is written as both `dist/<path>/index.html` and `dist/<path>.html`,
-plus `dist/404.html` and `dist/200.html` — the plain client-only shell for
-everything that isn't prerendered (`/admin`, unknown URLs). Point a host's SPA
-fallback at the shell (`vercel.json` already does). If a host's fallback serves
-`/index.html` instead, pages keep working: a prerendered page served for
-another URL hides itself and the app renders the right one.
+plus `dist/404.html` (the NotFound page, for unknown addresses, with a 404
+status) and `dist/200.html` — the plain client-only shell for `/admin` and for
+posts, projects and platforms added in `/admin` since the build (see
+`server/src/pages.js`). `vercel.json` and `npm start` already route these. If
+another host's fallback serves `/index.html` instead, pages keep working: a
+prerendered page served for another URL hides itself and the app renders the
+right one.

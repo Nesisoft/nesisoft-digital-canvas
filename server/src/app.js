@@ -3,9 +3,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cors from "cors";
 import multer from "multer";
-import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { INVALID_INPUT_CODES, databaseConfigured, getPool, isConnectionError } from "./db.js";
 import { isProd, SESSION_SECRET } from "./auth.js";
@@ -14,9 +12,7 @@ import adminRoutes from "./routes/admin.js";
 import inquiryRoutes from "./routes/inquiries.js";
 import waitlistRoutes from "./routes/waitlist.js";
 import trainingshipRoutes from "./routes/trainingships.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distDir = path.resolve(__dirname, "../../dist");
+import { DYNAMIC_PAGES, distDir, prerenderedFile, sendDynamicPage, sendNotFound } from "./pages.js";
 
 // Baseline security headers on every response, API and static alike. No CSP
 // yet: it would break the SPA's inline boot loader and third-party fonts.
@@ -39,27 +35,6 @@ function isSameOrigin(origin, host) {
   } catch {
     return false;
   }
-}
-
-/**
- * The built file for a page: dist/index.html for "/", otherwise the
- * prerendered dist/<path>.html or dist/<path>/index.html, and the client-only
- * shell (200.html) for anything that wasn't prerendered (/admin, unknown URLs).
- */
-function pageFile(urlPath) {
-  let clean;
-  try {
-    clean = decodeURIComponent(urlPath).replace(/\/+$/, "");
-  } catch {
-    return path.join(distDir, "200.html"); // malformed %-escape
-  }
-  const candidates = clean ? [`${clean}.html`, `${clean}/index.html`] : ["index.html"];
-  for (const candidate of candidates) {
-    const file = path.join(distDir, candidate);
-    // path.join resolves "..", so this keeps every lookup inside dist/.
-    if (file.startsWith(distDir + path.sep) && fs.existsSync(file)) return file;
-  }
-  return path.join(distDir, "200.html");
 }
 
 export function createApp() {
@@ -150,10 +125,22 @@ export function createApp() {
   // other real files come straight from dist/; no directory index or
   // trailing-slash redirect, so /blog stays /blog and gets its prerendered
   // page below, matching the canonical URLs.
-  if (isProd && !process.env.VERCEL) {
+  const servesSite = isProd && !process.env.VERCEL;
+  if (servesSite) {
     app.use(express.static(distDir, { index: false, redirect: false }));
-    app.get("*", (req, res) => {
-      res.sendFile(pageFile(req.path));
+    app.get(["/admin", "/admin/*"], (_req, res) => res.sendFile(path.join(distDir, "200.html")));
+  }
+
+  // A post, project or platform without a prerendered page: added in /admin
+  // since the build, or not there at all (see pages.js). On Vercel, vercel.json
+  // rewrites these paths here.
+  app.get(DYNAMIC_PAGES, sendDynamicPage);
+
+  if (servesSite) {
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api/")) return next();
+      const file = prerenderedFile(req.path);
+      return file ? res.sendFile(file) : sendNotFound(req, res);
     });
   }
 

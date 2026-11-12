@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { Section } from "@/components/ui/section";
 import { formatPostDate, getAllPosts } from "@/lib/blog";
-import { fetchPosts, resolveImage } from "@/lib/api";
+import { fetchPostSummaries, resolveImage, type PostSummary } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { WEB3FORMS_KEY, submitToWeb3Forms } from "@/lib/web3forms";
 
@@ -25,9 +25,9 @@ const Blog = () => {
   // can't serve the list; a successful API response (managed in /admin) wins.
   // Without bundled posts, the skeleton and error state below still apply.
   const bundledPosts = getAllPosts();
-  const { data: blogPosts = bundledPosts, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["posts"],
-    queryFn: fetchPosts,
+  const { data: blogPosts = bundledPosts, isLoading, isError, refetch, isFetching } = useQuery<PostSummary[]>({
+    queryKey: ["posts", "summary"],
+    queryFn: fetchPostSummaries,
     placeholderData: bundledPosts.length > 0 ? bundledPosts : undefined,
   });
   const categories = [

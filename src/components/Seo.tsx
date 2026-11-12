@@ -111,7 +111,10 @@ function buildHead(
       ["property", "article:author", article?.author],
       ["property", "article:section", article?.section],
     ],
-    canonical: url,
+    // A page kept out of search results (not found, loading, /admin) names
+    // no canonical URL: "don't index this" and "this is the page to index"
+    // would contradict each other.
+    canonical: noindex ? "" : url,
     // JSON-LD structured data — one or many schemas per page.
     jsonLd: jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [],
   };
@@ -139,12 +142,16 @@ function applyHead(head: SeoHead) {
   let link = document.head.querySelector<HTMLLinkElement>(
     'link[rel="canonical"]'
   );
-  if (!link) {
-    link = document.createElement("link");
-    link.setAttribute("rel", "canonical");
-    document.head.appendChild(link);
+  if (!head.canonical) {
+    link?.remove();
+  } else {
+    if (!link) {
+      link = document.createElement("link");
+      link.setAttribute("rel", "canonical");
+      document.head.appendChild(link);
+    }
+    link.setAttribute("href", head.canonical);
   }
-  link.setAttribute("href", head.canonical);
 
   document
     .querySelectorAll('script[data-seo-jsonld="true"]')

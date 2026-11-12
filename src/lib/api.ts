@@ -25,6 +25,12 @@ export interface BlogPost {
   readTime: string;
 }
 
+/** A post without its text, as lists show it (GET /api/posts?summary=1). */
+export type PostSummary = Omit<BlogPost, "content">;
+
+/** A bundled post's frontmatter (virtual:blog-index). */
+export type BlogIndexEntry = Omit<PostSummary, "readTime">;
+
 export interface SiteContent {
   hero: { titleLead: string; subtitle: string };
   about: {
@@ -128,6 +134,11 @@ async function getJSON<T>(path: string): Promise<T> {
 
 export function fetchPosts(): Promise<BlogPost[]> {
   return getJSON<BlogPost[]>("/api/posts");
+}
+
+/** The published posts without their text: a much smaller download for lists. */
+export function fetchPostSummaries(): Promise<PostSummary[]> {
+  return getJSON<PostSummary[]>("/api/posts?summary=1");
 }
 
 export function fetchPost(slug: string): Promise<BlogPost> {
