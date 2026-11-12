@@ -4,6 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { seoPlugin } from "./scripts/seo-plugin";
 import { prerenderPlugin } from "./scripts/prerender-plugin";
+import { blogIndexPlugin } from "./scripts/blog-index-plugin";
 import { siteConfig } from "./src/config/site";
 
 // https://vitejs.dev/config/
@@ -35,6 +36,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === 'development' && componentTagger(),
+      blogIndexPlugin(),
       seoPlugin(siteConfig.url),
       prerenderPlugin(),
     ].filter(Boolean),

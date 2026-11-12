@@ -12,9 +12,11 @@ import { asyncRouter } from "./asyncRouter.js";
 const router = asyncRouter();
 
 // --- Blog ---
-router.get("/posts", async (_req, res) => {
-  const posts = await listPublishedPosts();
-  res.json(posts.map(toPublicPost));
+// ?summary=1 leaves out each post's text, for lists (the blog, the homepage).
+router.get("/posts", async (req, res) => {
+  const posts = (await listPublishedPosts()).map(toPublicPost);
+  if (req.query.summary === undefined) return res.json(posts);
+  res.json(posts.map(({ content: _content, ...summary }) => summary));
 });
 
 router.get("/posts/:slug", async (req, res) => {

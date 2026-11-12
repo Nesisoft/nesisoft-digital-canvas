@@ -50,9 +50,10 @@ type Render = (url: string) => Promise<{ html: string; head: string }>;
  *
  * Writes into dist/:
  *  - index.html and every other route's files (see outputFilesFor)
- *  - 404.html: the NotFound page, for hosts that serve one
+ *  - 404.html: the NotFound page, served with a 404 status for unknown URLs
  *  - 200.html: the untouched client-only shell (boot loader, no content) —
- *    the SPA fallback for everything that isn't prerendered (/admin, unknown URLs)
+ *    for /admin, and for posts, projects and platforms added in /admin since
+ *    the build (server/src/pages.js gives it their head tags)
  *
  * The server bundle is built into a temp dir and deleted afterwards, so none
  * of it ships.
