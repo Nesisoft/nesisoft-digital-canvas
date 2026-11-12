@@ -170,10 +170,11 @@ scripts/
 - **Blog posts** are Markdown files in `src/content/blog/`. The build's SEO
   plugin reads these (plus services and projects) to regenerate
   `sitemap.xml` and `rss.xml` automatically, so the feeds never drift. The
-  live blog itself reads posts from the database, so the next production
-  deploy copies each new file in, once (see [Deployment](#deployment-vercel)).
-  From then on the post is edited, unpublished or deleted in `/admin`:
-  changing the file later doesn't change the live post.
+  live blog itself reads posts from the database, so each production deploy
+  copies in new files and changes to existing ones (see
+  [Deployment](#deployment-vercel)). Once a post is edited, unpublished or
+  deleted in `/admin`, it belongs to `/admin`: later changes to its file
+  aren't copied over it, and a deleted post isn't brought back.
 
 ### AI Blog Studio (`/studio`)
 
@@ -450,9 +451,10 @@ share one domain (and the admin session cookie stays first-party).
    - on the first deploy to an empty database, imports the bundled posts,
      projects and homepage copy, once. A database that already has content is
      never refilled, so anything deleted in `/admin` stays deleted;
-   - copies each Markdown post added to `src/content/blog/` since into the
-     database, once, so it appears in the blog list and in `/admin`. A post
-     deleted in `/admin` isn't copied in again;
+   - brings the blog in line with `src/content/blog/`: copies in new
+     Markdown posts, and updates a post whose file has changed, unless the
+     post has been edited in `/admin` since it was copied in. A post edited
+     or deleted in `/admin` is left to `/admin`, and the build log names it;
    - creates the `site-images` bucket if it's missing (a problem there is only
      a warning).
 

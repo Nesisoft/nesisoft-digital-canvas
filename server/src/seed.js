@@ -1,4 +1,5 @@
 import "./env.js";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -50,29 +51,54 @@ function parseFrontmatter(raw) {
 }
 
 const blogFiles = () => fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".md"));
-const slugOf = (file) => file.replace(/\.md$/, "");
+const md5 = (text) => createHash("md5").update(text).digest("hex");
 
-/** Adds one Markdown post unless its slug is taken; true if it was added. */
-async function insertPost(q, file) {
+// The fields a Markdown post sets, in a fixed order (see postHash).
+const POST_FIELDS = ["title", "excerpt", "content", "image", "category", "author", "date"];
+
+/** One Markdown post: its slug, the hash of the file, and its column values. */
+function readBundledPost(file) {
   const raw = fs.readFileSync(path.join(BLOG_DIR, file), "utf8");
   const { data, body } = parseFrontmatter(raw);
-  const slug = slugOf(file);
-  const { rowCount } = await q(
-    `insert into blog_posts (slug, title, excerpt, content, image, category, author, date)
-     values ($1, $2, $3, $4, $5, $6, $7, $8)
-     on conflict (slug) do nothing`,
-    [
-      slug,
-      data.title || slug,
-      data.excerpt || "",
-      body.trim(),
-      data.image || "",
-      data.category || "Uncategorized",
-      data.author || "Nesisoft Team",
-      data.date ? new Date(data.date) : new Date(),
-    ]
+  const slug = file.replace(/\.md$/, "");
+  return {
+    slug,
+    fileHash: md5(raw),
+    values: {
+      title: data.title || slug,
+      excerpt: data.excerpt || "",
+      content: body.trim(),
+      image: data.image || "",
+      category: data.category || "Uncategorized",
+      author: data.author || "Nesisoft Team",
+      date: data.date ? new Date(data.date) : new Date(),
+    },
+  };
+}
+
+/**
+ * A fingerprint of a post's content: a blog_posts row, or a file's values.
+ * Recorded when a file is copied in, to tell later whether /admin has changed
+ * the post since. Migration 010 stores some, so keep the recipe as it is.
+ */
+export function postHash(post) {
+  return md5(
+    JSON.stringify(
+      POST_FIELDS.map((field) => (field === "date" ? new Date(post.date).toISOString() : post[field]))
+    )
   );
-  return rowCount > 0;
+}
+
+/** Adds one post unless its slug is taken; the new row, or null. */
+async function insertPost(q, post) {
+  const { rows } = await q(
+    `insert into blog_posts (slug, ${POST_FIELDS.join(", ")})
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
+     on conflict (slug) do nothing
+     returning *`,
+    [post.slug, ...POST_FIELDS.map((field) => post.values[field])]
+  );
+  return rows[0] ?? null;
 }
 
 async function seedBlog(q) {
@@ -83,7 +109,7 @@ async function seedBlog(q) {
   const files = blogFiles();
   let created = 0;
   for (const file of files) {
-    if (await insertPost(q, file)) created += 1;
+    if (await insertPost(q, readBundledPost(file))) created += 1;
   }
   console.log(`[seed] blog: imported ${created} new post(s) (${files.length} files seen)`);
 }
@@ -205,50 +231,102 @@ async function importIfNew(q) {
   return "imported the bundled posts, projects and homepage copy";
 }
 
-// The posts bundled before new posts were imported one by one (below). The
-// initial import, or the admin, has already dealt with them, so they're never
-// imported again: one deleted in /admin stays deleted.
-const POSTS_BEFORE_TRACKING = [
-  "ai-integration-in-african-business",
-  "building-scalable-web-applications",
-  "future-of-mobile-app-development-in-africa",
-  "progressive-web-apps-for-african-markets",
-  "react-native-vs-native-development",
-  "rise-of-ecommerce-in-africa",
-];
+/** Records the version of a file copied in, and of the post it made. */
+const recordSync = (q, slug, fileHash, postHashValue) =>
+  q(
+    `insert into bundled_posts (slug, file_hash, post_hash, synced_at)
+     values ($1, $2, $3, now())
+     on conflict (slug) do update
+       set file_hash = excluded.file_hash, post_hash = excluded.post_hash, synced_at = now()`,
+    [slug, fileHash, postHashValue]
+  );
 
-// Recorded in schema_migrations, like INITIAL_CONTENT, once a post is imported.
-const postMarker = (slug) => `seed:post:${slug}`;
+// post_hash for a post that's left to /admin: no real fingerprint matches it.
+const LEFT_TO_ADMIN = "";
 
 /**
- * The deploy-time import of new posts (see deploy.js). The live blog is read
- * from the database, so each Markdown post added to src/content/blog is copied
- * in once, by the first production deploy that has it; from then on it's
- * edited (or unpublished, or deleted) in /admin like any other post, and the
- * file is never read again. A post whose slug is already taken in the
- * database is left as it is. Same transaction and lock as the initial import.
- * Returns what it did, for the log.
+ * Brings one bundled post into the database; what happened ("added",
+ * "updated" or "left"), or null when there was nothing to do. `tracked` is
+ * its bundled_posts row, if it has one (migration 010 explains the columns).
  */
-export function importNewBundledPosts() {
+async function syncPost(q, post, tracked) {
+  if (tracked?.post_hash === LEFT_TO_ADMIN) return null;
+  if (tracked?.post_hash && tracked.file_hash === post.fileHash) return null; // the file hasn't changed
+
+  const { rows } = await q("select * from blog_posts where slug = $1", [post.slug]);
+  const row = rows[0];
+  if (!row) {
+    // Copied in before and deleted in /admin since: it stays deleted.
+    if (tracked) {
+      await recordSync(q, post.slug, post.fileHash, LEFT_TO_ADMIN);
+      return "left";
+    }
+    const added = await insertPost(q, post);
+    await recordSync(q, post.slug, post.fileHash, postHash(added));
+    return "added";
+  }
+
+  // Is the post still as it was copied in? With a recorded fingerprint,
+  // compare with it; without one (a slug the database had before it was
+  // tracked), go by whether it has ever been saved in /admin.
+  const untouched = tracked?.post_hash
+    ? postHash(row) === tracked.post_hash
+    : row.updated_at.getTime() === row.created_at.getTime();
+  if (!untouched) {
+    await recordSync(q, post.slug, post.fileHash, LEFT_TO_ADMIN);
+    return "left";
+  }
+  if (postHash(row) === postHash(post.values)) {
+    await recordSync(q, post.slug, post.fileHash, postHash(row));
+    return null;
+  }
+  const { rows: updated } = await q(
+    `update blog_posts
+     set ${POST_FIELDS.map((field, i) => `${field} = $${i + 2}`).join(", ")}, updated_at = now()
+     where slug = $1
+     returning *`,
+    [post.slug, ...POST_FIELDS.map((field) => post.values[field])]
+  );
+  await recordSync(q, post.slug, post.fileHash, postHash(updated[0]));
+  return "updated";
+}
+
+/**
+ * The deploy-time sync of the Markdown posts (see deploy.js). The live blog is
+ * read from the database, so each production deploy brings it in line with
+ * src/content/blog:
+ *
+ *   - a new file is copied in, once;
+ *   - a changed file updates its post, as long as the post hasn't been edited
+ *     in /admin since it was copied in;
+ *   - a post edited or deleted in /admin is left to /admin from then on: its
+ *     file is never copied over it again, and a deleted post isn't re-added.
+ *
+ * Same transaction and lock as the initial import. Returns what it did, for
+ * the log.
+ */
+export function syncBundledPosts() {
   if (!fs.existsSync(BLOG_DIR)) return Promise.resolve("no blog folder");
   return withClient(async (client) => {
     const q = (text, params) => client.query(text, params);
     await q("begin");
     try {
       await q("select pg_advisory_xact_lock($1)", [MIGRATION_LOCK_ID]);
-      const { rows } = await q("select name from schema_migrations where name like 'seed:post:%'");
-      const imported = new Set(rows.map((row) => row.name));
-      const added = [];
+      const { rows } = await q("select slug, file_hash, post_hash from bundled_posts");
+      const tracked = new Map(rows.map((row) => [row.slug, row]));
+      const done = { added: [], updated: [], left: [] };
       for (const file of blogFiles()) {
-        const slug = slugOf(file);
-        if (POSTS_BEFORE_TRACKING.includes(slug) || imported.has(postMarker(slug))) continue;
-        if (await insertPost(q, file)) added.push(slug);
-        await q("insert into schema_migrations (name) values ($1) on conflict (name) do nothing", [
-          postMarker(slug),
-        ]);
+        const post = readBundledPost(file);
+        const outcome = await syncPost(q, post, tracked.get(post.slug));
+        if (outcome) done[outcome].push(post.slug);
       }
       await q("commit");
-      return added.length ? `imported ${added.length}: ${added.join(", ")}` : "none to import";
+      const parts = [
+        done.added.length && `added ${done.added.join(", ")}`,
+        done.updated.length && `updated ${done.updated.join(", ")}`,
+        done.left.length && `left to /admin (edited or deleted there): ${done.left.join(", ")}`,
+      ].filter(Boolean);
+      return parts.length ? parts.join("; ") : "up to date";
     } catch (err) {
       await q("rollback").catch(() => {});
       throw err;
